@@ -5,7 +5,7 @@ import HtmlWebpackPlugin from "html-webpack-plugin"
 const config: webpack.Configuration = {
   mode: "development",
   devtool: "inline-source-map",
-  entry: "./src/app",
+  entry: ["webpack-hot-middleware/client", "./src/app"],
   output: {
     path: path.resolve(__dirname, "dist"),
     filename: "[name].js",
@@ -13,7 +13,10 @@ const config: webpack.Configuration = {
   resolve: {
     extensions: [".js", ".ts", ".elm"],
   },
-  plugins: [new HtmlWebpackPlugin()],
+  plugins: [
+    new webpack.HotModuleReplacementPlugin({}),
+    new HtmlWebpackPlugin(),
+  ],
   module: {
     rules: [
       {
@@ -25,12 +28,18 @@ const config: webpack.Configuration = {
       {
         test: /\.elm$/,
         exclude: [/elm-stuff/, /node_modules/],
-        use: {
-          loader: "elm-webpack-loader",
-          options: {},
-        },
+        use: [
+          { loader: "elm-hot-webpack-loader" },
+          {
+            loader: "elm-webpack-loader",
+            options: {},
+          },
+        ],
       },
     ],
+  },
+  devServer: {
+    hot: true,
   },
 }
 
