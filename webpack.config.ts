@@ -4,8 +4,9 @@ import HtmlWebpackPlugin from "html-webpack-plugin"
 
 const config: webpack.Configuration = {
   mode: "development",
+  context: path.resolve(__dirname),
   devtool: "inline-source-map",
-  entry: ["webpack-hot-middleware/client", "./src/app"],
+  entry: ["webpack-hot-middleware/client", "./src/js"],
   output: {
     path: path.resolve(__dirname, "dist"),
     filename: "[name].js",

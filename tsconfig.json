@@ -1,6 +1,8 @@
 {
   "compilerOptions": {
+    "typeRoots": ["./node_modules/@types", "./src/node_modules/@types"],
     "sourceMap": true,
+    "lib": ["es2015", "dom"],
     "module": "commonjs",
     "target": "es5",
     "esModuleInterop": true,
