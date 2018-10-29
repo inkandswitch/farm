@@ -10,10 +10,12 @@ open http://localhost:4000
 
 ## TODO
 
-- Importing other modules
+- Connecting different modules
   - `import Foo` with a mapping of `source docId -> Module`?
     - Maybe a custom package manager?
   - Custom syntax `import Foo from "abc123"`?
+  - No importing; use Json.Value messages with a `postMessage` router?
+    - Simplest implementation. More annoying as a user.
 - compile elm on client
   - compile elm/compiler to js (prior art exists for elm 0.18)?
   - run in electron and ship elm/compiler?
