@@ -1,14 +1,24 @@
 # Realm
 
+Runtime-editable elm inside electron.
+
 ## Setup
 
 ```bash
 yarn
 yarn start
-open http://localhost:4000
 ```
 
 ## TODO
+
+- bot api
+  - elm custom element wrapping bot
+  - bot compilation bot
+  - elm compilation bot
+  - TS compilation bot
+- render elm widgets as custom elements
+
+## Idea history
 
 - Connecting different modules
   - `import Foo` with a mapping of `source docId -> Module`?

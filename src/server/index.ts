@@ -21,6 +21,7 @@ const { app } = ws(express())
 app.use(
   devServer(webpackCompiler, {
     publicPath: "/",
+    writeToDisk: name => !/hot-update/.test(name),
   }),
 )
 

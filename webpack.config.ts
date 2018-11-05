@@ -2,22 +2,13 @@ import path from "path"
 import webpack from "webpack"
 import HtmlWebpackPlugin from "html-webpack-plugin"
 
-const config: webpack.Configuration = {
+const shared: webpack.Configuration = {
   mode: "development",
   context: path.resolve(__dirname),
   devtool: "inline-source-map",
-  entry: ["webpack-hot-middleware/client", "./src/js"],
-  output: {
-    path: path.resolve(__dirname, "dist"),
-    filename: "[name].js",
-  },
   resolve: {
     extensions: [".js", ".ts", ".elm"],
   },
-  plugins: [
-    new webpack.HotModuleReplacementPlugin({}),
-    new HtmlWebpackPlugin(),
-  ],
   module: {
     rules: [
       {
@@ -39,9 +30,37 @@ const config: webpack.Configuration = {
       },
     ],
   },
-  devServer: {
-    hot: true,
-  },
 }
 
-export default config
+function config(name: string, opts: webpack.Configuration) {
+  return Object.assign(
+    {},
+    shared,
+    {
+      output: {
+        path: path.resolve(__dirname, "dist"),
+        filename: `${name}.js`,
+      },
+    },
+    opts,
+  )
+}
+
+export default [
+  config("electron", {
+    entry: ["./src/electron"],
+    target: "electron-main",
+  }),
+
+  config("renderer", {
+    entry: ["webpack-hot-middleware/client", "./src/js"],
+    target: "electron-renderer",
+    plugins: [
+      new webpack.HotModuleReplacementPlugin({}),
+      new HtmlWebpackPlugin(),
+    ],
+    devServer: {
+      hot: true,
+    },
+  }),
+]
