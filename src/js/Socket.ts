@@ -1,11 +1,11 @@
 import Queue from "./Queue"
+import QueuedResource from "./QueuedResource"
 
-export default class Socket<SendMsg, ReceiveMsg> {
+export default class Socket<S, R> extends QueuedResource<S, R> {
   url: string
-  sendQ = new Queue<SendMsg>()
-  receiveQ = new Queue<ReceiveMsg>()
 
   constructor(url: string) {
+    super()
     this.url = url
   }
 
@@ -20,7 +20,7 @@ export default class Socket<SendMsg, ReceiveMsg> {
     }
 
     socket.onmessage = ev => {
-      const msg: ReceiveMsg = JSON.parse(ev.data)
+      const msg: R = JSON.parse(ev.data)
       this.receiveQ.push(msg)
     }
 
@@ -35,9 +35,7 @@ export default class Socket<SendMsg, ReceiveMsg> {
     socket.onerror = ev => {
       console.log(ev)
     }
-  }
 
-  send(msg: SendMsg) {
-    this.sendQ.push(msg)
+    return this
   }
 }

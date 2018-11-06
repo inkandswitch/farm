@@ -2,6 +2,10 @@ import path from "path"
 import webpack from "webpack"
 import HtmlWebpackPlugin from "html-webpack-plugin"
 
+interface NamedConfig extends webpack.Configuration {
+  name: string
+}
+
 const shared: webpack.Configuration = {
   mode: "development",
   context: path.resolve(__dirname),
@@ -32,14 +36,16 @@ const shared: webpack.Configuration = {
   },
 }
 
-function config(name: string, opts: webpack.Configuration) {
+function config(opts: NamedConfig) {
   return Object.assign(
     {},
     shared,
     {
       output: {
         path: path.resolve(__dirname, "dist"),
-        filename: `${name}.js`,
+        filename: `${opts.name}.js`,
+        publicPath: "/",
+        globalObject: "this",
       },
     },
     opts,
@@ -47,18 +53,30 @@ function config(name: string, opts: webpack.Configuration) {
 }
 
 export default [
-  config("electron", {
+  config({
+    name: "electron",
     entry: ["./src/electron"],
     target: "electron-main",
   }),
 
-  config("renderer", {
+  config({
+    name: "renderer",
     entry: ["webpack-hot-middleware/client", "./src/js"],
     target: "electron-renderer",
     plugins: [
       new webpack.HotModuleReplacementPlugin({}),
       new HtmlWebpackPlugin(),
     ],
+    devServer: {
+      hot: true,
+    },
+  }),
+
+  config({
+    name: "repo.worker",
+    entry: ["webpack-hot-middleware/client", "./src/js/repo.worker"],
+    target: "electron-renderer",
+    plugins: [new webpack.HotModuleReplacementPlugin({})],
     devServer: {
       hot: true,
     },

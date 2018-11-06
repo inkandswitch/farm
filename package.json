@@ -49,7 +49,9 @@
   "dependencies": {
     "debug": "^4.1.0",
     "express-ws": "^4.0.0",
+    "hypermerge": "github:automerge/hypermerge#picomerge",
     "node-elm-compiler": "^5.0.1",
+    "random-access-memory": "^3.0.0",
     "tmp": "^0.0.33"
   }
 }

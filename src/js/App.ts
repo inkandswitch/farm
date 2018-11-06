@@ -1,11 +1,15 @@
 import Socket from "./Socket"
 import { Elm } from "../elm/Main"
 import * as Msg from "./Msg"
+import Worker from "./QueuedWorker"
 
 export default class App {
   server = new Socket<Msg.ToServer, Msg.FromServer>(
     "ws://localhost:4000/socket",
   )
+
+  repo = new Worker<Msg.ToRepo, Msg.FromRepo>("repo.worker.js")
+
   elm = Elm.Main.init({
     flags: null,
   })
@@ -17,8 +21,18 @@ export default class App {
       this.server.send(msg as Msg.ToServer)
     })
 
-    this.server.receiveQ.subscribe(msg => {
+    this.server.subscribe(msg => {
       this.elm.ports.fromServer.send(msg)
+    })
+
+    this.repo.connect()
+
+    this.elm.ports.toRepo.subscribe(msg => {
+      this.repo.send(msg as Msg.ToRepo)
+    })
+
+    this.repo.subscribe(msg => {
+      this.elm.ports.fromRepo.send(msg)
     })
   }
 }

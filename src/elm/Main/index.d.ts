@@ -9,8 +9,14 @@ export namespace Elm {
         fromServer: {
           send(data: [string, string]): void
         }
+        fromRepo: {
+          send(data: any): void
+        }
         toServer: {
           subscribe(callback: (data: [string, string]) => void): void
+        }
+        toRepo: {
+          subscribe(callback: (data: unknown) => void): void
         }
       };
     }
