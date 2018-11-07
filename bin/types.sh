@@ -29,8 +29,9 @@ install_types() {
 
 create_stub() {
 	require "name" $1
+	module="${name%%/*}"
 
-	path="./src/node_modules/@types/$name"
+	path="./src/node_modules/@types/$module"
 	index="$path/index.d.ts"
 
 	if [ -f $index ]; then

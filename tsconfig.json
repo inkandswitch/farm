@@ -1,5 +1,6 @@
 {
   "compilerOptions": {
+    "outDir": "./dist", // just in case
     "typeRoots": ["./node_modules/@types", "./src/node_modules/@types"],
     "sourceMap": true,
     "lib": ["es2015", "dom", "webworker"],
@@ -7,8 +8,10 @@
     "target": "es5",
     "esModuleInterop": true,
     "allowSyntheticDefaultImports": true,
-    "skipLibCheck": true,
+    "skipLibCheck": true, // prevents type errors in third-party libs, but also no type checking for our .d.ts files
     "strict": true,
-    "noFallthroughCasesInSwitch": true
+    "noFallthroughCasesInSwitch": true,
+    "forceConsistentCasingInFileNames": true,
+    "pretty": true
   }
 }

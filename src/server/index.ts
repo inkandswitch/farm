@@ -40,8 +40,9 @@ app.ws("/socket", (ws, req) => {
 
             try {
               const out = await elm.compileToString([filename], {
-                output: ".html",
+                output: ".js",
               })
+              console.log(out)
               ws.send(JSON.stringify(["Compiled", out]))
               log("Sent compiled Elm program")
             } catch (e) {
