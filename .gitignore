@@ -1,6 +1,7 @@
 /node_modules
 /elm-stuff
 /dist
+/.data
 
 .DS_Store
 

@@ -42,8 +42,14 @@ app.ws("/socket", (ws, req) => {
               const out = await elm.compileToString([filename], {
                 output: ".js",
               })
-              console.log(out)
-              ws.send(JSON.stringify(["Compiled", out]))
+
+              const program = `
+                (new function Wrapper() {
+                  ${out}
+                }).Elm
+              `
+
+              ws.send(JSON.stringify(["Compiled", program]))
               log("Sent compiled Elm program")
             } catch (e) {
               ws.send(JSON.stringify(["CompileError", e.message]))

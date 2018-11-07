@@ -2,7 +2,7 @@ module Main exposing (main)
 
 import Browser
 import Html exposing (Html, button, div, pre, text, textarea)
-import Html.Attributes exposing (cols, rows, srcdoc, style)
+import Html.Attributes exposing (cols, id, rows, srcdoc, style)
 import Html.Events exposing (onClick, onInput)
 import Receive
 import Send
@@ -105,20 +105,68 @@ viewEditor code =
 
 viewResult : String -> Html msg
 viewResult result =
-    div [] [ Html.iframe [ srcdoc result ] [] ]
+    div [ id "preview" ]
+        [--  Html.iframe [ srcdoc result ] []
+        ]
 
 
 initialCode : String
 initialCode =
-    """module Main exposing (main)
+    """port module Example exposing (main)
 
-import Html exposing (Html, div, text)
+import Html exposing (Html, button, div, text)
+import Html.Events exposing (onClick)
+import Plugin
 
 
-main : Html msg
+type alias Doc =
+    { counter : Int
+    }
+
+
+port output : Doc -> Cmd msg
+
+
+port input : (Doc -> msg) -> Sub msg
+
+
+type Msg
+    = Inc
+    | Dec
+
+
+main : Plugin.Program Doc Msg
 main =
-  div []
-        [ text "Hello, world!"
-        , text " Change this program and see it update on the right."
+    Plugin.element
+        { init = init
+        , update = update
+        , view = view
+        , input = input
+        , output = output
+        }
+
+
+init : Doc
+init =
+    { counter = 0
+    }
+
+
+update : Msg -> Doc -> Doc
+update msg doc =
+    case msg of
+        Inc ->
+            { doc | counter = doc.counter + 1 }
+
+        Dec ->
+            { doc | counter = doc.counter - 1 }
+
+
+view : Doc -> Html Msg
+view doc =
+    div []
+        [ button [ onClick Inc ] [ text "+" ]
+        , text <| String.fromInt doc.counter
+        , button [ onClick Dec ] [ text "-" ]
         ]
     """

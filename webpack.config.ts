@@ -1,6 +1,7 @@
 import path from "path"
 import webpack from "webpack"
 import HtmlWebpackPlugin from "html-webpack-plugin"
+import nodeExternals from "webpack-node-externals"
 
 interface NamedConfig extends webpack.Configuration {
   name: string
@@ -13,6 +14,11 @@ const shared: webpack.Configuration = {
   resolve: {
     extensions: [".js", ".ts", ".elm"],
   },
+  externals: [
+    nodeExternals({
+      whitelist: [/webpack/],
+    }),
+  ],
   module: {
     rules: [
       {

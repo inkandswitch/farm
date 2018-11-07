@@ -196,6 +196,13 @@
     "@types/connect" "*"
     "@types/webpack" "*"
 
+"@types/webpack-node-externals@^1.6.3":
+  version "1.6.3"
+  resolved "https://registry.yarnpkg.com/@types/webpack-node-externals/-/webpack-node-externals-1.6.3.tgz#a70ecab38339ab219d0090680c98c4973a90af01"
+  integrity sha512-sIYCMSV4Z1FbxqSKKvhmEnjd1UoZnTBT0VIhoZ0iT8gck7FB1MzJ1eH+yFyOgY65WU4LJBTxj3ySMKKfzfEiCw==
+  dependencies:
+    "@types/webpack" "*"
+
 "@types/webpack@*", "@types/webpack@^4.4.17":
   version "4.4.17"
   resolved "https://registry.yarnpkg.com/@types/webpack/-/webpack-4.4.17.tgz#3da3e0823a051311ba510bdc32354888921fc8b4"
@@ -585,10 +592,10 @@ atomic-batcher@^1.0.2:
   resolved "https://registry.yarnpkg.com/atomic-batcher/-/atomic-batcher-1.0.2.tgz#d16901d10ccec59516c197b9ccd8930689b813b4"
   integrity sha1-0WkB0QzOxZUWwZe5zNiTBom4E7Q=
 
-automerge@^0.9.1:
-  version "0.9.2"
-  resolved "https://registry.yarnpkg.com/automerge/-/automerge-0.9.2.tgz#adf82e6423c1fffc69caa0409badd9828c6c46ef"
-  integrity sha512-tgwGwsyDdQmKEfnXAXsY/roUgxVtgqg06jOQn3VWPrmT2L25TW1sJ6aG/CKDNOrRvoOviE9izbixsk/5vCiyjA==
+automerge@0.9.1:
+  version "0.9.1"
+  resolved "https://registry.yarnpkg.com/automerge/-/automerge-0.9.1.tgz#08c8bd2645da8cddf52afef25499e5c0e4bad0d9"
+  integrity sha512-sdjJD1VCogSTX2zUMGp2Yy37meJ9fwvoe7qD6RFgzZfssdwQ9OLcu1tFsKYzKacypdT+ZMf/lnUNdR1pM1nH1A==
   dependencies:
     immutable "^3.8.2"
     transit-immutable-js "^0.7.0"
@@ -2534,11 +2541,44 @@ hypercore@^6.20.2:
     unordered-array-remove "^1.0.2"
     unordered-set "^2.0.0"
 
+hypercore@^6.21.0:
+  version "6.21.0"
+  resolved "https://registry.yarnpkg.com/hypercore/-/hypercore-6.21.0.tgz#5e2d2271762abc7b9d0e1746b6f783ae459f6b1e"
+  integrity sha512-LPKI+nvgbFTKbXD1y6It3PUZDIQFHSYIeSDbqIZeIVuSoeI4PYcCehKdqB9Wls31AIZL7cFwA5o64uOtBxF1cA==
+  dependencies:
+    array-lru "^1.1.0"
+    atomic-batcher "^1.0.2"
+    bitfield-rle "^2.2.1"
+    buffer-alloc-unsafe "^1.0.0"
+    buffer-equals "^1.0.4"
+    buffer-from "^1.0.0"
+    bulk-write-stream "^1.1.3"
+    codecs "^1.2.0"
+    fast-bitfield "^1.2.1"
+    flat-tree "^1.6.0"
+    from2 "^2.3.0"
+    hypercore-crypto "^1.0.0"
+    hypercore-protocol "^6.4.1"
+    inherits "^2.0.3"
+    inspect-custom-symbol "^1.1.0"
+    last-one-wins "^1.0.4"
+    memory-pager "^1.0.2"
+    merkle-tree-stream "^3.0.3"
+    pretty-hash "^1.0.1"
+    process-nextick-args "^1.0.7"
+    random-access-file "^2.0.1"
+    sodium-universal "^2.0.0"
+    sparse-bitfield "^3.0.0"
+    thunky "^1.0.1"
+    uint64be "^2.0.1"
+    unordered-array-remove "^1.0.2"
+    unordered-set "^2.0.0"
+
 "hypermerge@github:automerge/hypermerge#picomerge":
   version "1.0.1"
-  resolved "https://codeload.github.com/automerge/hypermerge/tar.gz/237f07153914999eb253e6273a0682e0954fd235"
+  resolved "https://codeload.github.com/automerge/hypermerge/tar.gz/21bcd51d647c9b64e3a576c6af4b5b640cf17422"
   dependencies:
-    automerge "^0.9.1"
+    automerge "0.9.1"
     bs58 "^4.0.1"
     debug "^4.1.0"
     hypercore "^6.20.2"
@@ -5417,6 +5457,11 @@ webpack-log@^2.0.0:
   dependencies:
     ansi-colors "^3.0.0"
     uuid "^3.3.2"
+
+webpack-node-externals@^1.7.2:
+  version "1.7.2"
+  resolved "https://registry.yarnpkg.com/webpack-node-externals/-/webpack-node-externals-1.7.2.tgz#6e1ee79ac67c070402ba700ef033a9b8d52ac4e3"
+  integrity sha512-ajerHZ+BJKeCLviLUUmnyd5B4RavLF76uv3cs6KNuO8W+HuQaEs0y0L7o40NQxdPy5w0pcv8Ew7yPUAQG0UdCg==
 
 webpack-sources@^1.1.0, webpack-sources@^1.3.0:
   version "1.3.0"

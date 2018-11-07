@@ -1,18 +1,16 @@
 declare const self: DedicatedWorkerGlobalScope
+import { resolve } from "path"
+;(self as any).module.paths.push(resolve("./node_modules"))
 
-import { remote } from "electron"
 import QueuedPort from "./QueuedPort"
 import * as Msg from "./Msg"
 import { keyPair } from "hypercore/lib/crypto"
-import { applyDiff } from "deep-diff"
-const { app } = remote
-
 import { Hypermerge, FrontendManager } from "hypermerge"
-import { join } from "path"
+import { applyDiff } from "deep-diff"
 
 const port = new QueuedPort<Msg.FromRepo, Msg.ToRepo>(self).connect()
 
-const path = join(app.getPath("documents"), "Realm")
+const path = "./.data"
 
 const repo = new Hypermerge({ path })
 

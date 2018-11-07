@@ -3,7 +3,7 @@
     "outDir": "./dist", // just in case
     "typeRoots": ["./node_modules/@types", "./src/node_modules/@types"],
     "sourceMap": true,
-    "lib": ["es2015", "dom", "webworker"],
+    "lib": ["es2015", "es2017", "dom", "webworker"],
     "module": "commonjs",
     "target": "es5",
     "esModuleInterop": true,
