@@ -25,6 +25,7 @@ port.subscribe(msg => {
         })
       } else {
         manager = repo.createDocumentFrontend(keyPair())
+        console.log("Model docId", manager.docId)
 
         manager.change((doc: any) => {
           Object.assign(doc, msg.doc)
