@@ -24,7 +24,7 @@ const shared: webpack.Configuration = {
       {
         test: /\.ts$/,
         loader: "ts-loader",
-        exclude: [/node_modules/],
+        exclude: [/realm\/node_modules/],
       },
 
       {
@@ -86,5 +86,11 @@ export default [
     devServer: {
       hot: true,
     },
+  }),
+
+  config({
+    name: "nettest",
+    entry: ["./src/nettest"],
+    target: "node",
   }),
 ]

@@ -5,7 +5,8 @@
     "sourceMap": true,
     "lib": ["es2015", "es2017", "dom", "webworker"],
     "module": "commonjs",
-    "target": "es5",
+    "target": "es6",
+    "downlevelIteration": true,
     "esModuleInterop": true,
     "allowSyntheticDefaultImports": true,
     "skipLibCheck": true, // prevents type errors in third-party libs, but also no type checking for our .d.ts files
@@ -13,5 +14,6 @@
     "noFallthroughCasesInSwitch": true,
     "forceConsistentCasingInFileNames": true,
     "pretty": true
-  }
+  },
+  "include": ["src/**/*", "src/node_modules/**/*"]
 }
