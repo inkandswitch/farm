@@ -3,37 +3,59 @@ import * as Msg from "./Msg"
 
 type Repo = QueuedWorker<Msg.ToRepo, Msg.FromRepo>
 
+interface App {
+  ports: {
+    output: {
+      subscribe(fn: Function): void
+      unsubscribe(fn: Function): void
+    }
+    input: {
+      send(msg: any): void
+    }
+  }
+}
+
 export default class Widget {
-  elm: any
-  app: any
-  node: HTMLElement
+  app?: App
+  doc: null | object = null
   repo: Repo
 
-  constructor(repo: Repo, elm: any) {
-    this.elm = elm
-    this.node = document.createElement("div")
+  constructor(repo: Repo) {
     this.repo = repo
   }
 
-  mount(parent: HTMLElement) {
-    parent.appendChild(this.node)
-    this.app = this.elm.init({
-      flags: null,
-      node: this.node,
+  start(elm: any, parent: HTMLElement) {
+    this.stop(parent)
+
+    const node = document.createElement("div")
+    parent.appendChild(node)
+    const app = elm.init({
+      flags: this.doc,
+      node,
     })
 
-    this.app.ports.output.subscribe((doc: object) => {
-      this.repo.send({ t: "Doc", doc })
-    })
+    app.ports.output.subscribe(this.sendToRepo)
 
     this.repo.subscribe(msg => {
-      this.app.ports.input.send(msg.doc)
+      this.doc = msg.doc
+      app.ports.input.send(msg.doc)
     })
+    this.app = app
   }
 
-  destroy() {
-    this.repo.unsubscribe()
-    this.app.ports.output.unsubscribe()
-    this.node.remove()
+  sendToRepo = (doc: object) => {
+    this.repo.send({ t: "Doc", doc })
+  }
+
+  stop(parent: HTMLElement) {
+    if (this.app) {
+      this.repo.unsubscribe()
+      this.app.ports.output.unsubscribe(this.sendToRepo)
+      delete this.app
+
+      while (parent.firstChild) {
+        parent.removeChild(parent.firstChild)
+      }
+    }
   }
 }

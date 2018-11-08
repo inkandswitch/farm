@@ -10,7 +10,6 @@ import Widget from "./Widget"
 }
 
 export default class App {
-  widget?: Widget
   server = new Socket<Msg.ToServer, Msg.FromServer>(
     "ws://localhost:4000/socket",
   )
@@ -20,6 +19,8 @@ export default class App {
   elm = Elm.Main.init({
     flags: null,
   })
+
+  widget = new Widget(this.repo)
 
   start() {
     this.server.connect()
@@ -53,15 +54,10 @@ export default class App {
   }
 
   mount(result: any) {
-    if (this.widget) {
-      this.widget.destroy()
-    }
-
     const preview = document.getElementById("preview")
-
+    const elm = Object.values(result)[0]
     if (preview) {
-      this.widget = new Widget(this.repo, Object.values(result)[0])
-      this.widget.mount(preview)
+      this.widget.start(elm, preview)
     } else {
       console.log("No preview node!")
     }

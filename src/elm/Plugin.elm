@@ -60,7 +60,11 @@ update spec msg model =
         Custom submsg ->
             case model of
                 Ready doc ->
-                    ( Ready <| spec.update submsg doc, spec.output doc )
+                    let
+                        newDoc =
+                            spec.update submsg doc
+                    in
+                    ( Ready newDoc, spec.output newDoc )
 
 
 view : Spec doc msg -> Model doc -> Html (Msg doc msg)
