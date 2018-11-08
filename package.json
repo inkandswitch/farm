@@ -15,7 +15,7 @@
     "app": "yarn build && yarn start-app",
     "types": "./bin/types.sh",
     "elm": "elm-typescript-interop",
-    "nettest": "yarn build --config-name=nettest && node dist/nettest.js"
+    "nettest": "yarn build --config-name=nettest && node --inspect dist/nettest.js"
   },
   "devDependencies": {
     "@types/bs58": "^3.0.30",

@@ -15,7 +15,8 @@ const docId = process.argv[2]
 console.log("docId", docId)
 
 const manager = hm.openDocumentFrontend(docId)
-
+;(global as any).manager = manager
+;(global as any).repo = hm
 manager.on("doc", (doc: any) => console.log("doc", doc))
 setInterval(
   () =>
