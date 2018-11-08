@@ -2,14 +2,15 @@ module Main exposing (main)
 
 import Browser
 import Html exposing (Html, button, div, pre, text, textarea)
-import Html.Attributes exposing (cols, id, rows, srcdoc, style)
+import Html.Attributes exposing (attribute, cols, id, rows, srcdoc, style)
 import Html.Events exposing (onClick, onInput)
 import Receive
 import Send
 
 
 type alias Model =
-    { code : String
+    { url : String
+    , code : String
     , compiled : String
     , error : String
     }
@@ -20,7 +21,7 @@ type Msg
     | ServerMsg ( String, String )
 
 
-main : Program () Model Msg
+main : Program String Model Msg
 main =
     Browser.document
         { init = init
@@ -30,9 +31,9 @@ main =
         }
 
 
-init : () -> ( Model, Cmd Msg )
-init () =
-    { code = initialCode, compiled = "", error = "" }
+init : String -> ( Model, Cmd Msg )
+init url =
+    { url = url, code = initialCode, compiled = "", error = "" }
         |> compile
 
 
@@ -77,7 +78,8 @@ view : Model -> Browser.Document Msg
 view model =
     { title = "Realm"
     , body =
-        [ div
+        [ Html.node "realm-workspace" [ attribute "url" model.url ] []
+        , div
             [ style "display" "grid"
             , style "grid-template-columns" "1fr 1fr"
             ]

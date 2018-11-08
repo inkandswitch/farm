@@ -1,7 +1,8 @@
-module Plugin exposing (Program, element)
+module Plugin exposing (Program, element, render)
 
 import Browser
-import Html exposing (Html)
+import Html exposing (Attribute, Html)
+import Html.Attributes as Attr
 
 
 type alias Program doc msg =
@@ -24,6 +25,11 @@ type Msg doc msg
 
 type Model doc
     = Ready doc
+
+
+render : String -> String -> List (Attribute msg) -> List (Html msg) -> Html msg
+render name url attrs children =
+    Html.node ("realm-" ++ name) (Attr.attribute "url" url :: attrs) children
 
 
 element : Spec doc msg -> Program doc msg

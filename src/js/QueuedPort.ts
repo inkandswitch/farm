@@ -1,6 +1,6 @@
 import QueuedResource from "./QueuedResource"
 
-interface Port {
+export interface Port {
   postMessage(msg: any): void
   onmessage: null | ((msg: any) => void)
 }

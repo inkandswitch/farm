@@ -44,13 +44,10 @@ export default class App {
 
     this.repo.connect()
 
-    // this.elm.ports.toRepo.subscribe(doc => {
-    //   this.repo.send({ t: "Doc", doc })
-    // })
-
-    // this.repo.subscribe(msg => {
-    //   this.elm.ports.fromRepo.send(msg)
-    // })
+    this.repo.send({
+      t: "Start",
+      rootUrl: localStorage.rootUrl,
+    })
   }
 
   mount(result: any) {
