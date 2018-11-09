@@ -18,11 +18,11 @@ export namespace Elm {
         toRepo: {
           subscribe(callback: (data: unknown) => void): void
         }
-      };
+      }
     }
     export function init(options: {
-      node?: HTMLElement | null;
-      flags: null;
-    }): Elm.Main.App;
+      node?: HTMLElement | null
+      flags: string
+    }): Elm.Main.App
   }
 }

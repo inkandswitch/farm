@@ -1,10 +1,13 @@
 import Socket from "./Socket"
 import { Elm } from "../elm/Main"
 import * as Msg from "./Msg"
-import QueuedWorker from "./QueuedWorker"
 import Widget from "./Widget"
+import * as Repo from "./Repo"
+import { readFileSync } from "fs"
+import path from "path"
 
 // make the web worker thread-safe:
+import Registry from "./Registry"
 ;(<any>process).dlopen = () => {
   throw new Error("Load native module is not thread-safe")
 }
@@ -14,40 +17,37 @@ export default class App {
     "ws://localhost:4000/socket",
   )
 
-  repo = new QueuedWorker<Msg.ToRepo, Msg.FromRepo>("./repo.worker.js")
-
-  elm = Elm.Main.init({
-    flags: null,
-  })
-
-  widget = new Widget(this.repo)
+  repo = Repo.worker("./repo.worker.js")
+  rootId: string = localStorage.rootId || this.createRoot()
+  registry = new Registry(this.repo)
 
   start() {
+    this.registry.add("root", this.rootId)
+
     this.server.connect()
 
-    this.elm.ports.toServer.subscribe(msg => {
-      this.server.send(msg as Msg.ToServer)
+    // this.server.subscribe(msg => {
+    //   const [t, body] = msg
+    //   switch (t) {
+    //     case "Compiled":
+    //       this.elm.ports.fromServer.send(msg)
+    //       this.mount(eval(body))
+    //       break
+
+    //     default:
+    //       this.elm.ports.fromServer.send(msg)
+    //   }
+    // })
+  }
+
+  createRoot(): string {
+    const id = this.repo.create()
+    const handle = this.repo.open(id)
+    handle.change((doc: any) => {
+      doc["source.elm"] = ROOT_SOURCE_CODE
     })
-
-    this.server.subscribe(msg => {
-      const [t, body] = msg
-      switch (t) {
-        case "Compiled":
-          this.elm.ports.fromServer.send(msg)
-          this.mount(eval(body))
-          break
-
-        default:
-          this.elm.ports.fromServer.send(msg)
-      }
-    })
-
-    this.repo.connect()
-
-    this.repo.send({
-      t: "Start",
-      rootUrl: localStorage.rootUrl,
-    })
+    handle.cleanup()
+    return id
   }
 
   mount(result: any) {
@@ -60,3 +60,7 @@ export default class App {
     }
   }
 }
+
+const ROOT_SOURCE_CODE = readFileSync(
+  path.resolve(__dirname, "../elm/Example.elm"),
+)

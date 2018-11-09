@@ -59,8 +59,9 @@
     "deep-diff": "^1.0.2",
     "express-ws": "^4.0.0",
     "hypercore": "^6.21.0",
-    "hypermerge": "github:automerge/hypermerge#picomerge",
+    "hypermerge": "github:automerge/hypermerge#hyper3",
     "node-elm-compiler": "^5.0.1",
+    "random-access-file": "^2.0.1",
     "random-access-memory": "^3.0.0",
     "tmp": "^0.0.33",
     "ws": "^6.1.0"

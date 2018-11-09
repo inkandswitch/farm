@@ -27,6 +27,13 @@ type Model doc
     = Ready doc
 
 
+
+-- type alias Output doc =
+--     { doc : Maybe doc
+--     , open : Maybe String
+--     , }
+
+
 render : String -> String -> List (Attribute msg) -> List (Html msg) -> Html msg
 render name url attrs children =
     Html.node ("realm-" ++ name) (Attr.attribute "url" url :: attrs) children
