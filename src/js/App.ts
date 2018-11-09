@@ -11,7 +11,8 @@ import Registry from "./Registry"
 export default class App {
   repo = Repo.worker("./repo.worker.js")
   rootSourceId: string =
-    localStorage.rootSourceId || (localStorage.rootSourceId = this.createRoot())
+    localStorage.rootSourceId ||
+    (localStorage.rootSourceId = this.bootstrapWidget("root", "Example.elm"))
 
   rootId: string =
     localStorage.rootId || (localStorage.rootId = this.repo.create())
@@ -25,18 +26,18 @@ export default class App {
     document.body.appendChild(root)
   }
 
-  createRoot(): string {
+  bootstrapWidget(name: string, file: string): string {
     const id = this.repo.create()
     const handle = this.repo.open(id)
     handle.change((doc: any) => {
-      doc.name = "root"
-      doc["source.elm"] = ROOT_SOURCE_CODE
+      doc.name = name
+      doc["source.elm"] = sourceFor(file)
     })
     handle.cleanup()
     return id
   }
 }
 
-const ROOT_SOURCE_CODE = readFileSync(
-  path.resolve("src/elm/Example.elm"),
-).toString()
+function sourceFor(name: string) {
+  return readFileSync(path.resolve(`src/elm/${name}`)).toString()
+}
