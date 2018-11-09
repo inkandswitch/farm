@@ -15,8 +15,8 @@
     "app": "yarn build && yarn start-app",
     "types": "./bin/types.sh",
     "elm": "elm-typescript-interop",
-    "counter": "yarn build --config-name=counter && node --inspect dist/counter.js",
-    "cat": "yarn build --config-name=doccat && node --inspect dist/doccat.js"
+    "counter": "yarn build --config-name=counter && node dist/counter.js",
+    "cat": "yarn build --config-name=doccat && node dist/doccat.js"
   },
   "devDependencies": {
     "@types/bs58": "^3.0.30",
@@ -26,6 +26,7 @@
     "@types/express": "^4.16.0",
     "@types/express-ws": "^3.0.0",
     "@types/html-webpack-plugin": "^3.2.0",
+    "@types/lodash": "^4.14.118",
     "@types/node": "^10.12.0",
     "@types/tmp": "^0.0.33",
     "@types/webpack": "^4.4.17",
@@ -61,6 +62,7 @@
     "express-ws": "^4.0.0",
     "hypercore": "^6.21.0",
     "hypermerge": "github:automerge/hypermerge#hyper3",
+    "lodash": "^4.17.11",
     "node-elm-compiler": "^5.0.1",
     "random-access-file": "^2.0.1",
     "random-access-memory": "^3.0.0",

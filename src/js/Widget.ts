@@ -1,6 +1,7 @@
 import { RepoFrontend } from "hypermerge/dist/RepoFrontend"
 import Handle from "hypermerge/dist/Handle"
 import { applyDiff } from "deep-diff"
+import { defaults } from "lodash"
 import ElmApp from "./ElmApp"
 
 type Repo = RepoFrontend
@@ -71,15 +72,23 @@ export function create(
 
       this.app = app
 
-      app.subscribe(newDoc => {
-        handle.change((doc: any) => {
-          applyDiff(doc, newDoc)
-        })
-      })
+      app.subscribe(msg => {
+        if (msg.doc) {
+          handle.change((state: any) => {
+            applyDiff(state, msg.doc)
+          })
+        }
 
-      this.handle.subscribe(doc => {
-        if (isEmptyDoc(doc)) return
-        app.send(doc)
+        if (msg.init) {
+          handle.change((state: any) => {
+            defaults(state, msg.init)
+          })
+
+          handle.subscribe(doc => {
+            if (isEmptyDoc(doc)) return
+            app.send({ doc })
+          })
+        }
       })
     }
 

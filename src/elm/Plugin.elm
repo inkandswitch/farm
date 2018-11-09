@@ -1,4 +1,4 @@
-module Plugin exposing (Model, Program, element, render)
+module Plugin exposing (In, Model, Out, Program, element, render)
 
 import Browser
 import Html exposing (Attribute, Html)
@@ -19,13 +19,13 @@ type alias Spec state doc msg =
     { init : ( state, doc )
     , update : msg -> Model state doc -> ( state, doc )
     , view : Model state doc -> Html msg
-    , output : doc -> Cmd (Msg doc msg)
-    , input : (doc -> Msg doc msg) -> Sub (Msg doc msg)
+    , output : Out doc -> Cmd (Msg doc msg)
+    , input : (In doc -> Msg doc msg) -> Sub (Msg doc msg)
     }
 
 
 type Msg doc msg
-    = UpdatedDoc doc
+    = InMsg (In doc)
     | Custom msg
 
 
@@ -37,16 +37,20 @@ type alias Model state doc =
     }
 
 
+type alias Out doc =
+    { doc : Maybe doc
+    , init : Maybe doc
+    }
 
--- type alias Output doc =
---     { doc : Maybe doc
---     , open : Maybe String
---     , }
+
+type alias In doc =
+    { doc : Maybe doc
+    }
 
 
 render : String -> String -> List (Attribute msg) -> List (Html msg) -> Html msg
-render name url attrs children =
-    Html.node ("realm-" ++ name) (Attr.attribute "url" url :: attrs) children
+render name id attrs children =
+    Html.node ("realm-" ++ name) (Attr.attribute "docId" id :: attrs) children
 
 
 element : Spec state doc msg -> Program state doc msg
@@ -61,7 +65,7 @@ element spec =
 
 subscriptions : Spec state doc msg -> Model state doc -> Sub (Msg doc msg)
 subscriptions spec model =
-    spec.input UpdatedDoc
+    spec.input InMsg
 
 
 init : Spec state doc msg -> Flags -> ( Model state doc, Cmd (Msg doc msg) )
@@ -75,14 +79,18 @@ init spec flags =
       , docId = flags.docId
       , sourceId = flags.sourceId
       }
-    , Cmd.none
+    , spec.output { doc = Nothing, init = Just doc }
     )
 
 
 update : Spec state doc msg -> Msg doc msg -> Model state doc -> ( Model state doc, Cmd (Msg doc msg) )
 update spec msg model =
     case msg of
-        UpdatedDoc doc ->
+        InMsg inMsg ->
+            let
+                doc =
+                    inMsg.doc |> Maybe.withDefault model.doc
+            in
             ( { model | doc = doc }, Cmd.none )
 
         Custom submsg ->
@@ -93,7 +101,7 @@ update spec msg model =
                 newModel =
                     { model | state = state, doc = doc }
             in
-            ( newModel, spec.output doc )
+            ( newModel, spec.output { doc = Just doc, init = Nothing } )
 
 
 view : Spec state doc msg -> Model state doc -> Html (Msg doc msg)

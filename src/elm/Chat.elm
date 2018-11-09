@@ -23,10 +23,10 @@ type alias Doc =
     }
 
 
-port output : Doc -> Cmd msg
+port output : Plugin.Out Doc -> Cmd msg
 
 
-port input : (Doc -> msg) -> Sub msg
+port input : (Plugin.In Doc -> msg) -> Sub msg
 
 
 type Msg
@@ -75,15 +75,19 @@ update msg { state, doc } =
 
 send : State -> Doc -> ( State, Doc )
 send state doc =
-    ( { state | typing = "" }
-    , { doc
-        | messages =
-            { author = state.name
-            , content = state.typing
-            }
-                :: doc.messages
-      }
-    )
+    if String.trim state.typing == "" then
+        ( state, doc )
+
+    else
+        ( { state | typing = "" }
+        , { doc
+            | messages =
+                { author = state.name
+                , content = state.typing
+                }
+                    :: doc.messages
+          }
+        )
 
 
 view : Plugin.Model State Doc -> Html Msg

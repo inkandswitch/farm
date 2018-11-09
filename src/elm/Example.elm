@@ -10,10 +10,10 @@ type alias Doc =
     }
 
 
-port output : Doc -> Cmd msg
+port output : Plugin.Out Doc -> Cmd msg
 
 
-port input : (Doc -> msg) -> Sub msg
+port input : (Plugin.In Doc -> msg) -> Sub msg
 
 
 type Msg

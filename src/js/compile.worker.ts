@@ -37,6 +37,7 @@ port.subscribe(msg => {
           } catch (e) {
             port.send({ t: "CompileError", id, error: e.message })
             console.log("Sent Elm compile error")
+            console.error(e.message)
           }
         })
       })
