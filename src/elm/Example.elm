@@ -21,7 +21,7 @@ type Msg
     | Dec
 
 
-main : Plugin.Program Doc Msg
+main : Plugin.Program () Doc Msg
 main =
     Plugin.element
         { init = init
@@ -32,23 +32,25 @@ main =
         }
 
 
-init : Doc
+init : ( (), Doc )
 init =
-    { counter = 0
-    }
+    ( ()
+    , { counter = 0
+      }
+    )
 
 
-update : Msg -> Plugin.Model Doc -> Doc
-update msg { doc } =
+update : Msg -> Plugin.Model () Doc -> ( (), Doc )
+update msg { state, doc } =
     case msg of
         Inc ->
-            { doc | counter = doc.counter + 1 }
+            ( state, { doc | counter = doc.counter + 1 } )
 
         Dec ->
-            { doc | counter = doc.counter - 1 }
+            ( state, { doc | counter = doc.counter - 1 } )
 
 
-view : Plugin.Model Doc -> Html Msg
+view : Plugin.Model () Doc -> Html Msg
 view { docId, sourceId, doc } =
     div []
         [ button [ onClick Inc ] [ text "+" ]

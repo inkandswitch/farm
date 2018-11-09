@@ -11,14 +11,14 @@ type alias Flags =
     }
 
 
-type alias Program doc msg =
-    Platform.Program Flags (Model doc) (Msg doc msg)
+type alias Program state doc msg =
+    Platform.Program Flags (Model state doc) (Msg doc msg)
 
 
-type alias Spec doc msg =
-    { init : doc
-    , update : msg -> Model doc -> doc
-    , view : Model doc -> Html msg
+type alias Spec state doc msg =
+    { init : ( state, doc )
+    , update : msg -> Model state doc -> ( state, doc )
+    , view : Model state doc -> Html msg
     , output : doc -> Cmd (Msg doc msg)
     , input : (doc -> Msg doc msg) -> Sub (Msg doc msg)
     }
@@ -29,8 +29,9 @@ type Msg doc msg
     | Custom msg
 
 
-type alias Model doc =
+type alias Model state doc =
     { doc : doc
+    , state : state
     , docId : String
     , sourceId : String
     }
@@ -48,7 +49,7 @@ render name url attrs children =
     Html.node ("realm-" ++ name) (Attr.attribute "url" url :: attrs) children
 
 
-element : Spec doc msg -> Program doc msg
+element : Spec state doc msg -> Program state doc msg
 element spec =
     Browser.element
         { init = init spec
@@ -58,22 +59,27 @@ element spec =
         }
 
 
-subscriptions : Spec doc msg -> Model doc -> Sub (Msg doc msg)
+subscriptions : Spec state doc msg -> Model state doc -> Sub (Msg doc msg)
 subscriptions spec model =
     spec.input UpdatedDoc
 
 
-init : Spec doc msg -> Flags -> ( Model doc, Cmd (Msg doc msg) )
+init : Spec state doc msg -> Flags -> ( Model state doc, Cmd (Msg doc msg) )
 init spec flags =
-    ( { docId = flags.docId
+    let
+        ( state, doc ) =
+            spec.init
+    in
+    ( { state = state
+      , doc = doc
+      , docId = flags.docId
       , sourceId = flags.sourceId
-      , doc = spec.init
       }
     , Cmd.none
     )
 
 
-update : Spec doc msg -> Msg doc msg -> Model doc -> ( Model doc, Cmd (Msg doc msg) )
+update : Spec state doc msg -> Msg doc msg -> Model state doc -> ( Model state doc, Cmd (Msg doc msg) )
 update spec msg model =
     case msg of
         UpdatedDoc doc ->
@@ -81,13 +87,16 @@ update spec msg model =
 
         Custom submsg ->
             let
-                newDoc =
+                ( state, doc ) =
                     spec.update submsg model
+
+                newModel =
+                    { model | state = state, doc = doc }
             in
-            ( { model | doc = newDoc }, spec.output newDoc )
+            ( newModel, spec.output doc )
 
 
-view : Spec doc msg -> Model doc -> Html (Msg doc msg)
+view : Spec state doc msg -> Model state doc -> Html (Msg doc msg)
 view spec model =
     spec.view model
         |> Html.map Custom

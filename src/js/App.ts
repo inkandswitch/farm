@@ -12,7 +12,7 @@ export default class App {
   repo = Repo.worker("./repo.worker.js")
   rootSourceId: string =
     localStorage.rootSourceId ||
-    (localStorage.rootSourceId = this.bootstrapWidget("root", "Example.elm"))
+    (localStorage.rootSourceId = this.bootstrapWidget("root", "Chat.elm"))
 
   rootId: string =
     localStorage.rootId || (localStorage.rootId = this.repo.create())
