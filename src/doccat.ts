@@ -20,12 +20,3 @@ const handle = repo.open(docId)
 ;(global as any).repo = repo
 
 handle.subscribe((doc: any) => console.log("doc", doc))
-
-setInterval(
-  () =>
-    handle.change((state: any) => {
-      state.counter += 1
-      console.log("counter", state.counter)
-    }),
-  3000,
-)

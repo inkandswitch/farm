@@ -89,8 +89,24 @@ export default [
   }),
 
   config({
+    name: "compile.worker",
+    entry: ["webpack-hot-middleware/client", "./src/js/compile.worker"],
+    target: "electron-renderer",
+    plugins: [new webpack.HotModuleReplacementPlugin({})],
+    devServer: {
+      hot: true,
+    },
+  }),
+
+  config({
     name: "nettest",
     entry: ["./src/nettest"],
+    target: "node",
+  }),
+
+  config({
+    name: "doccat",
+    entry: ["./src/doccat"],
     target: "node",
   }),
 ]

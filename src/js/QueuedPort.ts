@@ -8,21 +8,22 @@ export interface Port {
 export default class QueuedPort<S, R> extends QueuedResource<S, R> {
   port: Port
 
-  constructor(port: Port) {
-    super()
+  constructor(port: Port, name?: string) {
+    super(name || "Port")
     this.port = port
-  }
 
-  connect() {
     this.sendQ.subscribe(msg => {
-      this.port.postMessage(msg)
+      port.postMessage(msg)
     })
 
-    this.port.onmessage = event => {
+    port.onmessage = event => {
       const msg: R = event.data
       this.receiveQ.push(msg)
     }
+  }
 
-    return this
+  close() {
+    super.unsubscribe()
+    this.sendQ.unsubscribe()
   }
 }

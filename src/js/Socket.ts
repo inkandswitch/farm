@@ -3,14 +3,17 @@ import QueuedResource from "./QueuedResource"
 
 export default class Socket<S, R> extends QueuedResource<S, R> {
   url: string
+  socket?: WebSocket
 
   constructor(url: string) {
-    super()
+    super("Socket")
     this.url = url
+    this.connect()
   }
 
   connect() {
     const socket = new WebSocket(this.url)
+    this.socket = socket
     console.log(`Connecting to ${this.url}`)
 
     socket.onopen = () => {
@@ -35,7 +38,9 @@ export default class Socket<S, R> extends QueuedResource<S, R> {
     socket.onerror = ev => {
       console.log(ev)
     }
+  }
 
-    return this
+  close() {
+    this.socket && this.socket.close()
   }
 }

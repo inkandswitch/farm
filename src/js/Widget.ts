@@ -1,61 +1,110 @@
-import QueuedWorker from "./QueuedWorker"
-import * as Msg from "./Msg"
+import { RepoFrontend } from "hypermerge/dist/RepoFrontend"
+import Handle from "hypermerge/dist/Handle"
+import { applyDiff } from "deep-diff"
+import ElmApp from "./ElmApp"
 
-type Repo = QueuedWorker<Msg.ToRepo, Msg.FromRepo>
+type Repo = RepoFrontend
 
-interface App {
-  ports: {
-    output: {
-      subscribe(fn: Function): void
-      unsubscribe(fn: Function): void
+export function create(repo: Repo, name: string, code: string) {
+  const tag = "realm-" + name
+  console.log("creating widget", tag)
+
+  class Widget extends HTMLElement {
+    static code = code
+
+    static app: any = toApp(code)
+    static instances = new Set<Widget>()
+
+    static upgrade(code: string) {
+      if (code === this.code) return
+      this.code = code
+      this.app = toApp(code)
+
+      this.instances.forEach(widget => {
+        widget.upgrade()
+      })
     }
-    input: {
-      send(msg: any): void
+
+    app?: ElmApp
+    handle?: Handle<any>
+    node = document.createElement("div")
+
+    constructor() {
+      super()
+
+      Widget.instances.add(this)
+
+      console.log("constructing widget", name)
+
+      this.attachShadow({ mode: "open" }).append(this.node)
+    }
+
+    connectedCallback() {
+      this.start()
+    }
+
+    disconnectedCallback() {
+      this.stop()
+    }
+
+    start() {
+      const handle = repo.open(this.docId)
+      this.handle = handle
+
+      const app = new ElmApp(
+        Widget.app.init({
+          flags: null,
+          node: this.node,
+        }),
+        tag,
+      )
+
+      this.app = app
+
+      app.subscribe(newDoc => {
+        handle.change((doc: any) => {
+          applyDiff(doc, newDoc)
+        })
+      })
+
+      this.handle.subscribe(doc => {
+        if (isEmptyDoc(doc)) return
+        app.send(doc)
+      })
+    }
+
+    upgrade() {
+      this.stop()
+      this.start()
+    }
+
+    stop() {
+      this.handle && this.handle.close()
+      this.app && this.app.close()
+    }
+
+    get docId(): string {
+      const id = this.getAttribute("docId")
+
+      if (!id) throw new Error(name + " docId attribute is required!")
+
+      return id
+    }
+
+    set docId(id: string) {
+      this.setAttribute("docId", id)
     }
   }
+
+  customElements.define(tag, Widget)
+
+  return Widget
 }
 
-export default class Widget {
-  app?: App
-  doc: null | object = null
-  repo: Repo
+function isEmptyDoc(doc: object | null): boolean {
+  return !doc || Object.keys(doc).length === 0
+}
 
-  constructor(repo: Repo) {
-    this.repo = repo
-  }
-
-  start(elm: any, parent: HTMLElement) {
-    this.stop(parent)
-
-    const node = document.createElement("div")
-    parent.appendChild(node)
-    const app = elm.init({
-      flags: this.doc,
-      node,
-    })
-
-    app.ports.output.subscribe(this.sendToRepo)
-
-    this.repo.subscribe(msg => {
-      this.doc = msg.doc
-      app.ports.input.send(msg.doc)
-    })
-    this.app = app
-  }
-
-  sendToRepo = (doc: object) => {
-    this.repo.send({ t: "Doc", doc })
-  }
-
-  stop(parent: HTMLElement) {
-    if (this.app) {
-      this.repo.unsubscribe()
-      this.app.ports.output.unsubscribe(this.sendToRepo)
-      delete this.app
-
-      while (parent.firstChild) {
-        parent.removeChild(parent.firstChild)
-      }
-    }
-  }
+function toApp(code: string) {
+  return Object.values(eval(code))[0]
 }

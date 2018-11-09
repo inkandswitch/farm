@@ -1,6 +1,20 @@
-export type Compile = ["Compile", string]
-export type Compiled = ["Compiled", string]
-export type CompileError = ["CompileError", string]
+export interface Compile {
+  t: "Compile"
+  id: string
+  source: string
+}
 
-export type ToServer = Compile
-export type FromServer = Compiled | CompileError
+export interface Compiled {
+  t: "Compiled"
+  id: string
+  output: string
+}
+
+export interface CompileError {
+  t: "CompileError"
+  id: string
+  error: string
+}
+
+export type ToCompiler = Compile
+export type FromCompiler = Compiled | CompileError
