@@ -60,7 +60,7 @@ export class Entry {
         if (this.widget) {
           this.widget.upgrade(source)
         } else {
-          this.widget = Widget.create(repo, doc.name, source)
+          this.widget = Widget.create(repo, doc.name, id, source)
         }
       }),
     )

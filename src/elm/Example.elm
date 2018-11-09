@@ -38,8 +38,8 @@ init =
     }
 
 
-update : Msg -> Doc -> Doc
-update msg doc =
+update : Msg -> Plugin.Model Doc -> Doc
+update msg { doc } =
     case msg of
         Inc ->
             { doc | counter = doc.counter + 1 }
@@ -48,10 +48,19 @@ update msg doc =
             { doc | counter = doc.counter - 1 }
 
 
-view : Doc -> Html Msg
-view doc =
+view : Plugin.Model Doc -> Html Msg
+view { docId, sourceId, doc } =
     div []
         [ button [ onClick Inc ] [ text "+" ]
         , text <| String.fromInt doc.counter
         , button [ onClick Dec ] [ text "-" ]
+        , Html.hr [] []
+        , Html.pre []
+            [ Html.b [] [ text "docId: " ]
+            , text docId
+            ]
+        , Html.pre []
+            [ Html.b [] [ text "sourceId: " ]
+            , text sourceId
+            ]
         ]

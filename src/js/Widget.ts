@@ -5,9 +5,13 @@ import ElmApp from "./ElmApp"
 
 type Repo = RepoFrontend
 
-export function create(repo: Repo, name: string, code: string) {
+export function create(
+  repo: Repo,
+  name: string,
+  sourceId: string,
+  code: string,
+) {
   const tag = "realm-" + name
-  console.log("creating widget", tag)
 
   class Widget extends HTMLElement {
     static code = code
@@ -15,10 +19,10 @@ export function create(repo: Repo, name: string, code: string) {
     static app: any = toApp(code)
     static instances = new Set<Widget>()
 
-    static upgrade(code: string) {
-      if (code === this.code) return
-      this.code = code
-      this.app = toApp(code)
+    static upgrade(newCode: string) {
+      if (newCode === this.code) return
+      this.code = newCode
+      this.app = toApp(newCode)
 
       this.instances.forEach(widget => {
         widget.upgrade()
@@ -27,16 +31,13 @@ export function create(repo: Repo, name: string, code: string) {
 
     app?: ElmApp
     handle?: Handle<any>
-    node = document.createElement("div")
 
     constructor() {
       super()
 
       Widget.instances.add(this)
 
-      console.log("constructing widget", name)
-
-      this.attachShadow({ mode: "open" }).append(this.node)
+      this.attachShadow({ mode: "open" })
     }
 
     connectedCallback() {
@@ -48,15 +49,24 @@ export function create(repo: Repo, name: string, code: string) {
     }
 
     start() {
+      if (!this.shadowRoot) throw new Error("No shadow root! " + tag)
+
       const handle = repo.open(this.docId)
       this.handle = handle
 
+      const node = document.createElement("div")
+      this.shadowRoot.innerHTML = ""
+      this.shadowRoot.appendChild(node)
+
       const app = new ElmApp(
         Widget.app.init({
-          flags: null,
-          node: this.node,
+          flags: {
+            docId: this.docId,
+            sourceId,
+          },
+          node,
         }),
-        tag,
+        tag + Math.random(),
       )
 
       this.app = app

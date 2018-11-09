@@ -99,8 +99,8 @@ export default [
   }),
 
   config({
-    name: "nettest",
-    entry: ["./src/nettest"],
+    name: "counter",
+    entry: ["./src/counter"],
     target: "node",
   }),
 
