@@ -91,7 +91,7 @@ send state doc =
 
 
 view : Plugin.Model State Doc -> Html Msg
-view { docId, sourceId, state, doc } =
+view { state, doc } =
     div []
         [ text "Your name: "
         , Html.input [ onInput SetName, value state.name ] []
@@ -99,15 +99,6 @@ view { docId, sourceId, state, doc } =
         , Html.hr [] []
         , textarea [ onInput SetMessage, value state.typing, rows 1, cols 50 ] []
         , button [ onClick Send ] [ text "Send" ]
-        , Html.hr [] []
-        , Html.pre []
-            [ Html.b [] [ text "docId: " ]
-            , text docId
-            ]
-        , Html.pre []
-            [ Html.b [] [ text "sourceId: " ]
-            , text sourceId
-            ]
         ]
 
 

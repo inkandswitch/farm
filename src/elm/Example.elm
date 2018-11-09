@@ -51,18 +51,9 @@ update msg { state, doc } =
 
 
 view : Plugin.Model () Doc -> Html Msg
-view { docId, sourceId, doc } =
+view { doc } =
     div []
         [ button [ onClick Inc ] [ text "+" ]
         , text <| String.fromInt doc.counter
         , button [ onClick Dec ] [ text "-" ]
-        , Html.hr [] []
-        , Html.pre []
-            [ Html.b [] [ text "docId: " ]
-            , text docId
-            ]
-        , Html.pre []
-            [ Html.b [] [ text "sourceId: " ]
-            , text sourceId
-            ]
         ]

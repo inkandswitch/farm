@@ -30,6 +30,10 @@ export function create(
       })
     }
 
+    static get observedAttributes() {
+      return ["docId"]
+    }
+
     app?: ElmApp
     handle?: Handle<any>
 
@@ -47,6 +51,12 @@ export function create(
 
     disconnectedCallback() {
       this.stop()
+    }
+
+    attributeChangedCallback(name: string, oldValue: string, newValue: string) {
+      if (name === "docId" && oldValue !== newValue) {
+        this.upgrade()
+      }
     }
 
     start() {
@@ -86,7 +96,7 @@ export function create(
 
           handle.subscribe(doc => {
             if (isEmptyDoc(doc)) return
-            app.send({ doc })
+            app.send({ doc, msg: null })
           })
         }
       })

@@ -5,6 +5,11 @@ import Html exposing (Attribute, Html)
 import Html.Attributes as Attr
 
 
+
+-- import Json.Decode as D
+-- import Json.Encode as E
+
+
 type alias Flags =
     { docId : String
     , sourceId : String
@@ -37,14 +42,15 @@ type alias Model state doc =
     }
 
 
-type alias Out doc =
+type alias In doc =
     { doc : Maybe doc
-    , init : Maybe doc
     }
 
 
-type alias In doc =
+type alias Out doc =
     { doc : Maybe doc
+    , init : Maybe doc
+    , create : Bool
     }
 
 
@@ -79,7 +85,7 @@ init spec flags =
       , docId = flags.docId
       , sourceId = flags.sourceId
       }
-    , spec.output { doc = Nothing, init = Just doc }
+    , spec.output { doc = Nothing, init = Just doc, create = False }
     )
 
 
@@ -101,10 +107,41 @@ update spec msg model =
                 newModel =
                     { model | state = state, doc = doc }
             in
-            ( newModel, spec.output { doc = Just doc, init = Nothing } )
+            ( newModel, spec.output { doc = Just doc, init = Nothing, create = False } )
 
 
 view : Spec state doc msg -> Model state doc -> Html (Msg doc msg)
 view spec model =
-    spec.view model
-        |> Html.map Custom
+    Html.div []
+        [ spec.view model
+            |> Html.map Custom
+        , Html.div
+            [ Attr.style "background-color" "#eee"
+            , Attr.style "padding" "2px 10px"
+            ]
+            [ Html.pre []
+                [ Html.b [] [ Html.text "docId: " ]
+                , Html.text model.docId
+                ]
+            , Html.pre []
+                [ Html.b [] [ Html.text "sourceId: " ]
+                , Html.text model.sourceId
+                ]
+            ]
+        ]
+
+
+
+-- ENCODERS and DECODERS
+-- incomingDecoder : D.Decoder InMsg
+-- incomingDecoder =
+--     D.field "type" D.string
+--         |> D.andThen
+--             (\t ->
+--                 case t of
+--                     "Created" ->
+--                         D.field "id" D.string
+--                             |> D.map CreatedDoc
+--                     _ ->
+--                         D.fail "Not a valid message"
+--             )
