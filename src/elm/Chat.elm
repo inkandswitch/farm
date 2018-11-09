@@ -1,7 +1,7 @@
 port module Example exposing (main)
 
 import Html exposing (Html, button, div, text, textarea)
-import Html.Attributes exposing (cols, placeholder, rows, value)
+import Html.Attributes exposing (cols, placeholder, rows, style, value)
 import Html.Events exposing (onClick, onInput)
 import Plugin
 
@@ -114,8 +114,13 @@ viewMessages msgs =
             div [] [ text "No messages yet..." ]
 
         _ ->
-            div []
-                (msgs |> List.reverse |> List.map viewMessage)
+            div
+                [ style "display" "flex"
+                , style "flex-direction" "column-reverse"
+                , style "max-height" "400px"
+                , style "overflow" "auto"
+                ]
+                (msgs |> List.map viewMessage)
 
 
 viewMessage : Message -> Html msg
