@@ -33,7 +33,7 @@ export default class App {
       doc.name = name
       doc["source.elm"] = sourceFor(file)
     })
-    handle.cleanup()
+    handle.close()
     return id
   }
 }

@@ -29,7 +29,7 @@ export default class Registry {
         }
       })
 
-      handle.cleanup()
+      handle.close()
     })
   }
 
