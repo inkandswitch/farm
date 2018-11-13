@@ -10,7 +10,7 @@
   "scripts": {
     "start": "concurrently 'yarn server' 'sleep 3 && yarn start-app'",
     "server": "node -r ts-node/register ./src/server",
-    "start-app": "electron .",
+    "start-app": "yarn build --config-name=electron && electron .",
     "build": "webpack",
     "app": "yarn build && yarn start-app",
     "types": "./bin/types.sh",
