@@ -1,7 +1,8 @@
 import * as Repo from "./Repo"
 import { readFileSync } from "fs"
 import path from "path"
-import Registry from "./Registry"
+import Compiler from "./Compile"
+import Widget from "./Widget"
 
 // make the web worker thread-safe:
 ;(<any>process).dlopen = () => {
@@ -10,18 +11,22 @@ import Registry from "./Registry"
 
 export default class App {
   repo = Repo.worker("./repo.worker.js")
-  rootSourceId: string =
-    localStorage.rootSourceId ||
-    (localStorage.rootSourceId = this.bootstrapWidget("root", "Chat.elm"))
+  compiler: Compiler = new Compiler(this.repo)
 
-  rootId: string =
-    localStorage.rootId || (localStorage.rootId = this.repo.create())
+  rootId: string = load("rootId", () => this.repo.create())
+  rootSourceId: string = load("rootSourceId", () =>
+    this.bootstrapWidget("root", "Chat.elm"),
+  )
 
-  registry = new Registry(this.repo)
+  constructor() {
+    Widget.repo = this.repo
+    customElements.define("realm-ui", Widget)
 
-  start() {
-    this.registry.add(this.rootSourceId)
-    const root = document.createElement("realm-root")
+    // TODO make this generic:
+    this.compiler.add(this.rootSourceId)
+
+    const root = document.createElement("realm-ui")
+    root.setAttribute("sourceId", this.rootSourceId)
     root.setAttribute("docId", this.rootId)
     document.body.appendChild(root)
   }
@@ -40,4 +45,11 @@ export default class App {
 
 function sourceFor(name: string) {
   return readFileSync(path.resolve(`src/elm/${name}`)).toString()
+}
+
+function load(key: string, def: () => string): string {
+  if (localStorage[key]) return localStorage[key]
+  const value = def()
+  localStorage[key] = value
+  return value
 }

@@ -3,137 +3,139 @@ import Handle from "hypermerge/dist/Handle"
 import { applyDiff } from "deep-diff"
 import { defaults } from "lodash"
 import ElmApp from "./ElmApp"
+import { whenChanged } from "./Subscription"
 
 type Repo = RepoFrontend
 
-export function create(
-  repo: Repo,
-  name: string,
-  sourceId: string,
-  code: string,
-) {
-  const tag = "realm-" + name
+export default class WidgetElement extends HTMLElement {
+  static set repo(repo: Repo) {
+    Widget.repo = repo
+  }
 
-  class Widget extends HTMLElement {
-    static code = code
+  static get observedAttributes() {
+    return ["docId", "sourceId"]
+  }
 
-    static app: any = toApp(code)
-    static instances = new Set<Widget>()
+  widget?: Widget
+  source?: Handle<any>
 
-    static upgrade(newCode: string) {
-      if (newCode === this.code) return
-      this.code = newCode
-      this.app = toApp(newCode)
+  constructor() {
+    super()
+    this.attachShadow({ mode: "open" })
+  }
 
-      this.instances.forEach(widget => {
-        widget.upgrade()
-      })
-    }
+  get docId(): string {
+    const id = this.getAttribute("docId")
+    if (!id) throw new Error(name + " docId attribute is required!")
+    return id
+  }
 
-    static get observedAttributes() {
-      return ["docId"]
-    }
+  get sourceId(): string {
+    const id = this.getAttribute("sourceId")
+    if (!id) throw new Error(name + " sourceId attribute is required!")
+    return id
+  }
 
-    app?: ElmApp
-    handle?: Handle<any>
+  connectedCallback() {
+    this.source = Widget.repo.open(this.sourceId)
 
-    constructor() {
-      super()
+    this.source.subscribe(
+      whenChanged(getJsSource, (source, doc) => {
+        this.remount(toElm(eval(source)))
+      }),
+    )
+  }
 
-      Widget.instances.add(this)
-
-      this.attachShadow({ mode: "open" })
-    }
-
-    connectedCallback() {
-      this.start()
-    }
-
-    disconnectedCallback() {
-      this.stop()
-    }
-
-    attributeChangedCallback(name: string, oldValue: string, newValue: string) {
-      if (name === "docId" && oldValue !== newValue) {
-        this.upgrade()
-      }
-    }
-
-    start() {
-      if (!this.shadowRoot) throw new Error("No shadow root! " + tag)
-
-      const handle = repo.open(this.docId)
-      this.handle = handle
-
-      const node = document.createElement("div")
-      this.shadowRoot.innerHTML = ""
-      this.shadowRoot.appendChild(node)
-
-      const app = new ElmApp(
-        Widget.app.init({
-          flags: {
-            docId: this.docId,
-            sourceId,
-          },
-          node,
-        }),
-        tag + Math.random(),
-      )
-
-      this.app = app
-
-      app.subscribe(msg => {
-        if (msg.doc) {
-          handle.change((state: any) => {
-            applyDiff(state, msg.doc)
-          })
-        }
-
-        if (msg.init) {
-          handle.change((state: any) => {
-            defaults(state, msg.init)
-          })
-
-          handle.subscribe(doc => {
-            if (isEmptyDoc(doc)) return
-            app.send({ doc, msg: null })
-          })
-        }
-      })
-    }
-
-    upgrade() {
-      this.stop()
-      this.start()
-    }
-
-    stop() {
-      this.handle && this.handle.close()
-      this.app && this.app.close()
-    }
-
-    get docId(): string {
-      const id = this.getAttribute("docId")
-
-      if (!id) throw new Error(name + " docId attribute is required!")
-
-      return id
-    }
-
-    set docId(id: string) {
-      this.setAttribute("docId", id)
+  disconnectedCallback() {
+    if (this.source) {
+      this.source.close()
+      delete this.source
     }
   }
 
-  customElements.define(tag, Widget)
+  attributeChangedCallback(name: string, _oldValue: string, _newValue: string) {
+    this.disconnectedCallback()
+    this.connectedCallback()
+  }
 
-  return Widget
+  remount(elm: any) {
+    this.unmount()
+    this.mount(elm)
+  }
+
+  mount(elm: any) {
+    if (!this.shadowRoot) throw new Error("No shadow root! " + this.sourceId)
+
+    const node = document.createElement("div")
+    this.shadowRoot.appendChild(node)
+
+    this.widget = new Widget(node, elm, this.sourceId, this.docId)
+  }
+
+  unmount() {
+    if (this.shadowRoot) {
+      this.shadowRoot.innerHTML = ""
+    }
+
+    if (this.widget) {
+      this.widget.close()
+      delete this.widget
+    }
+  }
 }
+
+export class Widget {
+  static repo: RepoFrontend
+
+  handle: Handle<any>
+  app: ElmApp
+
+  constructor(node: HTMLElement, elm: any, sourceId: string, docId: string) {
+    this.handle = Widget.repo.open(docId)
+    this.app = new ElmApp(elm)
+
+    this.app = new ElmApp(
+      elm.init({
+        node,
+        flags: {
+          docId,
+          sourceId,
+        },
+      }),
+    )
+
+    this.app.subscribe(msg => {
+      if (msg.doc) {
+        this.handle.change((state: any) => {
+          applyDiff(state, msg.doc)
+        })
+      }
+
+      if (msg.init) {
+        this.handle.change((state: any) => {
+          defaults(state, msg.init)
+        })
+
+        this.handle.subscribe(doc => {
+          if (isEmptyDoc(doc)) return
+          this.app.send({ doc, msg: null })
+        })
+      }
+    })
+  }
+
+  close() {
+    this.app.unsubscribe()
+    this.handle.close()
+  }
+}
+
+const getJsSource = (doc: any): string | undefined => doc["source.js"]
 
 function isEmptyDoc(doc: object | null): boolean {
   return !doc || Object.keys(doc).length === 0
 }
 
-function toApp(code: string) {
+function toElm(code: string) {
   return Object.values(eval(code))[0]
 }
