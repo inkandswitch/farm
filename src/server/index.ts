@@ -19,6 +19,7 @@ const { app } = ws(express())
 app.use(
   devServer(webpackCompiler, {
     publicPath: "/",
+    logLevel: "warn",
   }),
 )
 
