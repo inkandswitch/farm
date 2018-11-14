@@ -23,7 +23,11 @@ app.use(
   }),
 )
 
-app.use(hot(webpackCompiler))
+app.use(
+  hot(webpackCompiler, {
+    path: "/__webpack_hmr",
+  }),
+)
 
 // app.ws("/socket", (ws, req) => {
 //   ws.on("message", data => {

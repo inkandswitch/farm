@@ -7,6 +7,10 @@ interface NamedConfig extends webpack.Configuration {
   name: string
 }
 
+function hmrClient(name: string) {
+  return `webpack-hot-middleware/client?path=/__webpack_hmr&name=${name}`
+}
+
 const shared: webpack.Configuration = {
   mode: "development",
   context: path.resolve(__dirname),
@@ -67,7 +71,7 @@ export default [
 
   config({
     name: "renderer",
-    entry: ["webpack-hot-middleware/client", "./src/js"],
+    entry: [hmrClient("renderer"), "./src/js"],
     target: "electron-renderer",
     plugins: [
       new webpack.HotModuleReplacementPlugin({}),
@@ -80,7 +84,7 @@ export default [
 
   config({
     name: "repo.worker",
-    entry: ["webpack-hot-middleware/client", "./src/js/repo.worker"],
+    entry: [hmrClient("repo.worker"), "./src/js/repo.worker"],
     target: "electron-renderer",
     plugins: [new webpack.HotModuleReplacementPlugin({})],
     devServer: {
@@ -90,7 +94,7 @@ export default [
 
   config({
     name: "compile.worker",
-    entry: ["webpack-hot-middleware/client", "./src/js/compile.worker"],
+    entry: [hmrClient("compile.worker"), "./src/js/compile.worker"],
     target: "electron-renderer",
     plugins: [new webpack.HotModuleReplacementPlugin({})],
     devServer: {
