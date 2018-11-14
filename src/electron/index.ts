@@ -1,7 +1,7 @@
 process.env.ELECTRON_DISABLE_SECURITY_WARNINGS = "1"
 
-console.log(__dirname)
-console.log(process.env["NODE_PATH"])
+console.log("App starting...")
+
 import { app, BrowserWindow } from "electron"
 
 app.on("ready", createWindow)
@@ -17,6 +17,9 @@ function createWindow() {
     },
   })
 
-  win.loadURL("http://localhost:4000")
+  const url = "http://localhost:4000"
+
+  console.log(`Opening '${url}'...`)
+  win.loadURL(url)
   // win.loadFile("./dist/index.html") // production
 }
