@@ -54,9 +54,9 @@ type alias Out doc =
     }
 
 
-render : String -> String -> List (Attribute msg) -> List (Html msg) -> Html msg
-render sourceId docId attrs children =
-    Html.node "realm-ui" (Attr.attribute "sourceId" sourceId :: Attr.attribute "docId" docId :: attrs) children
+render : String -> String -> Html msg
+render sourceId docId =
+    Html.node "realm-ui" [ Attr.attribute "sourceId" sourceId, Attr.attribute "docId" docId ] []
 
 
 element : Spec state doc msg -> Program state doc msg
