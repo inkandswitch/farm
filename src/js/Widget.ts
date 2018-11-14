@@ -4,12 +4,17 @@ import { applyDiff } from "deep-diff"
 import { defaults } from "lodash"
 import ElmApp from "./ElmApp"
 import { whenChanged } from "./Subscription"
+import Compiler from "./Compiler"
 
 type Repo = RepoFrontend
 
 export default class WidgetElement extends HTMLElement {
   static set repo(repo: Repo) {
     Widget.repo = repo
+  }
+
+  static set compiler(compiler: Compiler) {
+    Widget.compiler = compiler
   }
 
   static get observedAttributes() {
@@ -21,6 +26,7 @@ export default class WidgetElement extends HTMLElement {
 
   constructor() {
     super()
+
     this.attachShadow({ mode: "open" })
   }
 
@@ -38,6 +44,7 @@ export default class WidgetElement extends HTMLElement {
 
   connectedCallback() {
     this.source = Widget.repo.open(this.sourceId)
+    Widget.compiler.add(this.sourceId)
 
     this.source.subscribe(
       whenChanged(getJsSource, (source, doc) => {
@@ -86,6 +93,7 @@ export default class WidgetElement extends HTMLElement {
 
 export class Widget {
   static repo: RepoFrontend
+  static compiler: Compiler
 
   handle: Handle<any>
   app: ElmApp

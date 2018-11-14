@@ -1,4 +1,4 @@
-module Plugin exposing (In, Model, Out, Program, element, render)
+module Plugin exposing (In, Model, Out, Program, element, render, viewFlags)
 
 import Browser
 import Html exposing (Attribute, Html)
@@ -115,18 +115,22 @@ view spec model =
     Html.div []
         [ spec.view model
             |> Html.map Custom
-        , Html.div
-            [ Attr.style "background-color" "#eee"
-            , Attr.style "padding" "2px 10px"
+        ]
+
+
+viewFlags : Flags -> Html msg
+viewFlags flags =
+    Html.div
+        [ Attr.style "background-color" "#eee"
+        , Attr.style "padding" "2px 10px"
+        ]
+        [ Html.pre []
+            [ Html.b [] [ Html.text "sourceId: " ]
+            , Html.text flags.sourceId
             ]
-            [ Html.pre []
-                [ Html.b [] [ Html.text "docId: " ]
-                , Html.text model.docId
-                ]
-            , Html.pre []
-                [ Html.b [] [ Html.text "sourceId: " ]
-                , Html.text model.sourceId
-                ]
+        , Html.pre []
+            [ Html.b [] [ Html.text "docId: " ]
+            , Html.text flags.docId
             ]
         ]
 

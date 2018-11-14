@@ -5,10 +5,6 @@ import { whenChanged } from "./Subscription"
 
 type CompileWorker = QueuedWorker<Msg.ToCompiler, Msg.FromCompiler>
 
-export function worker(url: string): CompileWorker {
-  return new QueuedWorker(url)
-}
-
 export default class Compiler {
   worker: CompileWorker = new QueuedWorker("compile.worker.js")
   repo: RepoFrontend

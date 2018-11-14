@@ -1,7 +1,7 @@
 import * as Repo from "./Repo"
 import { readFileSync } from "fs"
 import path from "path"
-import Compiler from "./Compile"
+import Compiler from "./Compiler"
 import Widget from "./Widget"
 
 // make the web worker thread-safe:
@@ -13,17 +13,22 @@ export default class App {
   repo = Repo.worker("./repo.worker.js")
   compiler: Compiler = new Compiler(this.repo)
 
-  rootId: string = load("rootId", () => this.repo.create())
+  rootId: string = load("rootId", () =>
+    this.bootstrapDoc({
+      sourceId: this.bootstrapWidget("Chat", "Chat.elm"),
+      id: this.repo.create(),
+    }),
+  )
   rootSourceId: string = load("rootSourceId", () =>
-    this.bootstrapWidget("root", "Chat.elm"),
+    this.bootstrapWidget("Nav", "Nav.elm"),
   )
 
   constructor() {
     Widget.repo = this.repo
+    Widget.compiler = this.compiler
     customElements.define("realm-ui", Widget)
 
-    // TODO make this generic:
-    this.compiler.add(this.rootSourceId)
+    // this.compiler.add(this.rootSourceId)
 
     const root = document.createElement("realm-ui")
     root.setAttribute("sourceId", this.rootSourceId)
@@ -37,6 +42,16 @@ export default class App {
     handle.change((doc: any) => {
       doc.name = name
       doc["source.elm"] = sourceFor(file)
+    })
+    handle.close()
+    return id
+  }
+
+  bootstrapDoc(props: object): string {
+    const id = this.repo.create()
+    const handle = this.repo.open(id)
+    handle.change((doc: any) => {
+      Object.assign(doc, props)
     })
     handle.close()
     return id
