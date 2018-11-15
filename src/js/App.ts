@@ -15,13 +15,14 @@ export default class App {
 
   rootDataUrl: string = load("rootDataUrl", () =>
     this.repo.create({
-      code: this.bootstrapWidget("Chat", "Chat.elm"),
-      data: this.repo.create(),
+      title: "Nav data",
+      code: this.bootstrapWidget("Counter.elm"),
+      data: this.repo.create({ title: "Counter data" }),
     }),
   )
 
   rootCodeUrl: string = load("rootCodeUrl", () =>
-    this.bootstrapWidget("Nav", "Nav.elm"),
+    this.bootstrapWidget("Nav.elm"),
   )
 
   constructor() {
@@ -36,9 +37,9 @@ export default class App {
     document.body.appendChild(root)
   }
 
-  bootstrapWidget(name: string, file: string): string {
+  bootstrapWidget(file: string): string {
     return this.repo.create({
-      name,
+      title: `${file} code`,
       "source.elm": sourceFor(file),
     })
   }
