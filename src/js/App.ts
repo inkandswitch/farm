@@ -16,8 +16,8 @@ export default class App {
   rootDataUrl: string = load("rootDataUrl", () =>
     this.repo.create({
       title: "Nav data",
-      code: this.bootstrapWidget("Counter.elm"),
-      data: this.repo.create({ title: "Counter data" }),
+      code: this.bootstrapWidget("Example.elm"),
+      data: this.repo.create({ title: "Example data" }),
     }),
   )
 
