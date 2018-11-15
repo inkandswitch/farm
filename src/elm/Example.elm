@@ -58,7 +58,7 @@ update msg { state, doc } =
 view : Plugin.Model State Doc -> Html Msg
 view { state, doc } =
     Html.div []
-        [ Html.div [ style "color" "blue" ]
+        [ Html.div [ style "color" "red" ]
             [ text "This is an example widget. Change me!"
             ]
         ]

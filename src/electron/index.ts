@@ -2,7 +2,7 @@ process.env.ELECTRON_DISABLE_SECURITY_WARNINGS = "1"
 
 console.log("App starting...")
 
-import { app, BrowserWindow } from "electron"
+import { app, shell, BrowserWindow } from "electron"
 
 app.on("ready", createWindow)
 
@@ -22,4 +22,10 @@ function createWindow() {
   console.log(`Opening '${url}'...`)
   win.loadURL(url)
   // win.loadFile("./dist/index.html") // production
+
+  win.webContents.on("will-navigate", (e, url) => {
+    console.log("Opening externally...", url)
+    e.preventDefault()
+    shell.openExternal(url)
+  })
 }
