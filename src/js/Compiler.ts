@@ -1,20 +1,20 @@
 import QueuedWorker from "./QueuedWorker"
 import * as Msg from "./Msg"
-import { RepoFrontend } from "hypermerge"
+import Repo from "./Repo"
 import { whenChanged } from "./Subscription"
 
 type CompileWorker = QueuedWorker<Msg.ToCompiler, Msg.FromCompiler>
 
 export default class Compiler {
   worker: CompileWorker = new QueuedWorker("compile.worker.js")
-  repo: RepoFrontend
-  docIds: Set<String> = new Set()
+  repo: Repo
+  docUrls: Set<String> = new Set()
 
-  constructor(repo: RepoFrontend) {
+  constructor(repo: Repo) {
     this.repo = repo
 
     this.worker.subscribe(msg => {
-      const handle = this.repo.open(msg.id)
+      const handle = this.repo.open(msg.url)
 
       handle.change((state: any) => {
         switch (msg.t) {
@@ -35,16 +35,16 @@ export default class Compiler {
     })
   }
 
-  add(id: string): this {
-    if (this.docIds.has(id)) return this
+  add(url: string): this {
+    if (this.docUrls.has(url)) return this
 
-    this.docIds.add(id)
+    this.docUrls.add(url)
 
-    this.repo.open(id).subscribe(
+    this.repo.open(url).subscribe(
       whenChanged(getElmSource, source => {
         this.worker.send({
           t: "Compile",
-          id,
+          url,
           source,
         })
       }),

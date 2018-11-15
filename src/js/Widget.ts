@@ -1,12 +1,10 @@
-import { RepoFrontend } from "hypermerge/dist/RepoFrontend"
+import Repo from "./Repo"
 import Handle from "hypermerge/dist/Handle"
 import { applyDiff } from "deep-diff"
 import { defaults } from "lodash"
 import ElmApp from "./ElmApp"
 import { whenChanged } from "./Subscription"
 import Compiler from "./Compiler"
-
-type Repo = RepoFrontend
 
 export default class WidgetElement extends HTMLElement {
   static set repo(repo: Repo) {
@@ -18,7 +16,7 @@ export default class WidgetElement extends HTMLElement {
   }
 
   static get observedAttributes() {
-    return ["docId", "sourceId"]
+    return ["src", "doc"]
   }
 
   widget?: Widget
@@ -30,21 +28,21 @@ export default class WidgetElement extends HTMLElement {
     this.attachShadow({ mode: "open" })
   }
 
-  get docId(): string {
-    const id = this.getAttribute("docId")
-    if (!id) throw new Error(name + " docId attribute is required!")
-    return id
+  get docUrl(): string {
+    const url = this.getAttribute("doc")
+    if (!url) throw new Error(name + " doc attribute is required!")
+    return url
   }
 
-  get sourceId(): string {
-    const id = this.getAttribute("sourceId")
-    if (!id) throw new Error(name + " sourceId attribute is required!")
-    return id
+  get src(): string {
+    const url = this.getAttribute("src")
+    if (!url) throw new Error(name + " src attribute is required!")
+    return url
   }
 
   connectedCallback() {
-    this.source = Widget.repo.open(this.sourceId)
-    Widget.compiler.add(this.sourceId)
+    this.source = Widget.repo.open(this.src)
+    Widget.compiler.add(this.src)
 
     this.source.subscribe(
       whenChanged(getJsSource, (source, doc) => {
@@ -71,12 +69,12 @@ export default class WidgetElement extends HTMLElement {
   }
 
   mount(elm: any) {
-    if (!this.shadowRoot) throw new Error("No shadow root! " + this.sourceId)
+    if (!this.shadowRoot) throw new Error("No shadow root! " + this.src)
 
     const node = document.createElement("div")
     this.shadowRoot.appendChild(node)
 
-    this.widget = new Widget(node, elm, this.sourceId, this.docId)
+    this.widget = new Widget(node, elm, this.src, this.docUrl)
   }
 
   unmount() {
@@ -92,22 +90,22 @@ export default class WidgetElement extends HTMLElement {
 }
 
 export class Widget {
-  static repo: RepoFrontend
+  static repo: Repo
   static compiler: Compiler
 
   handle: Handle<any>
   app: ElmApp
 
-  constructor(node: HTMLElement, elm: any, sourceId: string, docId: string) {
-    this.handle = Widget.repo.open(docId)
+  constructor(node: HTMLElement, elm: any, src: string, docUrl: string) {
+    this.handle = Widget.repo.open(docUrl)
     this.app = new ElmApp(elm)
 
     this.app = new ElmApp(
       elm.init({
         node,
         flags: {
-          docId,
-          sourceId,
+          docUrl,
+          src,
         },
       }),
     )

@@ -1,17 +1,45 @@
 import { RepoFrontend } from "hypermerge/dist/RepoFrontend"
+import * as Link from "./Link"
+import Handle from "hypermerge/dist/Handle"
 
-export function worker(url: string): RepoFrontend {
-  const worker = new Worker(url)
-  const repo = new RepoFrontend()
-  ;(self as any).repo = repo
+export default class Repo extends RepoFrontend {
+  worker: Worker
 
-  worker.onmessage = event => {
-    repo.receive(event.data)
+  constructor(url: string) {
+    super()
+    this.worker = new Worker(url)
+
+    this.worker.onmessage = event => {
+      this.receive(event.data)
+    }
+
+    this.subscribe(msg => {
+      this.worker.postMessage(msg)
+    })
   }
 
-  repo.subscribe(msg => {
-    worker.postMessage(msg)
-  })
+  create = (props?: any): string => {
+    const id = super.create()
 
-  return repo
+    super
+      .open(id)
+      .change((state: any) => {
+        Object.assign(state, props)
+      })
+      .close()
+
+    return Link.fromId(id)
+  }
+
+  open = <T>(url: string): Handle<T> => {
+    return super.open(Link.toId(url))
+  }
+
+  change = (url: string, fn: Function): this => {
+    super
+      .open(url)
+      .change(fn)
+      .close()
+    return this
+  }
 }

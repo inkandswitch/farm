@@ -1,4 +1,4 @@
-import * as Repo from "./Repo"
+import Repo from "./Repo"
 import { readFileSync } from "fs"
 import path from "path"
 import Compiler from "./Compiler"
@@ -10,51 +10,52 @@ import Widget from "./Widget"
 }
 
 export default class App {
-  repo = Repo.worker("./repo.worker.js")
+  repo = new Repo("./repo.worker.js")
   compiler: Compiler = new Compiler(this.repo)
 
-  rootId: string = load("rootId", () =>
+  rootDocUrl: string = load("rootDocUrl", () =>
     this.bootstrapDoc({
       sourceId: this.bootstrapWidget("Chat", "Chat.elm"),
       id: this.repo.create(),
     }),
   )
-  rootSourceId: string = load("rootSourceId", () =>
+  rootSrc: string = load("rootSrc", () =>
     this.bootstrapWidget("Nav", "Nav.elm"),
   )
 
   constructor() {
+    ;(self as any).repo = this.repo
     Widget.repo = this.repo
     Widget.compiler = this.compiler
     customElements.define("realm-ui", Widget)
 
-    // this.compiler.add(this.rootSourceId)
+    // this.compiler.add(this.rootSrc)
 
     const root = document.createElement("realm-ui")
-    root.setAttribute("sourceId", this.rootSourceId)
-    root.setAttribute("docId", this.rootId)
+    root.setAttribute("src", this.rootSrc)
+    root.setAttribute("doc", this.rootDocUrl)
     document.body.appendChild(root)
   }
 
   bootstrapWidget(name: string, file: string): string {
-    const id = this.repo.create()
-    const handle = this.repo.open(id)
+    const url = this.repo.create()
+    const handle = this.repo.open(url)
     handle.change((doc: any) => {
       doc.name = name
       doc["source.elm"] = sourceFor(file)
     })
     handle.close()
-    return id
+    return url
   }
 
   bootstrapDoc(props: object): string {
-    const id = this.repo.create()
-    const handle = this.repo.open(id)
+    const url = this.repo.create()
+    const handle = this.repo.open(url)
     handle.change((doc: any) => {
       Object.assign(doc, props)
     })
     handle.close()
-    return id
+    return url
   }
 }
 

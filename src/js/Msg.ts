@@ -1,18 +1,18 @@
 export interface Compile {
   t: "Compile"
-  id: string
+  url: string
   source: string
 }
 
 export interface Compiled {
   t: "Compiled"
-  id: string
+  url: string
   output: string
 }
 
 export interface CompileError {
   t: "CompileError"
-  id: string
+  url: string
   error: string
 }
 

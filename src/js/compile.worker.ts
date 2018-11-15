@@ -12,14 +12,14 @@ const port = new QueuedPort<FromCompiler, ToCompiler>(self)
 ;(self as any).port = port
 
 port.subscribe(msg => {
-  const { id } = msg
+  const { url } = msg
   switch (msg.t) {
     case "Compile":
       tmp.file({ postfix: ".elm" }, (err, filename, fd) => {
-        if (err) port.send({ t: "CompileError", id, error: err.message })
+        if (err) port.send({ t: "CompileError", url, error: err.message })
 
         fs.write(fd, msg.source, async err => {
-          if (err) port.send({ t: "CompileError", id, error: err.message })
+          if (err) port.send({ t: "CompileError", url, error: err.message })
 
           try {
             const out = await elm.compileToString([filename], {
@@ -32,10 +32,10 @@ port.subscribe(msg => {
             }).Elm
           `
 
-            port.send({ t: "Compiled", id, output })
+            port.send({ t: "Compiled", url, output })
             console.log("Sent compiled Elm program")
           } catch (e) {
-            port.send({ t: "CompileError", id, error: e.message })
+            port.send({ t: "CompileError", url, error: e.message })
             console.log("Sent Elm compile error")
             console.error(e.message)
           }

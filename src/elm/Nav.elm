@@ -13,13 +13,13 @@ port input : (Plugin.In Doc -> msg) -> Sub msg
 
 
 type alias Doc =
-    { sourceId : String
+    { src : String
     , id : String
     }
 
 
 type alias State =
-    { sourceId : Maybe String
+    { src : Maybe String
     , id : Maybe String
     }
 
@@ -44,10 +44,10 @@ main =
 init : ( State, Doc )
 init =
     ( { id = Nothing
-      , sourceId = Nothing
+      , src = Nothing
       }
     , { id = ""
-      , sourceId = ""
+      , src = ""
       }
     )
 
@@ -67,7 +67,7 @@ update msg { state, doc } =
                 go state doc
 
             else
-                ( { state | sourceId = Just sId }, doc )
+                ( { state | src = Just sId }, doc )
 
         Go ->
             go state doc
@@ -75,27 +75,27 @@ update msg { state, doc } =
 
 go : State -> Doc -> ( State, Doc )
 go state doc =
-    ( { id = Nothing, sourceId = Nothing }
+    ( { id = Nothing, src = Nothing }
     , { doc
         | id = state.id |> Maybe.withDefault doc.id
-        , sourceId = state.sourceId |> Maybe.withDefault doc.sourceId
+        , src = state.src |> Maybe.withDefault doc.src
       }
     )
 
 
 view : Plugin.Model State Doc -> Html Msg
-view { state, doc, sourceId, docId } =
+view { state, doc, src, docUrl } =
     div []
         [ div
             [ style "padding" "10px"
             , style "box-shadow" "10px"
             ]
-            [ text "Source id: "
+            [ text "src: "
             , viewInput SetSourceId
-                (state.sourceId
-                    |> Maybe.withDefault doc.sourceId
+                (state.src
+                    |> Maybe.withDefault doc.src
                 )
-            , text "Doc id: "
+            , text "docUrl: "
             , viewInput SetId
                 (state.id
                     |> Maybe.withDefault doc.id
@@ -105,13 +105,13 @@ view { state, doc, sourceId, docId } =
         , div
             [ style "padding" "10px"
             ]
-            [ if String.length doc.sourceId > 0 && String.length doc.id > 0 then
-                Plugin.render doc.sourceId doc.id
+            [ if String.length doc.src > 0 && String.length doc.id > 0 then
+                Plugin.render doc.src doc.id
 
               else
                 text ""
             ]
-        , Plugin.viewFlags { docId = docId, sourceId = sourceId }
+        , Plugin.viewFlags { docUrl = docUrl, src = src }
         ]
 
 
