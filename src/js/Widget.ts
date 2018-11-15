@@ -16,7 +16,7 @@ export default class WidgetElement extends HTMLElement {
   }
 
   static get observedAttributes() {
-    return ["src", "doc"]
+    return ["code", "data"]
   }
 
   widget?: Widget
@@ -28,21 +28,21 @@ export default class WidgetElement extends HTMLElement {
     this.attachShadow({ mode: "open" })
   }
 
-  get docUrl(): string {
-    const url = this.getAttribute("doc")
-    if (!url) throw new Error(name + " doc attribute is required!")
+  get dataUrl(): string {
+    const url = this.getAttribute("data")
+    if (!url) throw new Error(name + " data attribute is required!")
     return url
   }
 
-  get src(): string {
-    const url = this.getAttribute("src")
-    if (!url) throw new Error(name + " src attribute is required!")
+  get codeUrl(): string {
+    const url = this.getAttribute("code")
+    if (!url) throw new Error(name + " code attribute is required!")
     return url
   }
 
   connectedCallback() {
-    this.source = Widget.repo.open(this.src)
-    Widget.compiler.add(this.src)
+    this.source = Widget.repo.open(this.codeUrl)
+    Widget.compiler.add(this.codeUrl)
 
     this.source.subscribe(
       whenChanged(getJsSource, (source, doc) => {
@@ -69,12 +69,12 @@ export default class WidgetElement extends HTMLElement {
   }
 
   mount(elm: any) {
-    if (!this.shadowRoot) throw new Error("No shadow root! " + this.src)
+    if (!this.shadowRoot) throw new Error("No shadow root! " + this.codeUrl)
 
     const node = document.createElement("div")
     this.shadowRoot.appendChild(node)
 
-    this.widget = new Widget(node, elm, this.src, this.docUrl)
+    this.widget = new Widget(node, elm, this.codeUrl, this.dataUrl)
   }
 
   unmount() {
@@ -96,16 +96,16 @@ export class Widget {
   handle: Handle<any>
   app: ElmApp
 
-  constructor(node: HTMLElement, elm: any, src: string, docUrl: string) {
-    this.handle = Widget.repo.open(docUrl)
+  constructor(node: HTMLElement, elm: any, code: string, data: string) {
+    this.handle = Widget.repo.open(data)
     this.app = new ElmApp(elm)
 
     this.app = new ElmApp(
       elm.init({
         node,
         flags: {
-          docUrl,
-          src,
+          data,
+          code,
         },
       }),
     )

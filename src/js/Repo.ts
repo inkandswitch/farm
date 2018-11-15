@@ -18,7 +18,7 @@ export default class Repo extends RepoFrontend {
     })
   }
 
-  create = (props?: any): string => {
+  create = (props: object = { fixme__: "orion" }): string => {
     const id = super.create()
 
     super

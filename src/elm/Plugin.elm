@@ -11,8 +11,8 @@ import Html.Attributes as Attr
 
 
 type alias Flags =
-    { docUrl : String
-    , src : String
+    { data : String
+    , code : String
     }
 
 
@@ -37,8 +37,8 @@ type Msg doc msg
 type alias Model state doc =
     { doc : doc
     , state : state
-    , docUrl : String
-    , src : String
+    , data : String
+    , code : String
     }
 
 
@@ -55,8 +55,8 @@ type alias Out doc =
 
 
 render : String -> String -> Html msg
-render src docUrl =
-    Html.node "realm-ui" [ Attr.attribute "src" src, Attr.attribute "docUrl" docUrl ] []
+render code data =
+    Html.node "realm-ui" [ Attr.attribute "code" code, Attr.attribute "data" data ] []
 
 
 element : Spec state doc msg -> Program state doc msg
@@ -82,8 +82,8 @@ init spec flags =
     in
     ( { state = state
       , doc = doc
-      , docUrl = flags.docUrl
-      , src = flags.src
+      , data = flags.data
+      , code = flags.code
       }
     , spec.output { doc = Nothing, init = Just doc, create = False }
     )
@@ -125,12 +125,12 @@ viewFlags flags =
         , Attr.style "padding" "2px 10px"
         ]
         [ Html.pre []
-            [ Html.b [] [ Html.text "src: " ]
-            , Html.text flags.src
+            [ Html.b [] [ Html.text "code: " ]
+            , Html.text flags.code
             ]
         , Html.pre []
-            [ Html.b [] [ Html.text "docUrl: " ]
-            , Html.text flags.docUrl
+            [ Html.b [] [ Html.text "data: " ]
+            , Html.text flags.data
             ]
         ]
 

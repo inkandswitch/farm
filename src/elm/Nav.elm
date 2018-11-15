@@ -13,20 +13,20 @@ port input : (Plugin.In Doc -> msg) -> Sub msg
 
 
 type alias Doc =
-    { src : String
-    , id : String
+    { code : String
+    , data : String
     }
 
 
 type alias State =
-    { src : Maybe String
-    , id : Maybe String
+    { code : Maybe String
+    , data : Maybe String
     }
 
 
 type Msg
-    = SetId String
-    | SetSourceId String
+    = SetData String
+    | SetCode String
     | Go
 
 
@@ -43,11 +43,11 @@ main =
 
 init : ( State, Doc )
 init =
-    ( { id = Nothing
-      , src = Nothing
+    ( { data = Nothing
+      , code = Nothing
       }
-    , { id = ""
-      , src = ""
+    , { data = ""
+      , code = ""
       }
     )
 
@@ -55,19 +55,19 @@ init =
 update : Msg -> Plugin.Model State Doc -> ( State, Doc )
 update msg { state, doc } =
     case msg of
-        SetId id ->
-            if id |> String.contains "\n" then
+        SetData data ->
+            if data |> String.contains "\n" then
                 go state doc
 
             else
-                ( { state | id = Just id }, doc )
+                ( { state | data = Just data }, doc )
 
-        SetSourceId sId ->
+        SetCode sId ->
             if sId |> String.contains "\n" then
                 go state doc
 
             else
-                ( { state | src = Just sId }, doc )
+                ( { state | code = Just sId }, doc )
 
         Go ->
             go state doc
@@ -75,43 +75,43 @@ update msg { state, doc } =
 
 go : State -> Doc -> ( State, Doc )
 go state doc =
-    ( { id = Nothing, src = Nothing }
+    ( { data = Nothing, code = Nothing }
     , { doc
-        | id = state.id |> Maybe.withDefault doc.id
-        , src = state.src |> Maybe.withDefault doc.src
+        | data = state.data |> Maybe.withDefault doc.data
+        , code = state.code |> Maybe.withDefault doc.code
       }
     )
 
 
 view : Plugin.Model State Doc -> Html Msg
-view { state, doc, src, docUrl } =
+view { state, doc, code, data } =
     div []
         [ div
             [ style "padding" "10px"
             , style "box-shadow" "10px"
             ]
-            [ text "src: "
-            , viewInput SetSourceId
-                (state.src
-                    |> Maybe.withDefault doc.src
+            [ text "code: "
+            , viewInput SetCode
+                (state.code
+                    |> Maybe.withDefault doc.code
                 )
-            , text "docUrl: "
-            , viewInput SetId
-                (state.id
-                    |> Maybe.withDefault doc.id
+            , text "data: "
+            , viewInput SetData
+                (state.data
+                    |> Maybe.withDefault doc.data
                 )
             , button [ onClick Go ] [ text "Go" ]
             ]
         , div
             [ style "padding" "10px"
             ]
-            [ if String.length doc.src > 0 && String.length doc.id > 0 then
-                Plugin.render doc.src doc.id
+            [ if String.length doc.code > 0 && String.length doc.data > 0 then
+                Plugin.render doc.code doc.data
 
               else
                 text ""
             ]
-        , Plugin.viewFlags { docUrl = docUrl, src = src }
+        , Plugin.viewFlags { data = data, code = code }
         ]
 
 
