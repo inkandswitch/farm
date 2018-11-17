@@ -49,6 +49,7 @@ type alias In doc =
 
 type alias Out doc =
     { doc : Maybe doc
+    , prevDoc : Maybe doc
     , init : Maybe doc
     , create : Bool
     }
@@ -85,7 +86,7 @@ init spec flags =
       , data = flags.data
       , code = flags.code
       }
-    , spec.output { doc = Nothing, init = Just doc, create = False }
+    , spec.output { doc = Nothing, prevDoc = Nothing, init = Just doc, create = False }
     )
 
 
@@ -107,7 +108,7 @@ update spec msg model =
                 newModel =
                     { model | state = state, doc = doc }
             in
-            ( newModel, spec.output { doc = Just doc, init = Nothing, create = False } )
+            ( newModel, spec.output { doc = Just doc, prevDoc = Just model.doc, init = Nothing, create = False } )
 
 
 view : Spec state doc msg -> Model state doc -> Html (Msg doc msg)

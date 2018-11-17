@@ -16,8 +16,8 @@ export default class App {
   rootDataUrl: string = load("rootDataUrl", () =>
     this.repo.create({
       title: "Nav data",
-      code: this.bootstrapWidget("Example.elm"),
-      data: this.repo.create({ title: "Example data" }),
+      code: this.bootstrapWidget("Chat.elm"),
+      data: this.repo.create({ title: "Chat data" }),
     }),
   )
 

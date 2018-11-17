@@ -1,6 +1,6 @@
 import Repo from "./Repo"
 import Handle from "hypermerge/dist/Handle"
-import { applyDiff } from "deep-diff"
+import { observableDiff, applyChange, Diff } from "deep-diff"
 import { defaults } from "lodash"
 import ElmApp from "./ElmApp"
 import { whenChanged } from "./Subscription"
@@ -45,7 +45,7 @@ export default class WidgetElement extends HTMLElement {
     Widget.compiler.add(this.codeUrl)
 
     this.source.subscribe(
-      whenChanged(getJsSource, (source, doc) => {
+      whenChanged(getJsSource, source => {
         this.remount(toElm(eval(source)))
       }),
     )
@@ -113,7 +113,12 @@ export class Widget {
     this.app.subscribe(msg => {
       if (msg.doc) {
         this.handle.change((state: any) => {
-          applyDiff(state, msg.doc)
+          if (!msg.prevDoc) return
+
+          observableDiff(msg.prevDoc, msg.doc, (change: any) => {
+            console.log("Applying", change)
+            applyChange(state, msg.doc, change)
+          })
         })
       }
 
@@ -145,3 +150,7 @@ function isEmptyDoc(doc: object | null): boolean {
 function toElm(code: string) {
   return Object.values(eval(code))[0]
 }
+
+// function isArrayPush(lhs: any, change: Diff<any, any>) {
+//   return change.kind === "A" && change.index === _.get(lhs, change.path).length
+// }
