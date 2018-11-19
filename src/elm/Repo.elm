@@ -1,4 +1,4 @@
-port module Repo exposing (Model, Msg(..), OutMsg(..), create, repoIn, repoOut)
+port module Repo exposing (create, created)
 
 import Json.Decode as D
 import Json.Encode as E
@@ -6,14 +6,18 @@ import Result
 import Task
 
 
-type alias Model msg =
-    { createQ : List (List String -> msg)
-    }
-
-
-create : Int -> (List String -> msg) -> Cmd msg
-create n mkMsg =
+create : Int -> Cmd msg
+create n =
     Create n |> send
+
+
+port created : (List String -> msg) -> Sub msg
+
+
+
+-- type alias Model msg =
+--     { createQ : List (List String -> msg)
+--     }
 
 
 type Msg
@@ -21,20 +25,18 @@ type Msg
     | Error String
 
 
-update : Msg -> Model msg -> ( Model msg, Cmd msg )
-update msg model =
-    case msg of
-        Created ids ->
-            case model.createQ of
-                mkMsg :: createQ ->
-                    ( { model | createQ = createQ }, mkMsg ids |> Task.succeed |> Task.perform identity )
-
-
-
--- Outgoing Messages
-
-
 port repoOut : E.Value -> Cmd msg
+
+
+
+-- update : Msg -> Model msg -> ( Model msg, Cmd msg )
+-- update msg model =
+--     case msg of
+--         Created ids ->
+--             case model.createQ of
+--                 mkMsg :: createQ ->
+--                     ( { model | createQ = createQ }, mkMsg ids |> Task.succeed |> Task.perform identity )
+-- Outgoing Messages
 
 
 type OutMsg
@@ -58,36 +60,26 @@ send =
 
 
 -- Incoming Messages
-
-
-port repoIn : (D.Value -> msg) -> Sub msg
-
-
-msgDecoder : D.Decoder Msg
-msgDecoder =
-    D.field "t" D.string
-        |> D.andThen
-            (\t ->
-                case t of
-                    "Created" ->
-                        D.map Created
-                            (D.field "ids" (D.list D.string))
-
-                    _ ->
-                        D.fail ("'" ++ t ++ "' is not a valid Repo.Msg type.")
-            )
-
-
-decodeMsg : D.Value -> Msg
-decodeMsg val =
-    case D.decodeValue msgDecoder val of
-        Err err ->
-            Error (D.errorToString err)
-
-        Ok msg ->
-            msg
-
-
-incoming : Sub Msg
-incoming =
-    repoIn decodeMsg
+-- port repoIn : (D.Value -> msg) -> Sub msg
+-- msgDecoder : D.Decoder Msg
+-- msgDecoder =
+--     D.field "t" D.string
+--         |> D.andThen typeDecoder
+-- typeDecoder : String -> D.Decoder Msg
+-- typeDecoder t =
+--     case t of
+--         "Created" ->
+--             D.map Created
+--                 (D.field "ids" (D.list D.string))
+--         _ ->
+--             D.fail "Not a valid Repo.Msg type."
+-- decodeMsg : D.Value -> Msg
+-- decodeMsg val =
+--     case D.decodeValue msgDecoder val of
+--         Err err ->
+--             Error (D.errorToString err)
+--         Ok msg ->
+--             msg
+-- incoming : Sub Msg
+-- incoming =
+--     repoIn decodeMsg
