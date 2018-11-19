@@ -1,8 +1,14 @@
-module Counter exposing (main)
+module Counter exposing (Doc, Msg, State, gizmo)
 
-import Gizmo
+import Gizmo exposing (Model)
 import Html exposing (Html, button, div, text)
 import Html.Events exposing (onClick)
+
+
+{-| Ephemeral state not saved to the doc
+-}
+type alias State =
+    {}
 
 
 {-| Document state
@@ -18,35 +24,34 @@ type Msg
     = Inc
 
 
-init : Doc
+init : ( State, Doc )
 init =
-    { counter = 0
-    }
+    ( {}
+    , { counter = 0
+      }
+    )
 
 
-update : Msg -> Doc -> Doc
-update msg doc =
+update : Msg -> Model State Doc -> ( State, Doc )
+update msg { doc } =
     case msg of
         Inc ->
-            { doc | counter = doc.counter + 1 }
+            ( {}, { doc | counter = doc.counter + 1 } )
 
 
-subscriptions : Model State Doc -> Sub Msg
-subscriptions model =
-    Sub.none
-
-
-view : Doc -> Html Msg
-view doc =
+view : Model State Doc -> Html Msg
+view { doc } =
     div []
         [ button [ onClick Inc ] [ text <| String.fromInt doc.counter ]
         ]
 
 
-main : Gizmo.Program () doc msg
-main =
+gizmo : Gizmo.Program State Doc Msg
+gizmo =
     Gizmo.sandbox
         { init = init
         , update = update
         , view = view
         }
+
+Gizmo.create Created
