@@ -37,6 +37,8 @@ export default class ElmGizmo {
     this.repo = ElmGizmo.repo
     this.handle = this.repo.open(data)
 
+    ElmGizmo.compiler.add(code)
+
     this.app = elm.init({
       node,
       flags: {
