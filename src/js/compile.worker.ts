@@ -6,26 +6,32 @@ import QueuedPort from "./QueuedPort"
 import { ToCompiler, FromCompiler } from "./Msg"
 import fs from "fs"
 import elm from "node-elm-compiler"
+import AsyncQueue from "./AsyncQueue"
 
 const port = new QueuedPort<FromCompiler, ToCompiler>(self)
 ;(self as any).port = port
 
-port.subscribe(receive)
+const workQ = new AsyncQueue<ToCompiler>("compiler:workQ")
+
+workQ.take(work)
+
+port.subscribe(workQ.push)
 
 if (!fs.existsSync(".tmp")) {
   fs.mkdirSync(".tmp")
 }
 
-function receive(msg: ToCompiler) {
-  port.unsubscribe()
-
+function work(msg: ToCompiler) {
   const { url } = msg
   switch (msg.t) {
     case "Compile":
       const source = msg.source.replace(/^module \w+/, "module Source")
 
       fs.writeFile("./.tmp/Source.elm", source, async err => {
-        if (err) port.send({ t: "CompileError", url, error: err.message })
+        if (err) {
+          port.send({ t: "CompileError", url, error: err.message })
+          workQ.take(work)
+        }
 
         try {
           // Compile via Harness.elm if missing `main` function
@@ -44,13 +50,13 @@ function receive(msg: ToCompiler) {
           `
 
           port.send({ t: "Compiled", url, output })
-          console.log("Sent compiled Elm program")
-          port.subscribe(receive)
+          console.log(`Compiled Elm program: ${url}`)
+          workQ.take(work)
         } catch (e) {
           port.send({ t: "CompileError", url, error: e.message })
-          console.log("Sent Elm compile error")
+          console.log(`Elm compile error: ${url}`)
           console.error(e.message)
-          port.subscribe(receive)
+          workQ.take(work)
         }
       })
       break
