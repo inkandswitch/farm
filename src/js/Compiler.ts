@@ -20,8 +20,8 @@ export default class Compiler {
         switch (msg.t) {
           case "Compiled":
             if (state.error) state.error = ""
-            if (state["source.js"] !== msg.output) {
-              state["source.js"] = msg.output
+            if (getJsSource(state) !== msg.output) {
+              state["Source.js"] = msg.output
             }
             break
 
@@ -54,4 +54,8 @@ export default class Compiler {
   }
 }
 
-const getElmSource = (doc: any): string | undefined => doc["source.elm"]
+const getElmSource = (doc: any): string | undefined =>
+  doc["Source.elm"] || doc["source.elm"]
+
+const getJsSource = (doc: any): string | undefined =>
+  doc["Source.js"] || doc["source.js"]

@@ -87,7 +87,8 @@ export default class GizmoElement extends HTMLElement {
   }
 }
 
-const getJsSource = (doc: any): string | undefined => doc["source.js"]
+const getJsSource = (doc: any): string | undefined =>
+  doc["Source.js"] || doc["source.js"]
 
 function toElm(code: string) {
   return Object.values(eval(code))[0]

@@ -1,4 +1,4 @@
-port module Repo exposing (create, created)
+port module Repo exposing (Ref, Url, clone, create, created)
 
 import Json.Decode as D
 import Json.Encode as E
@@ -6,23 +6,34 @@ import Result
 import Task
 
 
-create : Int -> Cmd msg
-create n =
-    Create n |> send
+type alias Url =
+    String
 
 
-port created : (List String -> msg) -> Sub msg
+type alias Ref =
+    String
+
+
+create : Ref -> Int -> Cmd msg
+create ref n =
+    send <| Create ref n
+
+
+clone : Ref -> Url -> Cmd msg
+clone ref url =
+    send <| Clone ref url
+
+
+port created : (( Ref, List Url ) -> msg) -> Sub msg
 
 
 
 -- type alias Model msg =
 --     { createQ : List (List String -> msg)
 --     }
-
-
-type Msg
-    = Created (List String)
-    | Error String
+-- type Msg
+--     = Created (List String)
+--     | Error String
 
 
 port repoOut : E.Value -> Cmd msg
@@ -40,16 +51,25 @@ port repoOut : E.Value -> Cmd msg
 
 
 type OutMsg
-    = Create Int -- Number of docs to create
+    = Create Ref Int -- String ref and number of docs to create
+    | Clone Ref Url -- String ref and url to
 
 
 encodeOut : OutMsg -> E.Value
 encodeOut msg =
     case msg of
-        Create n ->
+        Create ref n ->
             E.object
                 [ ( "t", E.string "Create" )
+                , ( "ref", E.string ref )
                 , ( "n", E.int n )
+                ]
+
+        Clone ref url ->
+            E.object
+                [ ( "t", E.string "Clone" )
+                , ( "ref", E.string ref )
+                , ( "url", E.string url )
                 ]
 
 

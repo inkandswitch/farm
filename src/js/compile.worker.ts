@@ -22,15 +22,15 @@ function receive(msg: ToCompiler) {
   const { url } = msg
   switch (msg.t) {
     case "Compile":
-      const source = msg.source.replace(/^module \w+/, "module Subject")
+      const source = msg.source.replace(/^module \w+/, "module Source")
 
-      fs.writeFile("./.tmp/Subject.elm", source, async err => {
+      fs.writeFile("./.tmp/Source.elm", source, async err => {
         if (err) port.send({ t: "CompileError", url, error: err.message })
 
         try {
           // Compile via Harness.elm if missing `main` function
           const filename = /^main /.test(source)
-            ? "./.tmp/Subject.elm"
+            ? "./.tmp/Source.elm"
             : "./src/elm/Harness.elm"
 
           const out = await elm.compileToString([filename], {

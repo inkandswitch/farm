@@ -18,7 +18,7 @@ export interface Ports {
   saveDoc: ReceivePort<any>
   loadDoc: SendPort<any>
   repoOut?: ReceivePort<any>
-  created?: SendPort<string[]>
+  created?: SendPort<[string, string[]]>
 }
 
 export interface ElmApp {
@@ -86,6 +86,12 @@ export default class ElmGizmo {
     }
   }
 
+  sendCreated(ref: string, urls: string[]) {
+    this.app.ports &&
+      this.app.ports.created &&
+      this.app.ports.created.send([ref, urls])
+  }
+
   onSave = ({ doc, prevDoc }: any) => {
     this.handle.change((state: any) => {
       if (!prevDoc) return
@@ -113,10 +119,12 @@ export default class ElmGizmo {
       case "Create":
         const urls = times(msg.n, () => this.repo.create())
         console.log("sending urls", urls)
-        this.app.ports &&
-          this.app.ports.created &&
-          this.app.ports.created.send(urls)
+        this.sendCreated(msg.ref, urls)
         break
+
+      case "Clone":
+        const url = this.repo.clone(msg.url)
+        this.sendCreated(msg.ref, [url])
     }
   }
 

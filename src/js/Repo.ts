@@ -35,11 +35,32 @@ export default class Repo extends RepoFrontend {
     return super.open(Link.toId(url))
   }
 
+  once = <T>(url: string, fn: Function): this => {
+    const handle = this.open(url)
+    handle.subscribe(doc => {
+      fn(doc)
+      handle.close()
+    })
+    return this
+  }
+
   change = (url: string, fn: Function): this => {
     super
-      .open(url)
+      .open(Link.toId(url))
       .change(fn)
       .close()
     return this
+  }
+
+  clone = (url: string): string => {
+    const newUrl = this.create()
+
+    this.once(url, (doc: any) => {
+      this.change(newUrl, (state: any) => {
+        Object.assign(state, doc)
+      })
+    })
+
+    return newUrl
   }
 }

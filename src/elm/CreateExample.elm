@@ -3,7 +3,7 @@ module CreateExample exposing (Doc, Msg, State, gizmo)
 import Gizmo exposing (Flags, Model)
 import Html exposing (Html, button, div, text)
 import Html.Events exposing (onClick)
-import Repo
+import Repo exposing (Ref, Url)
 
 
 gizmo : Gizmo.Program State Doc Msg
@@ -41,17 +41,21 @@ init flags =
 {-| Message type for modifying State and Doc inside update
 -}
 type Msg
-    = Created (List String)
+    = Created ( Ref, List String )
     | Create Int
+    | Clone Url
 
 
 update : Msg -> Model State Doc -> ( State, Doc, Cmd Msg )
 update msg { state, doc } =
     case msg of
         Create n ->
-            ( state, doc, Repo.create n )
+            ( state, doc, Repo.create "CreateOne" n )
 
-        Created urls ->
+        Clone url ->
+            ( state, doc, Repo.clone "Clone" url )
+
+        Created ( ref, urls ) ->
             ( state, { doc | urls = doc.urls ++ urls }, Cmd.none )
 
 
@@ -63,7 +67,10 @@ view { doc } =
             (doc.urls
                 |> List.map
                     (\url ->
-                        Html.li [] [ text url ]
+                        Html.li []
+                            [ text url
+                            , button [ onClick <| Clone url ] [ text "Clone" ]
+                            ]
                     )
             )
         ]

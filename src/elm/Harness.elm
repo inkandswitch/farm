@@ -4,7 +4,7 @@ import Browser
 import Gizmo exposing (Flags, Msg(..))
 import Html exposing (Html)
 import Repo
-import Subject as S exposing (Doc, State, gizmo)
+import Source as S exposing (Doc, State, gizmo)
 
 
 port initDoc : Doc -> Cmd msg
