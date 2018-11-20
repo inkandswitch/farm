@@ -2,7 +2,7 @@ import Repo from "./Repo"
 import { readFileSync } from "fs"
 import path from "path"
 import Compiler from "./Compiler"
-import Widget from "./Widget"
+import Gizmo from "./Gizmo"
 
 // make the web worker thread-safe:
 ;(<any>process).dlopen = () => {
@@ -25,9 +25,9 @@ export default class App {
 
   constructor() {
     ;(self as any).repo = this.repo
-    Widget.repo = this.repo
-    Widget.compiler = this.compiler
-    customElements.define("realm-ui", Widget)
+    Gizmo.repo = this.repo
+    Gizmo.compiler = this.compiler
+    customElements.define("realm-ui", Gizmo)
 
     const root = document.createElement("realm-ui")
     root.setAttribute("code", this.rootCodeUrl)

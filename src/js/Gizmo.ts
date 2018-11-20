@@ -4,7 +4,7 @@ import { whenChanged } from "./Subscription"
 import Compiler from "./Compiler"
 import ElmGizmo from "./ElmGizmo"
 
-export default class WidgetElement extends HTMLElement {
+export default class GizmoElement extends HTMLElement {
   static set repo(repo: Repo) {
     ElmGizmo.repo = repo
   }
