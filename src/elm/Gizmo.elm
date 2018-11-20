@@ -1,4 +1,4 @@
-module Gizmo exposing (Flags, Model, Program, element, sandbox)
+module Gizmo exposing (Flags, Model, Msg(..), Program, element, sandbox)
 
 import Html exposing (Html)
 import Repo
@@ -10,11 +10,10 @@ type alias Flags =
     }
 
 
-type alias Model state doc msg =
+type alias Model state doc =
     { doc : doc
     , state : state
     , flags : Flags
-    , repo : Repo.Model msg
     }
 
 
@@ -27,7 +26,7 @@ type alias Program state doc msg =
     { init : Flags -> ( state, doc, Cmd msg )
     , update : msg -> Model state doc -> ( state, doc, Cmd msg )
     , view : Model state doc -> Html msg
-    , subscriptions : ( state, doc ) -> Sub msg
+    , subscriptions : Model state doc -> Sub msg
     }
 
 

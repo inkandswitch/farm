@@ -1,25 +1,23 @@
 import Repo from "./Repo"
 import Handle from "hypermerge/dist/Handle"
-import { observableDiff, applyChange, Diff } from "deep-diff"
-import { defaults } from "lodash"
-import ElmApp from "./ElmApp"
 import { whenChanged } from "./Subscription"
 import Compiler from "./Compiler"
+import ElmGizmo from "./ElmGizmo"
 
 export default class WidgetElement extends HTMLElement {
   static set repo(repo: Repo) {
-    Widget.repo = repo
+    ElmGizmo.repo = repo
   }
 
   static set compiler(compiler: Compiler) {
-    Widget.compiler = compiler
+    ElmGizmo.compiler = compiler
   }
 
   static get observedAttributes() {
     return ["code", "data"]
   }
 
-  widget?: Widget
+  gizmo?: ElmGizmo
   source?: Handle<any>
 
   constructor() {
@@ -41,8 +39,8 @@ export default class WidgetElement extends HTMLElement {
   }
 
   connectedCallback() {
-    this.source = Widget.repo.open(this.codeUrl)
-    Widget.compiler.add(this.codeUrl)
+    this.source = ElmGizmo.repo.open(this.codeUrl)
+    ElmGizmo.compiler.add(this.codeUrl)
 
     this.source.subscribe(
       whenChanged(getJsSource, source => {
@@ -74,7 +72,7 @@ export default class WidgetElement extends HTMLElement {
     const node = document.createElement("div")
     this.shadowRoot.appendChild(node)
 
-    this.widget = new Widget(node, elm, this.codeUrl, this.dataUrl)
+    this.gizmo = new ElmGizmo(node, elm, this.codeUrl, this.dataUrl)
   }
 
   unmount() {
@@ -82,70 +80,14 @@ export default class WidgetElement extends HTMLElement {
       this.shadowRoot.innerHTML = ""
     }
 
-    if (this.widget) {
-      this.widget.close()
-      delete this.widget
+    if (this.gizmo) {
+      this.gizmo.close()
+      delete this.gizmo
     }
   }
 }
 
-export class Widget {
-  static repo: Repo
-  static compiler: Compiler
-
-  handle: Handle<any>
-  app: ElmApp
-
-  constructor(node: HTMLElement, elm: any, code: string, data: string) {
-    this.handle = Widget.repo.open(data)
-    this.app = new ElmApp(elm)
-
-    this.app = new ElmApp(
-      elm.init({
-        node,
-        flags: {
-          data,
-          code,
-        },
-      }),
-    )
-
-    this.app.subscribe(msg => {
-      if (msg.doc) {
-        this.handle.change((state: any) => {
-          if (!msg.prevDoc) return
-
-          observableDiff(msg.prevDoc, msg.doc, (change: any) => {
-            console.log("Applying", change)
-            applyChange(state, msg.doc, change)
-          })
-        })
-      }
-
-      if (msg.init) {
-        this.handle.change((state: any) => {
-          defaults(state, msg.init)
-        })
-
-        this.handle.subscribe(doc => {
-          if (isEmptyDoc(doc)) return
-          this.app.send({ doc, msg: null })
-        })
-      }
-    })
-  }
-
-  close() {
-    this.app.unsubscribe()
-    this.handle.close()
-  }
-}
-
 const getJsSource = (doc: any): string | undefined => doc["source.js"]
-
-function isEmptyDoc(doc: object | null): boolean {
-  return !doc || Object.keys(doc).length === 0
-}
 
 function toElm(code: string) {
   return Object.values(eval(code))[0]

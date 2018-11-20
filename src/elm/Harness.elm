@@ -1,10 +1,10 @@
 port module Harness exposing (main)
 
 import Browser
-import Counter as S exposing (Doc, State, gizmo)
-import Gizmo exposing (Flags)
+import Gizmo exposing (Flags, Msg(..))
 import Html exposing (Html)
 import Repo
+import Subject as S exposing (Doc, State, gizmo)
 
 
 port initDoc : Doc -> Cmd msg
@@ -36,15 +36,14 @@ init flags =
       , flags = flags
       }
     , Cmd.batch
-        [ cmd
+        [ cmd |> Cmd.map Custom
         , initDoc doc
         ]
     )
 
 
-type Msg
-    = Custom S.Msg
-    | LoadDoc Doc
+type alias Msg =
+    Gizmo.Msg Doc S.Msg
 
 
 update : Msg -> Model -> ( Model, Cmd Msg )
@@ -70,7 +69,7 @@ subscriptions : Model -> Sub Msg
 subscriptions model =
     Sub.batch
         [ loadDoc LoadDoc
-        , gizmo.subscriptions model
+        , gizmo.subscriptions model |> Sub.map Custom
         ]
 
 

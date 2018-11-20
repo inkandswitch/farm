@@ -53,5 +53,3 @@ gizmo =
         , update = update
         , view = view
         }
-
-Gizmo.create Created

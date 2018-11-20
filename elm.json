@@ -1,27 +1,25 @@
 {
-    "type": "application",
-    "source-directories": [
-        "src/elm"
-    ],
-    "elm-version": "0.19.0",
-    "dependencies": {
-        "direct": {
-            "NoRedInk/elm-json-decode-pipeline": "1.0.0",
-            "elm/browser": "1.0.1",
-            "elm/core": "1.0.0",
-            "elm/html": "1.0.0",
-            "elm/json": "1.0.0",
-            "elm-explorations/linear-algebra": "1.0.3",
-            "elm-explorations/webgl": "1.0.1"
-        },
-        "indirect": {
-            "elm/time": "1.0.0",
-            "elm/url": "1.0.0",
-            "elm/virtual-dom": "1.0.2"
-        }
+  "type": "application",
+  "source-directories": ["src/elm", ".tmp"],
+  "elm-version": "0.19.0",
+  "dependencies": {
+    "direct": {
+      "NoRedInk/elm-json-decode-pipeline": "1.0.0",
+      "elm/browser": "1.0.1",
+      "elm/core": "1.0.0",
+      "elm/html": "1.0.0",
+      "elm/json": "1.0.0",
+      "elm-explorations/linear-algebra": "1.0.3",
+      "elm-explorations/webgl": "1.0.1"
     },
-    "test-dependencies": {
-        "direct": {},
-        "indirect": {}
+    "indirect": {
+      "elm/time": "1.0.0",
+      "elm/url": "1.0.0",
+      "elm/virtual-dom": "1.0.2"
     }
+  },
+  "test-dependencies": {
+    "direct": {},
+    "indirect": {}
+  }
 }
