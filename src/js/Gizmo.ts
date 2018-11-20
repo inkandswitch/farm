@@ -23,7 +23,7 @@ export default class GizmoElement extends HTMLElement {
   constructor() {
     super()
 
-    this.attachShadow({ mode: "open" })
+    // this.attachShadow({ mode: "open" })
   }
 
   get dataUrl(): string {
@@ -67,18 +67,20 @@ export default class GizmoElement extends HTMLElement {
   }
 
   mount(elm: any) {
-    if (!this.shadowRoot) throw new Error("No shadow root! " + this.codeUrl)
+    // if (!this.shadowRoot) throw new Error("No shadow root! " + this.codeUrl)
 
     const node = document.createElement("div")
-    this.shadowRoot.appendChild(node)
+    // this.shadowRoot.appendChild(node)
+    this.appendChild(node)
 
     this.gizmo = new ElmGizmo(node, elm, this.codeUrl, this.dataUrl)
   }
 
   unmount() {
-    if (this.shadowRoot) {
-      this.shadowRoot.innerHTML = ""
-    }
+    // if (this.shadowRoot) {
+    //   this.shadowRoot.innerHTML = ""
+    // }
+    this.innerHTML = ""
 
     if (this.gizmo) {
       this.gizmo.close()
