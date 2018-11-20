@@ -15,12 +15,12 @@ export default class App {
 
   rootDataUrl: string = load("rootDataUrl", () =>
     this.repo.create({
-      title: "Cube data",
+      title: "CreateExample data",
     }),
   )
 
   rootCodeUrl: string = load("rootCodeUrl", () =>
-    this.bootstrapWidget("Cube.elm"),
+    this.bootstrapWidget("CreateExample.elm"),
   )
 
   constructor() {

@@ -5,6 +5,15 @@ import Html exposing (Html, button, div, text)
 import Html.Events exposing (onClick)
 
 
+gizmo : Gizmo.Program State Doc Msg
+gizmo =
+    Gizmo.sandbox
+        { init = init
+        , update = update
+        , view = view
+        }
+
+
 {-| Ephemeral state not saved to the doc
 -}
 type alias State =
@@ -18,18 +27,18 @@ type alias Doc =
     }
 
 
-{-| Message type for modifying State and Doc inside update
--}
-type Msg
-    = Inc
-
-
 init : ( State, Doc )
 init =
     ( {}
     , { counter = 0
       }
     )
+
+
+{-| Message type for modifying State and Doc inside update
+-}
+type Msg
+    = Inc
 
 
 update : Msg -> Model State Doc -> ( State, Doc )
@@ -44,12 +53,3 @@ view { doc } =
     div []
         [ button [ onClick Inc ] [ text <| String.fromInt doc.counter ]
         ]
-
-
-gizmo : Gizmo.Program State Doc Msg
-gizmo =
-    Gizmo.sandbox
-        { init = init
-        , update = update
-        , view = view
-        }

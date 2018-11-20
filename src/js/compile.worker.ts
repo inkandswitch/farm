@@ -28,10 +28,10 @@ function receive(msg: ToCompiler) {
         if (err) port.send({ t: "CompileError", url, error: err.message })
 
         try {
-          // Compile via Harness.elm if elm program is a Gizmo
-          const filename = /^import +Gizmo/.test(source)
-            ? "./src/elm/Harness.elm"
-            : "./.tmp/Subject.elm"
+          // Compile via Harness.elm if missing `main` function
+          const filename = /^main /.test(source)
+            ? "./.tmp/Subject.elm"
+            : "./src/elm/Harness.elm"
 
           const out = await elm.compileToString([filename], {
             output: ".js",

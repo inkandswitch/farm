@@ -6,6 +6,16 @@ import Html.Events exposing (onClick)
 import Repo
 
 
+gizmo : Gizmo.Program State Doc Msg
+gizmo =
+    Gizmo.element
+        { init = init
+        , update = update
+        , view = view
+        , subscriptions = subscriptions
+        }
+
+
 {-| Ephemeral state not saved to the doc
 -}
 type alias State =
@@ -19,13 +29,6 @@ type alias Doc =
     }
 
 
-{-| Message type for modifying State and Doc inside update
--}
-type Msg
-    = Created (List String)
-    | Create Int
-
-
 init : Flags -> ( State, Doc, Cmd Msg )
 init flags =
     ( {}
@@ -33,6 +36,13 @@ init flags =
       }
     , Cmd.none
     )
+
+
+{-| Message type for modifying State and Doc inside update
+-}
+type Msg
+    = Created (List String)
+    | Create Int
 
 
 update : Msg -> Model State Doc -> ( State, Doc, Cmd Msg )
@@ -62,13 +72,3 @@ view { doc } =
 subscriptions : Model State Doc -> Sub Msg
 subscriptions model =
     Repo.created Created
-
-
-gizmo : Gizmo.Program State Doc Msg
-gizmo =
-    Gizmo.element
-        { init = init
-        , update = update
-        , view = view
-        , subscriptions = subscriptions
-        }

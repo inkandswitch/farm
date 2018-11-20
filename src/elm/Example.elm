@@ -1,25 +1,17 @@
-port module Example exposing (main)
+module Example exposing (Doc, Msg, State, gizmo)
 
+import Gizmo exposing (Model)
 import Html exposing (Html, text)
 import Html.Attributes as Attr exposing (style)
 import Html.Events exposing (onClick)
-import Plugin
 
 
-port output : Plugin.Out Doc -> Cmd msg
-
-
-port input : (Plugin.In Doc -> msg) -> Sub msg
-
-
-main : Plugin.Program State Doc Msg
-main =
-    Plugin.element
+gizmo : Gizmo.Program State Doc Msg
+gizmo =
+    Gizmo.sandbox
         { init = init
         , update = update
         , view = view
-        , input = input
-        , output = output
         }
 
 
@@ -48,14 +40,14 @@ type Msg
     = NoOp
 
 
-update : Msg -> Plugin.Model State Doc -> ( State, Doc )
+update : Msg -> Model State Doc -> ( State, Doc )
 update msg { state, doc } =
     case msg of
         NoOp ->
             ( state, doc )
 
 
-view : Plugin.Model State Doc -> Html Msg
+view : Model State Doc -> Html Msg
 view { state, doc } =
     Html.div []
         [ Html.div [ style "color" "red" ]

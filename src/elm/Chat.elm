@@ -1,15 +1,18 @@
-port module Example exposing (main)
+module Chat exposing (Doc, Msg, State, gizmo)
 
+import Gizmo exposing (Model)
 import Html exposing (Html, button, div, text, textarea)
 import Html.Attributes exposing (cols, placeholder, rows, style, value)
 import Html.Events exposing (onClick, onInput)
-import Plugin
 
 
-type alias State =
-    { typing : String
-    , name : String
-    }
+gizmo : Gizmo.Program State Doc Msg
+gizmo =
+    Gizmo.sandbox
+        { init = init
+        , update = update
+        , view = view
+        }
 
 
 type alias Message =
@@ -18,32 +21,15 @@ type alias Message =
     }
 
 
-type alias Doc =
-    { messages : List Message
+type alias State =
+    { typing : String
+    , name : String
     }
 
 
-port output : Plugin.Out Doc -> Cmd msg
-
-
-port input : (Plugin.In Doc -> msg) -> Sub msg
-
-
-type Msg
-    = SetMessage String
-    | SetName String
-    | Send
-
-
-main : Plugin.Program State Doc Msg
-main =
-    Plugin.element
-        { init = init
-        , update = update
-        , view = view
-        , input = input
-        , output = output
-        }
+type alias Doc =
+    { messages : List Message
+    }
 
 
 init : ( State, Doc )
@@ -56,7 +42,13 @@ init =
     )
 
 
-update : Msg -> Plugin.Model State Doc -> ( State, Doc )
+type Msg
+    = SetMessage String
+    | SetName String
+    | Send
+
+
+update : Msg -> Model State Doc -> ( State, Doc )
 update msg { state, doc } =
     case msg of
         SetMessage str ->
@@ -90,7 +82,7 @@ send state doc =
         )
 
 
-view : Plugin.Model State Doc -> Html Msg
+view : Model State Doc -> Html Msg
 view { state, doc } =
     div []
         [ text "Your name: "
