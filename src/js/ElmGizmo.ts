@@ -48,7 +48,7 @@ export default class ElmGizmo {
     })
 
     if (this.app.ports) {
-      console.log("ports", this.app.ports)
+      // console.log("ports", this.app.ports)
       this.subscribe(this.app.ports)
     }
   }
