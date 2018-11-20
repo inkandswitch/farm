@@ -29,6 +29,10 @@ export default class App {
     Gizmo.compiler = this.compiler
     customElements.define("realm-ui", Gizmo)
 
+    const style = document.createElement("style")
+    style.innerHTML = "body { margin: 0px; }"
+    document.body.appendChild(style)
+
     const root = document.createElement("realm-ui")
     root.setAttribute("code", this.rootCodeUrl)
     root.setAttribute("data", this.rootDataUrl)
