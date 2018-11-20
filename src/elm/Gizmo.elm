@@ -1,6 +1,7 @@
-module Gizmo exposing (Flags, Model, Msg(..), Program, element, sandbox)
+module Gizmo exposing (Flags, Model, Msg(..), Program, element, render, sandbox)
 
 import Html exposing (Html)
+import Html.Attributes as Attr
 import Repo
 
 
@@ -52,3 +53,8 @@ element =
 withThird : c -> ( a, b ) -> ( a, b, c )
 withThird c ( a, b ) =
     ( a, b, c )
+
+
+render : String -> String -> Html msg
+render code data =
+    Html.node "realm-ui" [ Attr.attribute "code" code, Attr.attribute "data" data ] []
