@@ -14,7 +14,7 @@ export interface SendPort<T> {
 }
 
 export interface Ports {
-  initDoc: ReceivePort<any>
+  initDoc?: ReceivePort<any>
   saveDoc: ReceivePort<any>
   loadDoc: SendPort<any>
   repoOut?: ReceivePort<any>
@@ -52,12 +52,20 @@ export default class ElmGizmo {
   }
 
   subscribe(ports: Ports) {
+    if (!ports.initDoc) {
+      console.error("This looks like an invalid component. Not subscribing.")
+      return
+    }
     ports.initDoc.subscribe(this.onInit)
     ports.saveDoc.subscribe(this.onSave)
     ports.repoOut && ports.repoOut.subscribe(this.onRepoOut)
   }
 
   unsubscribe(ports: Ports) {
+    if (!ports.initDoc) {
+      console.error("This looks like an invalid component. Not unsubscribing.")
+      return
+    }
     ports.initDoc.unsubscribe(this.onInit)
     ports.saveDoc.unsubscribe(this.onSave)
 
