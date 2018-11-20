@@ -97,7 +97,7 @@ export default class ElmGizmo {
       if (!prevDoc) return
 
       observableDiff(prevDoc, doc, (change: any) => {
-        console.log("Applying", change)
+        // console.log("Applying", change)
         applyChange(state, doc, change)
       })
     })
