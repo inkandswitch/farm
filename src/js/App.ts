@@ -89,7 +89,7 @@ export default class App {
   bootstrapWidget(file: string): string {
     return this.repo.create({
       title: `${file} code`,
-      "source.elm": sourceFor(file),
+      "Source.elm": sourceFor(file),
     })
   }
 }
