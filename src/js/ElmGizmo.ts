@@ -19,6 +19,7 @@ export interface Ports {
   loadDoc: SendPort<any>
   repoOut?: ReceivePort<any>
   created?: SendPort<[string, string[]]>
+  output?: ReceivePort<string[]>
 }
 
 export interface ElmApp {
@@ -61,6 +62,7 @@ export default class ElmGizmo {
     ports.initDoc.subscribe(this.onInit)
     ports.saveDoc.subscribe(this.onSave)
     ports.repoOut && ports.repoOut.subscribe(this.onRepoOut)
+    ports.output && ports.output.subscribe(this.onOutput)
   }
 
   unsubscribe(ports: Ports) {
@@ -73,6 +75,10 @@ export default class ElmGizmo {
 
     if (ports.repoOut) {
       ports.repoOut.unsubscribe(this.onRepoOut)
+    }
+
+    if (ports.output) {
+      ports.output.unsubscribe(this.onOutput)
     }
   }
 
@@ -126,6 +132,10 @@ export default class ElmGizmo {
         const url = this.repo.clone(msg.url)
         this.sendCreated(msg.ref, [url])
     }
+  }
+
+  onOutput = (strs: string[]) => {
+    console.log(...strs)
   }
 
   close() {
