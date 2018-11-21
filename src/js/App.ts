@@ -23,10 +23,18 @@ export default class App {
     this.bootstrapWidget("CreateExample.elm"),
   )
 
+  selfDataUrl: string = load("selfDataUrl", () =>
+    this.repo.create({
+      title: "Mysterious Stranger",
+    }),
+  )
+
   constructor() {
     ;(self as any).repo = this.repo
     Gizmo.repo = this.repo
     Gizmo.compiler = this.compiler
+    Gizmo.selfDataUrl = this.selfDataUrl
+
     customElements.define("realm-ui", Gizmo)
 
     const style = document.createElement("style")
@@ -76,6 +84,10 @@ export default class App {
       }
       blockquote, q {
         quotes: "" "";
+      }
+
+      realm-ui {
+        display: contents;
       }
     `
     document.body.appendChild(style)

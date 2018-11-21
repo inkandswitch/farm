@@ -13,6 +13,10 @@ export default class GizmoElement extends HTMLElement {
     ElmGizmo.compiler = compiler
   }
 
+  static set selfDataUrl(selfDataUrl: string) {
+    ElmGizmo.selfDataUrl = selfDataUrl
+  }
+
   static get observedAttributes() {
     return ["code", "data"]
   }

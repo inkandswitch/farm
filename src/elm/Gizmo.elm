@@ -8,6 +8,7 @@ import Repo
 type alias Flags =
     { code : String
     , data : String
+    , self : String
     }
 
 
@@ -57,4 +58,7 @@ withThird c ( a, b ) =
 
 render : String -> String -> Html msg
 render code data =
-    Html.node "realm-ui" [ Attr.attribute "code" code, Attr.attribute "data" data ] []
+    Html.node "realm-ui" 
+    [ Attr.attribute "code" code
+    , Attr.attribute "data" data
+    ] []

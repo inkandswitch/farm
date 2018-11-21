@@ -29,6 +29,7 @@ export interface ElmApp {
 export default class ElmGizmo {
   static repo: Repo
   static compiler: Compiler
+  static selfDataUrl: string
 
   handle: Handle<any>
   app: ElmApp
@@ -45,6 +46,7 @@ export default class ElmGizmo {
       flags: {
         data,
         code,
+        self: ElmGizmo.selfDataUrl,
       },
     })
 
