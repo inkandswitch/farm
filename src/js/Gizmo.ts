@@ -26,21 +26,20 @@ export default class GizmoElement extends HTMLElement {
     // this.attachShadow({ mode: "open" })
   }
 
-  get dataUrl(): string {
-    const url = this.getAttribute("data")
-    if (!url) throw new Error(name + " data attribute is required!")
-    return url
+  get dataUrl(): string | null {
+    return this.getAttribute("data") || null
   }
 
-  get codeUrl(): string {
-    const url = this.getAttribute("code")
-    if (!url) throw new Error(name + " code attribute is required!")
-    return url
+  get codeUrl(): string | null {
+    return this.getAttribute("code") || null
   }
 
   connectedCallback() {
-    this.source = ElmGizmo.repo.open(this.codeUrl)
-    ElmGizmo.compiler.add(this.codeUrl)
+    const { codeUrl } = this
+    if (!codeUrl) return
+
+    this.source = ElmGizmo.repo.open(codeUrl)
+    ElmGizmo.compiler.add(codeUrl)
 
     this.source.subscribe(
       whenChanged(getJsSource, source => {
@@ -69,11 +68,15 @@ export default class GizmoElement extends HTMLElement {
   mount(elm: any) {
     // if (!this.shadowRoot) throw new Error("No shadow root! " + this.codeUrl)
 
+    const { codeUrl, dataUrl } = this
+
+    if (!codeUrl || !dataUrl) return
+
     const node = document.createElement("div")
     // this.shadowRoot.appendChild(node)
     this.appendChild(node)
 
-    this.gizmo = new ElmGizmo(node, elm, this.codeUrl, this.dataUrl)
+    this.gizmo = new ElmGizmo(node, elm, codeUrl, dataUrl)
   }
 
   unmount() {
