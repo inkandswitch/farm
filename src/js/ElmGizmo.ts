@@ -35,7 +35,7 @@ export default class ElmGizmo {
   app: ElmApp
   repo: Repo
 
-  constructor(node: HTMLElement, elm: any, code: string, data: string) {
+  constructor(node: HTMLElement | null, elm: any, code: string, data: string) {
     this.repo = ElmGizmo.repo
     this.handle = this.repo.open(data)
 

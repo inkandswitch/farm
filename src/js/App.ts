@@ -11,7 +11,7 @@ import Gizmo from "./Gizmo"
 
 export default class App {
   repo = new Repo("./repo.worker.js")
-  compiler: Compiler = new Compiler(this.repo)
+  compiler: Compiler = new Compiler(this.repo, "./compile.worker.js")
 
   rootDataUrl: string = load("rootDataUrl", () =>
     this.repo.create({

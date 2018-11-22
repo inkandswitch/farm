@@ -1,6 +1,9 @@
 declare const self: DedicatedWorkerGlobalScope
 import { resolve } from "path"
-;(self as any).module.paths.push(resolve("./node_modules"))
+
+if ((self as any).module) {
+  ;(self as any).module.paths.push(resolve("./node_modules"))
+}
 
 import QueuedPort from "./QueuedPort"
 import { ToCompiler, FromCompiler } from "./Msg"
@@ -34,10 +37,11 @@ function work(msg: ToCompiler) {
         }
 
         try {
-          // Compile via Harness.elm if missing `main` function
-          const filename = /^main /.test(source)
-            ? "./.tmp/Source.elm"
-            : "./src/elm/Harness.elm"
+          const filename = /^main /m.test(source)
+            ? "./.tmp/Source.elm" // Compile directly if `main` function exists
+            : /^gizmo /m.test(source)
+              ? "./src/elm/Harness.elm" // Compile via Harness if `gizmo` function exists
+              : "./src/elm/BotHarness.elm" // Otherwise, compile via BotHarness
 
           const out = await elm.compileToString([filename], {
             output: ".js",

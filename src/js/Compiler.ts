@@ -6,12 +6,13 @@ import { whenChanged } from "./Subscription"
 type CompileWorker = QueuedWorker<Msg.ToCompiler, Msg.FromCompiler>
 
 export default class Compiler {
-  worker: CompileWorker = new QueuedWorker("compile.worker.js")
+  worker: CompileWorker
   repo: Repo
   docUrls: Set<String> = new Set()
 
-  constructor(repo: Repo) {
+  constructor(repo: Repo, url: string) {
     this.repo = repo
+    this.worker = new QueuedWorker(url)
 
     this.worker.subscribe(msg => {
       const handle = this.repo.open(msg.url)
@@ -51,6 +52,10 @@ export default class Compiler {
     )
 
     return this
+  }
+
+  terminate() {
+    this.worker.terminate()
   }
 }
 

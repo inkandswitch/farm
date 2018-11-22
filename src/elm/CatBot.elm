@@ -55,4 +55,4 @@ subscriptions { state, doc } =
 
 onDoc : Model State Doc -> ( State, Cmd Msg )
 onDoc { state, doc } =
-    ( state, IO.log (Debug.toString doc) )
+    ( state, IO.log (Doc.asString (Doc.decode doc)) )

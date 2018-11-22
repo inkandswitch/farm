@@ -1,6 +1,9 @@
 declare const self: DedicatedWorkerGlobalScope
 import { resolve } from "path"
-;(self as any).module.paths.push(resolve("./node_modules"))
+
+if ((self as any).module) {
+  ;(self as any).module.paths.push(resolve("./node_modules"))
+}
 
 import raf from "random-access-file"
 import { RepoBackend } from "hypermerge"

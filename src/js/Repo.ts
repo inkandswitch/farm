@@ -1,21 +1,17 @@
 import { RepoFrontend } from "hypermerge/dist/RepoFrontend"
 import * as Link from "./Link"
 import Handle from "hypermerge/dist/Handle"
+import QueuedWorker from "./QueuedWorker"
 
 export default class Repo extends RepoFrontend {
-  worker: Worker
+  worker: QueuedWorker<any, any>
 
   constructor(url: string) {
     super()
-    this.worker = new Worker(url)
+    this.worker = new QueuedWorker(url)
 
-    this.worker.onmessage = event => {
-      this.receive(event.data)
-    }
-
-    this.subscribe(msg => {
-      this.worker.postMessage(msg)
-    })
+    this.worker.subscribe(this.receive)
+    this.subscribe(this.worker.send)
   }
 
   create = (props: object = { fixme__: "orion" }): string => {
@@ -62,5 +58,9 @@ export default class Repo extends RepoFrontend {
     })
 
     return newUrl
+  }
+
+  terminate() {
+    this.worker.terminate()
   }
 }

@@ -19,7 +19,7 @@ export default abstract class QueuedResource<SendMsg, ReceiveMsg> {
     return this
   }
 
-  unsubscribe = (): this => {
+  unsubscribe(): this {
     this.receiveQ.unsubscribe()
     return this
   }
