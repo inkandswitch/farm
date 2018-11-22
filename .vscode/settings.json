@@ -6,5 +6,15 @@
     "editor.insertSpaces": true,
     "editor.tabSize": 4
   },
-  "elm.formatCommand": "./node_modules/.bin/elm-format"
+  "elm.formatCommand": "./node_modules/.bin/elm-format",
+  "hypermergefs.roots": [
+    "hypermerge://DLPW4Kotn3Z9Hz2YQiMW5j97ofccyuhpFiFriJh4P2Si/",
+    "hypermerge://2ukn1Myu2Z6MWF5BvyFMHk3S7q52egryL2XYvfxzu558/",
+    "hypermerge://HSwDVsGzJbpPD88SF7FMNDZgRhuF6SpvQfnVsM6RogTo/",
+    "hypermerge://J3pbWADhHf544gAZ7H7wygwiRip56JGWJ3C7BbTkMfsc/",
+    "hypermerge://9wUHvu5xFTZmdCkmjy9kDqy6CMq5Dn1uu6nEhvnKt4bx/",
+    "hypermerge://3eXxFv6NFKTJCxDmGkhsSsomk1trLAme1YyTnGPeAXLX/",
+    "hypermerge://2f811DqW9VhM4xzASENiQo7oTcvMpGq9irGmewVz6tr3/",
+    "hypermerge://RxJmxe9P7dZrWLcfFYp7VqF7uHf7EGW2xjs7CrCv7xD/"
+  ]
 }
