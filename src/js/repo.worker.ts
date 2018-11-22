@@ -9,7 +9,9 @@ import raf from "random-access-file"
 import { RepoBackend } from "hypermerge"
 import Client from "discovery-cloud/Client"
 
-const repo = new RepoBackend({ storage: raf, path: "./.data" })
+const storagePath = process.env.REPO_ROOT || "./.data"
+
+const repo = new RepoBackend({ storage: raf, path: storagePath })
 ;(self as any).repo = repo
 
 self.onmessage = msg => {

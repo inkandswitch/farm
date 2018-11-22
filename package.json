@@ -17,7 +17,7 @@
     "elm": "elm-typescript-interop",
     "counter": "yarn build --config-name=counter && node dist/counter.js",
     "cat": "yarn build --config-name=doccat && node dist/doccat.js",
-    "realm": "node -r ts-node/register ./src/js/cli/realm.ts",
+    "realm": "cross-env REPO_ROOT=./.data/bots node -r ts-node/register ./src/js/cli/realm.ts",
     "bot": "yarn realm bot"
   },
   "devDependencies": {
@@ -38,6 +38,7 @@
     "@types/webpack-hot-middleware": "^2.16.4",
     "@types/webpack-node-externals": "^1.6.3",
     "concurrently": "^4.0.1",
+    "cross-env": "^5.2.0",
     "electron": "^3.0.7",
     "elm": "^0.19.0-bugfix2",
     "elm-hot-webpack-loader": "^1.0.2",
