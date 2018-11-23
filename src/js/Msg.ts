@@ -1,3 +1,5 @@
+import * as Errors from "./Errors"
+
 export interface Compile {
   t: "Compile"
   url: string
@@ -14,6 +16,7 @@ export interface CompileError {
   t: "CompileError"
   url: string
   error: string
+  errors?: Errors.CompileError[]
 }
 
 export type ToCompiler = Compile

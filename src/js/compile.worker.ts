@@ -10,6 +10,7 @@ import { ToCompiler, FromCompiler } from "./Msg"
 import fs from "fs"
 import elm from "node-elm-compiler"
 import AsyncQueue from "./AsyncQueue"
+import * as Errors from "./Errors"
 
 const port = new QueuedPort<FromCompiler, ToCompiler>(self)
 ;(self as any).port = port
@@ -44,6 +45,7 @@ function work(msg: ToCompiler) {
               : "./src/elm/BotHarness.elm" // Otherwise, compile via BotHarness
 
           const out = await elm.compileToString([filename], {
+            report: "json",
             output: ".js",
           })
 
@@ -57,9 +59,16 @@ function work(msg: ToCompiler) {
           console.log(`Compiled Elm program: ${url}`)
           workQ.take(work)
         } catch (e) {
-          port.send({ t: "CompileError", url, error: e.message })
-          console.log(`Elm compile error: ${url}`)
-          console.error(e.message)
+          console.log(e)
+          const error = e.message
+
+          const errors: Errors.CompileError[] = JSON.parse(
+            error.substring(error.indexOf("\n") + 1),
+          ).errors
+
+          port.send({ t: "CompileError", url, error, errors })
+          errors && errors.forEach && errors.forEach(Errors.log)
+
           workQ.take(work)
         }
       })

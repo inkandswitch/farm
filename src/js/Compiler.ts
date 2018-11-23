@@ -21,6 +21,8 @@ export default class Compiler {
         switch (msg.t) {
           case "Compiled":
             if (state.error) state.error = ""
+            if (state.errors) delete state.errors
+
             if (getJsSource(state) !== msg.output) {
               state["Source.js"] = msg.output
             }
@@ -28,6 +30,7 @@ export default class Compiler {
 
           case "CompileError":
             state.error = msg.error
+            state.errors = msg.errors
             break
         }
       })
