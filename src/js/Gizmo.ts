@@ -47,7 +47,7 @@ export default class GizmoElement extends HTMLElement {
 
     this.source.subscribe(
       whenChanged(getJsSource, source => {
-        this.remount(toElm(eval(source)))
+        this.remount(toElm(source))
       }),
     )
   }
@@ -100,7 +100,11 @@ const getJsSource = (doc: any): string | undefined =>
   doc["Source.js"] || doc["source.js"]
 
 function toElm(code: string) {
-  return Object.values(eval(code))[0]
+  const { warn } = console
+  console.warn = () => {}
+  const app = eval(code)
+  console.warn = warn
+  return Object.values(app)[0]
 }
 
 // function isArrayPush(lhs: any, change: Diff<any, any>) {
