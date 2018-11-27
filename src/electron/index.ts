@@ -14,6 +14,7 @@ function createWindow() {
       sandbox: false,
       nodeIntegration: true,
       nodeIntegrationInWorker: true,
+      nativeWindowOpen: true,
     },
   })
 
