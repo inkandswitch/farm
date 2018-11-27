@@ -47,7 +47,7 @@ export default class GizmoElement extends HTMLElement {
 
     this.source.subscribe(
       whenChanged(getJsSource, source => {
-        this.remount(toElm(source))
+        this.mount(toElm(source))
       }),
     )
   }
@@ -64,12 +64,8 @@ export default class GizmoElement extends HTMLElement {
     this.connectedCallback()
   }
 
-  remount(elm: any) {
-    this.unmount()
-    this.mount(elm)
-  }
-
   mount(elm: any) {
+    this.unmount()
     // if (!this.shadowRoot) throw new Error("No shadow root! " + this.codeUrl)
 
     const { codeUrl, dataUrl } = this
