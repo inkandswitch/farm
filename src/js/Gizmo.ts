@@ -26,8 +26,6 @@ export default class GizmoElement extends HTMLElement {
 
   constructor() {
     super()
-
-    // this.attachShadow({ mode: "open" })
   }
 
   get dataUrl(): string | null {
@@ -66,7 +64,6 @@ export default class GizmoElement extends HTMLElement {
 
   mount(elm: any) {
     this.unmount()
-    // if (!this.shadowRoot) throw new Error("No shadow root! " + this.codeUrl)
 
     const { codeUrl, dataUrl } = this
 
@@ -80,9 +77,6 @@ export default class GizmoElement extends HTMLElement {
   }
 
   unmount() {
-    // if (this.shadowRoot) {
-    //   this.shadowRoot.innerHTML = ""
-    // }
     this.innerHTML = ""
 
     if (this.gizmo) {
@@ -102,7 +96,3 @@ function toElm(code: string) {
   console.warn = warn
   return Object.values(app)[0]
 }
-
-// function isArrayPush(lhs: any, change: Diff<any, any>) {
-//   return change.kind === "A" && change.index === _.get(lhs, change.path).length
-// }
