@@ -61,7 +61,7 @@
     "bs58": "^4.0.1",
     "commander": "^2.19.0",
     "debug": "^4.1.0",
-    "deep-diff": "^1.0.2",
+    "deep-diff": "github:jeffpeterson/diff",
     "express-ws": "^4.0.0",
     "hypercore": "^6.21.0",
     "hypermerge": "github:automerge/hypermerge#hyper3",

@@ -17,4 +17,4 @@ remove : Int -> Array a -> Array a
 remove n arr =
     append
         (slice 0 n arr)
-        (slice (n + 1) -1 arr)
+        (slice (n + 1) (Array.length arr) arr)
