@@ -63,7 +63,7 @@ export const setType = (url: string) => {
 
 export const parts = (url: string): Partial<Spec> => {
   const [, /* url */ scheme, id, query = ""]: Array<string | undefined> =
-    url.match(/^(\w+):\/(\w+)\/(?:\?([&.\w=-]*))?$/) || []
+    url.match(/^(\w+):\/\/?(\w+)\/(?:\?([&.\w=-]*))?$/) || []
   const params = parseParams(query)
   return { scheme, id, params }
 }
