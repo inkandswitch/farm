@@ -36,6 +36,15 @@ export default class GizmoElement extends HTMLElement {
     return this.getAttribute("code") || null
   }
 
+  get attrs(): { [k: string]: string } {
+    const out = {} as { [k: string]: string }
+    for (let i = 0; i < this.attributes.length; i++) {
+      const attr = this.attributes[i]
+      out[attr.name] = attr.value
+    }
+    return out
+  }
+
   connectedCallback() {
     const { codeUrl } = this
     if (!codeUrl) return
@@ -73,7 +82,11 @@ export default class GizmoElement extends HTMLElement {
     // this.shadowRoot.appendChild(node)
     this.appendChild(node)
 
-    this.gizmo = new ElmGizmo(node, elm, codeUrl, dataUrl)
+    this.gizmo = new ElmGizmo(node, elm, {
+      code: codeUrl,
+      data: dataUrl,
+      all: this.attrs,
+    })
   }
 
   unmount() {

@@ -1,7 +1,7 @@
 port module Harness exposing (main)
 
 import Browser
-import Gizmo exposing (Flags, Msg(..))
+import Gizmo exposing (Flags, InputFlags, Msg(..), decodeFlags)
 import Html exposing (Html)
 import Repo
 import Source as S exposing (Doc, State, gizmo)
@@ -25,9 +25,12 @@ type alias Model =
     Gizmo.Model State Doc
 
 
-init : Flags -> ( Model, Cmd Msg )
-init flags =
+init : InputFlags -> ( Model, Cmd Msg )
+init iFlags =
     let
+        flags =
+            decodeFlags iFlags
+
         ( state, doc, cmd ) =
             gizmo.init flags
     in
@@ -79,7 +82,7 @@ view model =
         |> Html.map Custom
 
 
-main : Platform.Program Flags Model Msg
+main : Platform.Program InputFlags Model Msg
 main =
     Browser.element
         { init = init

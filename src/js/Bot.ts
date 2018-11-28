@@ -51,7 +51,14 @@ export default class Bot {
   }
 
   mount(elm: any) {
-    this.gizmo = new ElmGizmo(null, elm, this.codeUrl, this.dataUrl)
+    this.gizmo = new ElmGizmo(null, elm, {
+      code: this.codeUrl,
+      data: this.dataUrl,
+      all: {
+        code: this.codeUrl,
+        data: this.dataUrl,
+      },
+    })
   }
 
   unmount() {

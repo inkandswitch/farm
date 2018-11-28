@@ -27,6 +27,12 @@ export interface ElmApp {
   ports?: Ports
 }
 
+export interface Attributes {
+  code: string
+  data: string
+  all: { [k: string]: string }
+}
+
 export default class ElmGizmo {
   static repo: Repo
   static compiler: Compiler
@@ -36,17 +42,14 @@ export default class ElmGizmo {
   app: ElmApp
   repo: Repo
 
-  constructor(node: HTMLElement | null, elm: any, code: string, data: string) {
+  constructor(node: HTMLElement | null, elm: any, attrs: Attributes) {
     this.repo = ElmGizmo.repo
-    this.handle = this.repo.open(data)
-
-    ElmGizmo.compiler.add(code)
+    this.handle = this.repo.open(attrs.data)
 
     this.app = elm.init({
       node,
       flags: {
-        data,
-        code,
+        ...attrs,
         self: ElmGizmo.selfDataUrl,
       },
     })

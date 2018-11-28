@@ -1,6 +1,6 @@
 port module BotHarness exposing (main)
 
-import Bot exposing (Flags, Msg(..))
+import Bot exposing (Flags, InputFlags, Msg(..), decodeFlags)
 import Repo
 import Source as S exposing (Doc, State, bot)
 
@@ -23,9 +23,12 @@ type alias Model =
     Bot.Model State Doc
 
 
-init : Flags -> ( Model, Cmd Msg )
-init flags =
+init : InputFlags -> ( Model, Cmd Msg )
+init iFlags =
     let
+        flags =
+            decodeFlags iFlags
+
         ( state, doc, cmd ) =
             bot.init flags
     in
@@ -78,7 +81,7 @@ subscriptions model =
         ]
 
 
-main : Platform.Program Flags Model Msg
+main : Platform.Program InputFlags Model Msg
 main =
     Platform.worker
         { init = init

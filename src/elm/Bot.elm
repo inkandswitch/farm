@@ -1,11 +1,25 @@
-module Bot exposing (Flags, Model, Msg(..), Program, create)
+module Bot exposing (Flags, InputFlags, Model, Msg(..), Program, create, decodeFlags)
 
+import Dict exposing (Dict)
+import Json.Decode as Json
 import Repo
+
+
+type alias Attrs =
+    Dict String String
 
 
 type alias Flags =
     { code : String
     , data : String
+    , all : Attrs
+    }
+
+
+type alias InputFlags =
+    { code : String
+    , data : String
+    , all : Json.Value
     }
 
 
@@ -51,3 +65,23 @@ create =
 withThird : c -> ( a, b ) -> ( a, b, c )
 withThird c ( a, b ) =
     ( a, b, c )
+
+
+decodeFlags : InputFlags -> Flags
+decodeFlags fl =
+    { code = fl.code
+    , data = fl.data
+    , all =
+        fl.all
+            |> Json.decodeValue attrsDecoder
+            |> Result.withDefault Dict.empty
+    }
+
+
+attrsDecoder : Json.Decoder Attrs
+attrsDecoder =
+    Json.dict <|
+        Json.oneOf
+            [ Json.string
+            , Json.succeed ""
+            ]
