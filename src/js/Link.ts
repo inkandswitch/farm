@@ -21,7 +21,7 @@ export interface LinkArgs extends Pick<Spec, "id"> {
 }
 
 export const create = ({ id, params }: LinkArgs): string => {
-  return `${SCHEME}://${id}/${params ? createParams(params) : ""}`
+  return `${SCHEME}:/${id}/${params ? createParams(params) : ""}`
 }
 
 export function fromId(id: string): string {
@@ -63,7 +63,7 @@ export const setType = (url: string) => {
 
 export const parts = (url: string): Partial<Spec> => {
   const [, /* url */ scheme, id, query = ""]: Array<string | undefined> =
-    url.match(/^(\w+):\/\/(\w+)\/(?:\?([&.\w=-]*))?$/) || []
+    url.match(/^(\w+):\/(\w+)\/(?:\?([&.\w=-]*))?$/) || []
   const params = parseParams(query)
   return { scheme, id, params }
 }
