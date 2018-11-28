@@ -21,7 +21,7 @@ export interface LinkArgs extends Pick<Spec, "id"> {
 }
 
 export const create = ({ id, params }: LinkArgs): string => {
-  return `${SCHEME}:/${id}/${params ? createParams(params) : ""}`
+  return `${SCHEME}:/${id}${params ? createParams(params) : ""}`
 }
 
 export function fromId(id: string): string {
