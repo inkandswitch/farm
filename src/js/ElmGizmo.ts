@@ -17,6 +17,7 @@ export interface Ports {
   initDoc?: ReceivePort<any>
   saveDoc: ReceivePort<any>
   loadDoc: SendPort<any>
+  command?: ReceivePort<[string, string]>
   repoOut?: ReceivePort<any>
   created?: SendPort<[string, string[]]>
   output?: ReceivePort<string[]>
@@ -63,6 +64,7 @@ export default class ElmGizmo {
     }
     ports.initDoc.subscribe(this.onInit)
     ports.saveDoc.subscribe(this.onSave)
+    ports.command && ports.command.subscribe(this.onCommand)
     ports.repoOut && ports.repoOut.subscribe(this.onRepoOut)
     ports.output && ports.output.subscribe(this.onOutput)
   }
@@ -77,6 +79,10 @@ export default class ElmGizmo {
 
     if (ports.repoOut) {
       ports.repoOut.unsubscribe(this.onRepoOut)
+    }
+
+    if (ports.command) {
+      ports.command.unsubscribe(this.onCommand)
     }
 
     if (ports.output) {
@@ -138,6 +144,14 @@ export default class ElmGizmo {
 
   onOutput = (strs: string[]) => {
     console.log(...strs)
+  }
+
+  onCommand = ([cmd, str]: [string, string]) => {
+    switch (cmd) {
+      case "Copy":
+        ;(<any>navigator).clipboard.writeText(str)
+        break
+    }
   }
 
   close() {

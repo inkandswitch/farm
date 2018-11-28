@@ -1,8 +1,11 @@
-module Gizmo exposing (Flags, Model, Msg(..), Program, element, render, sandbox)
+port module Gizmo exposing (Flags, Model, Msg(..), Program, command, element, render, sandbox)
 
 import Html exposing (Html)
 import Html.Attributes as Attr
 import Repo
+
+
+port command : ( String, String ) -> Cmd msg
 
 
 type alias Flags =
@@ -58,7 +61,8 @@ withThird c ( a, b ) =
 
 render : String -> String -> Html msg
 render code data =
-    Html.node "realm-ui" 
-    [ Attr.attribute "code" code
-    , Attr.attribute "data" data
-    ] []
+    Html.node "realm-ui"
+        [ Attr.attribute "code" code
+        , Attr.attribute "data" data
+        ]
+        []
