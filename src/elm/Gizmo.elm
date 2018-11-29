@@ -1,5 +1,6 @@
 port module Gizmo exposing
     ( Attrs
+    , EmitDetail
     , Flags
     , InputFlags
     , Model
@@ -9,6 +10,8 @@ port module Gizmo exposing
     , command
     , decodeFlags
     , element
+    , emit
+    , onEmit
     , render
     , renderWith
     , sandbox
@@ -17,11 +20,46 @@ port module Gizmo exposing
 import Dict exposing (Dict)
 import Html exposing (Html)
 import Html.Attributes as Attr
+import Html.Events as Events
 import Json.Decode as Json
 import Repo exposing (Url)
 
 
 port command : ( String, String ) -> Cmd msg
+
+
+port emitted : ( String, String ) -> Cmd msg
+
+
+emit : String -> String -> Cmd msg
+emit name value =
+    emitted ( name, value )
+
+
+type alias EmitDetail =
+    { name : String
+    , value : Url
+    , code : Url
+    , data : Url
+    }
+
+
+onEmit : String -> (EmitDetail -> msg) -> Html.Attribute msg
+onEmit name mkMsg =
+    Events.stopPropagationOn name
+        (emitDecoder
+            |> Json.map mkMsg
+            |> Json.map (\msg -> ( msg, True ))
+        )
+
+
+emitDecoder : Json.Decoder EmitDetail
+emitDecoder =
+    Json.map4 EmitDetail
+        (Json.at [ "detail", "name" ] Json.string)
+        (Json.at [ "detail", "value" ] Json.string)
+        (Json.at [ "detail", "code" ] Json.string)
+        (Json.at [ "detail", "data" ] Json.string)
 
 
 type alias Attrs =

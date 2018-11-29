@@ -18,6 +18,7 @@ export interface Ports {
   saveDoc: ReceivePort<any>
   loadDoc: SendPort<any>
   command?: ReceivePort<[string, string]>
+  emitted?: ReceivePort<[string, string]>
   repoOut?: ReceivePort<any>
   created?: SendPort<[string, string[]]>
   output?: ReceivePort<string[]>
@@ -33,6 +34,13 @@ export interface Attributes {
   all: { [k: string]: string }
 }
 
+export interface Detail {
+  name: string
+  value: string
+  code: string
+  data: string
+}
+
 export default class ElmGizmo {
   static repo: Repo
   static compiler: Compiler
@@ -41,10 +49,12 @@ export default class ElmGizmo {
   handle: Handle<any>
   app: ElmApp
   repo: Repo
+  attrs: Attributes
 
   constructor(node: HTMLElement | null, elm: any, attrs: Attributes) {
     this.repo = ElmGizmo.repo
     this.handle = this.repo.open(attrs.data)
+    this.attrs = attrs
 
     this.app = elm.init({
       node,
@@ -60,6 +70,8 @@ export default class ElmGizmo {
     }
   }
 
+  dispatchEvent(e: CustomEvent<Detail>) {}
+
   subscribe(ports: Ports) {
     if (!ports.initDoc) {
       console.error("This looks like an invalid component. Not subscribing.")
@@ -68,6 +80,7 @@ export default class ElmGizmo {
     ports.initDoc.subscribe(this.onInit)
     ports.saveDoc.subscribe(this.onSave)
     ports.command && ports.command.subscribe(this.onCommand)
+    ports.emitted && ports.emitted.subscribe(this.onEmitted)
     ports.repoOut && ports.repoOut.subscribe(this.onRepoOut)
     ports.output && ports.output.subscribe(this.onOutput)
   }
@@ -86,6 +99,10 @@ export default class ElmGizmo {
 
     if (ports.command) {
       ports.command.unsubscribe(this.onCommand)
+    }
+
+    if (ports.emitted) {
+      ports.emitted.unsubscribe(this.onEmitted)
     }
 
     if (ports.output) {
@@ -155,6 +172,18 @@ export default class ElmGizmo {
         ;(<any>navigator).clipboard.writeText(str)
         break
     }
+  }
+
+  onEmitted = ([name, value]: [string, string]) => {
+    const { code, data } = this.attrs
+    const detail = { name, value, code, data }
+    this.dispatchEvent(
+      new CustomEvent(name, {
+        detail,
+        bubbles: true,
+        composed: true,
+      }),
+    )
   }
 
   close() {

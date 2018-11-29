@@ -87,6 +87,8 @@ export default class GizmoElement extends HTMLElement {
       data: dataUrl,
       all: this.attrs,
     })
+
+    this.gizmo.dispatchEvent = e => this.dispatchEvent(e)
   }
 
   unmount() {
