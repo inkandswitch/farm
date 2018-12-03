@@ -1,9 +1,13 @@
 module Chat exposing (Doc, Msg, State, gizmo)
 
+import Css exposing (..)
 import Gizmo exposing (Model)
-import Html exposing (Html, button, div, text, textarea)
-import Html.Attributes exposing (cols, placeholder, rows, style, value)
-import Html.Events exposing (onClick, onInput)
+import Html
+import Html.Styled exposing (..)
+import Html.Styled.Attributes as Attr exposing (autofocus, css, href, placeholder, src, value)
+import Html.Styled.Events exposing (keyCode, on, onBlur, onClick, onInput)
+import Json.Decode as Json
+import List.Extra exposing (groupWhile)
 
 
 gizmo : Gizmo.Program State Doc Msg
@@ -11,108 +15,132 @@ gizmo =
     Gizmo.sandbox
         { init = init
         , update = update
-        , view = view
+        , view = toUnstyled << view
         }
+
+
+{-| Ephemeral state not saved to the doc
+-}
+type alias State =
+    { input : String
+    }
 
 
 type alias Message =
     { author : String
-    , content : String
+    , message : String
     }
 
 
-type alias State =
-    { typing : String
-    , name : String
-    }
-
-
+{-| Document state
+-}
 type alias Doc =
-    { messages : List Message
+    { counter : Int
+    , messages : List Message
     }
 
 
 init : ( State, Doc )
 init =
-    ( { typing = ""
-      , name = "Anonymous"
-      }
-    , { messages = []
+    ( { input = "" }
+    , { counter = 0
+      , messages = []
       }
     )
 
 
+{-| Message type for modifying State and Doc inside update
+-}
 type Msg
-    = SetMessage String
-    | SetName String
-    | Send
+    = Change String
+    | Submit
+    | KeyDown Int
+
+
+onKeyDown : (Int -> msg) -> Attribute msg
+onKeyDown tagger =
+    on "keydown" (Json.map tagger keyCode)
 
 
 update : Msg -> Model State Doc -> ( State, Doc )
-update msg { state, doc } =
+update msg { flags, state, doc } =
     case msg of
-        SetMessage str ->
-            if str |> String.contains "\n" then
-                send state doc
+        Change typing ->
+            ( { state | input = typing }, doc )
+
+        Submit ->
+            ( { state | input = "" }
+            , { doc
+                | messages =
+                    { author = flags.self
+                    , message = state.input
+                    }
+                        :: doc.messages
+              }
+            )
+
+        KeyDown key ->
+            if key == 13 then
+                ( { state | input = "" }
+                , { doc | messages = { author = flags.self, message = state.input } :: doc.messages }
+                )
 
             else
-                ( { state | typing = str }, doc )
-
-        SetName str ->
-            ( { state | name = str }, doc )
-
-        Send ->
-            send state doc
+                ( state, doc )
 
 
-send : State -> Doc -> ( State, Doc )
-send state doc =
-    if String.trim state.typing == "" then
-        ( state, doc )
+avatarGizmo =
+    "hypermerge://9DJcvkXLyRU8KmqvyzhNY3zCpkKXVkHVJ8vBNr6iizGQ/"
 
-    else
-        ( { state | typing = "" }
-        , { doc
-            | messages =
-                { author = state.name
-                , content = state.typing
-                }
-                    :: doc.messages
-          }
-        )
+
+titleGizmo =
+    "hypermerge://E19jZZNm4QceSWwwiZGLtrduFVDwmdtM3PGFAfMMS55S/"
 
 
 view : Model State Doc -> Html Msg
 view { state, doc } =
-    div []
-        [ text "Your name: "
-        , Html.input [ onInput SetName, value state.name ] []
-        , viewMessages doc.messages
-        , Html.hr [] []
-        , textarea [ onInput SetMessage, value state.typing, rows 1, cols 50 ] []
-        , button [ onClick Send ] [ text "Send" ]
+    div [ css [ padding (px 24) ] ]
+        [ div []
+            (groupWhile (\a b -> a.author == b.author)
+                (List.reverse doc.messages)
+                |> List.map viewGroup
+            )
+        , viewInput state
         ]
 
 
-viewMessages : List Message -> Html msg
-viewMessages msgs =
-    case msgs of
-        [] ->
-            div [] [ text "No messages yet..." ]
-
-        _ ->
-            div
-                [ style "display" "flex"
-                , style "flex-direction" "column-reverse"
-                , style "max-height" "400px"
-                , style "overflow" "auto"
-                ]
-                (msgs |> List.map viewMessage)
-
-
-viewMessage : Message -> Html msg
-viewMessage { author, content } =
+viewInput : State -> Html Msg
+viewInput state =
     div []
-        [ Html.b [] [ text author ]
-        , div [] [ text content ]
+        [ input [ onKeyDown KeyDown, onInput Change, value state.input ] []
+        , button [ onClick Submit ] [ text "Send" ]
         ]
+
+
+viewGroup : ( Message, List Message ) -> Html Msg
+viewGroup ( authorMessage, messages ) =
+    div
+        [ css
+            [ displayFlex
+            , flexDirection row
+            , paddingLeft (px 12)
+            , paddingBottom (px 10)
+            ]
+        ]
+        [ div [] [ fromUnstyled (Gizmo.render avatarGizmo authorMessage.author) ]
+        , div [ css [ displayFlex, flexDirection column, paddingLeft (px 12) ] ]
+            [ div [ css [ fontWeight bold, marginBottom (px 5) ] ] [ fromUnstyled (Gizmo.render titleGizmo authorMessage.author) ]
+            , div [] ((authorMessage :: messages) |> List.map viewMessage)
+            ]
+        ]
+
+
+viewMessage : Message -> Html Msg
+viewMessage { message, author } =
+    div
+        [ css
+            [ backgroundColor (hex "")
+            , marginBottom (px 5)
+            ]
+        ]
+        [ text message ]
