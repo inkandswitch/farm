@@ -3,21 +3,22 @@ import * as Link from "./Link"
 import Handle from "hypermerge/dist/Handle"
 import QueuedWorker from "./QueuedWorker"
 
-export default class Repo extends RepoFrontend {
+export default class Repo {
   worker: QueuedWorker<any, any>
+  front: RepoFrontend
 
   constructor(url: string) {
-    super()
+    this.front = new RepoFrontend()
     this.worker = new QueuedWorker(url)
 
-    this.worker.subscribe(this.receive)
-    this.subscribe(this.worker.send)
+    this.worker.subscribe(this.front.receive)
+    this.front.subscribe(this.worker.send)
   }
 
   create = (props: object = { fixme__: "orion" }): string => {
-    const id = super.create()
+    const id = this.front.create()
 
-    super
+    this.front
       .open(id)
       .change((state: any) => {
         Object.assign(state, props)
@@ -28,7 +29,7 @@ export default class Repo extends RepoFrontend {
   }
 
   open = <T>(url: string): Handle<T> => {
-    return super.open(Link.toId(url))
+    return this.front.open(Link.toId(url))
   }
 
   once = <T>(url: string, fn: Function): this => {
@@ -41,7 +42,7 @@ export default class Repo extends RepoFrontend {
   }
 
   change = (url: string, fn: Function): this => {
-    super
+    this.front
       .open(Link.toId(url))
       .change(fn)
       .close()
