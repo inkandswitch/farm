@@ -21,6 +21,7 @@ export default class Compiler {
         switch (msg.t) {
           case "Compiled":
             if (state.error) state.error = ""
+            if (state.hypermergeFsDiagnostics) state.hypermergeFsDiagnostics = null
             if (getJsSource(state) !== msg.output) {
               state["Source.js"] = msg.output
             }
@@ -28,12 +29,37 @@ export default class Compiler {
 
           case "CompileError":
             state.error = msg.error
+            state.hypermergeFsDiagnostics = this.produceDiagnosticsFromMessage(msg.error)
             break
         }
       })
 
       handle.close()
     })
+  }
+
+  produceDiagnosticsFromMessage(error: string) {
+    const jsonString = error.substring(error.indexOf("\n") + 1)
+    const json = JSON.parse(jsonString)
+
+    const nestedProblems = json.errors.map((error: any) => 
+      error.problems.map((problem: any) =>{
+        const messageLines = problem.message.filter( (_: any, idx: number) => (idx % 2 === 0))
+        const message = messageLines.join("\n")
+
+        return {
+          severity: "error",
+          message,
+          startLine: problem.region.start.line,
+          startColumn: problem.region.start.column,
+          endLine: problem.region.end.line,
+          endColumn: problem.region.end.column
+        }
+      })
+    )
+
+    console.log(nestedProblems)
+    return { "Source.elm": [].concat(...nestedProblems) } 
   }
 
   add(url: string): this {
