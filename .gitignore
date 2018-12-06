@@ -1,8 +1,7 @@
 /node_modules
 /elm-stuff
 /dist
-.data
-/.data2
+.data*
 .tmp
 
 .DS_Store
