@@ -37,7 +37,7 @@ program
   .command("create <elmFile>")
   .description("create a realm bot from an elm file")
   .action(filename => {
-    const source = fs.readFileSync("./src/elm/" + filename).toString()
+    const source = fs.readFileSync("./src/elm/examples/" + filename).toString()
     const url = repo.create({
       title: filename + " source",
       "Source.elm": source,
