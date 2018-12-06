@@ -9,6 +9,7 @@ import {
   BrowserWindow,
   MenuItemConstructorOptions,
 } from "electron"
+import contextMenu from "electron-context-menu"
 
 app.on("ready", createWindow)
 
@@ -17,6 +18,8 @@ app.setAsDefaultProtocolClient("realm")
 app.on("open-url", (_event, url) => {
   getWindow().webContents.send("open-url", url)
 })
+
+contextMenu({})
 
 function createWindow(): BrowserWindow {
   const win = new BrowserWindow({
