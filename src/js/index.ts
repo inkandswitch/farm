@@ -13,5 +13,5 @@ Object.assign(self, {
 
 ipcRenderer.on("open-url", (_event: any, url: string) => {
   console.log("Opening url", url)
-  // app.handleUrl(url)
+  app.handleUrl(url)
 })

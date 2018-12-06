@@ -12,6 +12,7 @@ import Gizmo from "./Gizmo"
 export default class App {
   repo = new Repo("./repo.worker.js")
   compiler: Compiler = new Compiler(this.repo, "./compile.worker.js")
+  root: Gizmo
 
   rootDataUrl: string = load("rootDataUrl", () =>
     this.repo.create({
@@ -92,10 +93,14 @@ export default class App {
     `
     document.body.appendChild(style)
 
-    const root = document.createElement("realm-ui")
-    root.setAttribute("code", this.rootCodeUrl)
-    root.setAttribute("data", this.rootDataUrl)
-    document.body.appendChild(root)
+    this.root = document.createElement("realm-ui") as Gizmo
+    this.root.setAttribute("code", this.rootCodeUrl)
+    this.root.setAttribute("data", this.rootDataUrl)
+    document.body.appendChild(this.root)
+  }
+
+  handleUrl(url: string) {
+    this.root.navigateTo(url)
   }
 
   bootstrapWidget(file: string): string {

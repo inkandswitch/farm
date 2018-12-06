@@ -22,6 +22,7 @@ export interface Ports {
   repoOut?: ReceivePort<any>
   created?: SendPort<[string, string[]]>
   output?: ReceivePort<string[]>
+  navigatedUrls?: SendPort<string>
 }
 
 export interface ElmApp {
@@ -124,6 +125,11 @@ export default class ElmGizmo {
     this.app.ports &&
       this.app.ports.created &&
       this.app.ports.created.send([ref, urls])
+  }
+
+  navigateTo(url: string) {
+    const { ports } = this.app
+    ports && ports.navigatedUrls && ports.navigatedUrls.send(url)
   }
 
   onSave = ({ doc, prevDoc }: any) => {

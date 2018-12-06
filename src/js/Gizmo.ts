@@ -71,6 +71,10 @@ export default class GizmoElement extends HTMLElement {
     this.connectedCallback()
   }
 
+  navigateTo(url: string) {
+    this.gizmo && this.gizmo.navigateTo(url)
+  }
+
   mount(elm: any) {
     this.unmount()
 
