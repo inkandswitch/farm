@@ -55,12 +55,11 @@ function work(msg: ToCompiler) {
           `
 
           port.send({ t: "Compiled", url, output })
-          console.log(`Compiled Elm program: ${url}`)
+          console.log(`Elm compile success: ${url}`)
           workQ.take(work)
         } catch (e) {
           port.send({ t: "CompileError", url, error: e.message })
           console.log(`Elm compile error: ${url}`)
-          console.error(e.message)
           workQ.take(work)
         }
       })
