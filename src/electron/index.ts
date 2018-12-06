@@ -6,7 +6,13 @@ import { app, shell, BrowserWindow } from "electron"
 
 app.on("ready", createWindow)
 
-function createWindow() {
+app.setAsDefaultProtocolClient("realm")
+
+app.on("open-url", (_event, url) => {
+  getWindow().webContents.send("open-url", url)
+})
+
+function createWindow(): BrowserWindow {
   const win = new BrowserWindow({
     width: 1200,
     height: 720,
@@ -30,4 +36,14 @@ function createWindow() {
     e.preventDefault()
     shell.openExternal(url)
   })
+
+  return win
+}
+
+function getWindow(): BrowserWindow {
+  return (
+    BrowserWindow.getFocusedWindow() ||
+    BrowserWindow.getAllWindows()[0] ||
+    createWindow()
+  )
 }
