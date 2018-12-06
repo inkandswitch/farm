@@ -75,7 +75,7 @@ export default [
     target: "electron-renderer",
     plugins: [
       new webpack.HotModuleReplacementPlugin({}),
-      new HtmlWebpackPlugin(),
+      new HtmlWebpackPlugin({title: "Realm"}),
     ],
     devServer: {
       hot: true,

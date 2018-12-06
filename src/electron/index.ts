@@ -37,7 +37,6 @@ function createWindow(): BrowserWindow {
 
   console.log(`Opening '${url}'...`)
   win.loadURL(url)
-  win.webContents.openDevTools()
   // win.loadFile("./dist/index.html") // production
 
   win.webContents.on("will-navigate", (e, url) => {
