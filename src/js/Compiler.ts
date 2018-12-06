@@ -44,16 +44,20 @@ export default class Compiler {
 
     const nestedProblems = json.errors.map((error: any) => 
       error.problems.map((problem: any) =>{
-        const messageLines = problem.message.filter( (_: any, idx: number) => (idx % 2 === 0))
-        const message = messageLines.join("\n")
+        const message = problem.message
+          .map((message: any) =>
+            typeof message === 'string'
+              ? message
+              : '' + message.string + '', // VSCode still needs to add formatting
+          ).join('')
 
         return {
           severity: "error",
           message,
-          startLine: problem.region.start.line,
-          startColumn: problem.region.start.column,
-          endLine: problem.region.end.line,
-          endColumn: problem.region.end.column
+          startLine: problem.region.start.line - 1,
+          startColumn: problem.region.start.column - 1,
+          endLine: problem.region.end.line - 1,
+          endColumn: problem.region.end.column - 1
         }
       })
     )
