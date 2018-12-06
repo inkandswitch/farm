@@ -13,6 +13,7 @@ port module Gizmo exposing
     , emit
     , onEmit
     , render
+    , renderWindow
     , renderWith
     , sandbox
     )
@@ -138,6 +139,15 @@ renderWith attrs code data =
             :: attr "data" data
             :: attrs
         )
+        []
+
+
+renderWindow : Url -> Url -> Html msg
+renderWindow code data =
+    Html.node "realm-window"
+        [ attr "code" code
+        , attr "data" data
+        ]
         []
 
 

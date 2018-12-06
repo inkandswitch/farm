@@ -3,6 +3,7 @@ import { readFileSync } from "fs"
 import path from "path"
 import Compiler from "./Compiler"
 import Gizmo from "./Gizmo"
+import GizmoWindow from "./Window"
 
 // make the web worker thread-safe:
 ;(<any>process).dlopen = () => {
@@ -45,6 +46,7 @@ export default class App {
     Gizmo.selfDataUrl = this.selfDataUrl
 
     customElements.define("realm-ui", Gizmo)
+    customElements.define("realm-window", GizmoWindow)
 
     const style = document.createElement("style")
     style.innerHTML = `
