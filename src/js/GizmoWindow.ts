@@ -1,4 +1,6 @@
-export default class WindowElement extends HTMLElement {
+export default class GizmoWindowElement extends HTMLElement {
+  static styleNode?: Node
+
   window : Window | null = null
 
   static get observedAttributes() {
@@ -34,11 +36,13 @@ export default class WindowElement extends HTMLElement {
   }
 
   disconnectedCallback() {
-      // TODO: close window?
+    if (this.window) {
+      this.window.close()
+      this.window = null
+    }
   }
 
   attributeChangedCallback(name: string, _oldValue: string, _newValue: string) {
-      // TODO: should this be here?
     this.disconnectedCallback()
     this.connectedCallback()
   }
@@ -49,25 +53,24 @@ export default class WindowElement extends HTMLElement {
     const { codeUrl, dataUrl } = this
     if (!codeUrl || !dataUrl) return
 
-    // TODO: only look this up once.
-    const styleNode = document.getElementsByTagName('style')[0]
-
     const root = document.createElement("realm-ui")
     root.setAttribute("code", codeUrl)
     root.setAttribute("data", dataUrl)
 
-    this.window = open("","")
-    if (this.window) {
-        styleNode && this.window.document.body.appendChild(styleNode.cloneNode(true))
-        this.window.document.body.appendChild(root)
-        this.window.onbeforeunload = () => {
-            this.setAttribute("closed", "")
-            this.window = null
-            // TODO: remove this element from the dom
-        }
-    }
+    // TODO: use realm url or per-gizmo url once we can auto-focus an already open window.
+    this.window = open("", "")
+    if (!this.window) return
+
+    const body = this.window.document.body
+    GizmoWindowElement.styleNode && body.appendChild(GizmoWindowElement.styleNode.cloneNode(true))
+    body.appendChild(root)
+    this.window.addEventListener('beforeunload', this.onBeforeWindowUnload)
   }
 
-  unmount() {
+  onBeforeWindowUnload = () => {
+    this.window = null
+    // if (this.parentElement) {
+    //   this.parentElement.removeChild(this)
+    // }
   }
 }

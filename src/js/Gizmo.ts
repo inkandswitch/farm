@@ -54,7 +54,7 @@ export default class GizmoElement extends HTMLElement {
 
     this.source.subscribe(
       whenChanged(getJsSource, source => {
-        this.mount(toElm(source))
+        this.mount(this.toElm(source))
       }),
     )
   }
@@ -103,15 +103,24 @@ export default class GizmoElement extends HTMLElement {
       delete this.gizmo
     }
   }
+
+  toElm(code: string) {
+    // TODO: explore using vm.runInNewContext
+    // Get a reference to this element's `window` (which may be different than
+    // the global `window` if the gizmo was launched into its own window) to
+    // ensure Elm javascript type checks are correct.
+    // e.g. When evaluated in window A: `arrayFromWindowB instanceof Array == false`
+    const ourWindow = (this as any).ownerDocument.defaultView
+
+    // Elm logs warnings when being evaled, so temporarily noop `console.warn`
+    const { warn } = ourWindow.console
+    ourWindow.console.warn = () => {}
+    const app = ourWindow.eval(code)
+    ourWindow.console.warn = warn
+    return Object.values(app)[0]
+  }
 }
 
 const getJsSource = (doc: any): string | undefined =>
   doc["Source.js"] || doc["source.js"]
 
-function toElm(code: string) {
-  const { warn } = console
-  console.warn = () => {}
-  const app = eval(code)
-  console.warn = warn
-  return Object.values(app)[0]
-}
