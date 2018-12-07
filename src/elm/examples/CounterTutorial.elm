@@ -240,6 +240,18 @@ steps =
                 ]
             , controls [ prev, nextIf (getCounter state.data >= 9000) ]
             ]
+        , \{ doc } ->
+            [ title "Open your gizmo's code document"
+            , p []
+                [ text "It's time to upgrade this counter. "
+                , text "Open the URL below in VS Code. "
+                , text "Or, click "
+                , a [ href (VsCode.link doc.codeUrl) ]
+                    [ text "here" ]
+                , text " to open it automatically."
+                ]
+            , codeBlock [ a [ href doc.codeUrl ] [ text doc.codeUrl ] ]
+            ]
         , \_ ->
             [ title "Get some Incsight"
             , p []
