@@ -14,9 +14,9 @@ type alias Uri =
     }
 
 
-parse : String -> Result (List DeadEnd) Uri
+parse : String -> Result String Uri
 parse =
-    run uri
+    run uri >> Result.mapError deadEndsToString
 
 
 uri : Parser Uri
@@ -59,3 +59,38 @@ key =
     getChompedString <|
         succeed ()
             |. chompUntilEndOr "/"
+
+
+deadEndsToString : List DeadEnd -> String
+deadEndsToString =
+    deadEndsToStrings >> String.join "\n"
+
+
+deadEndsToStrings : List DeadEnd -> List String
+deadEndsToStrings =
+    List.map deadEndToString
+
+
+deadEndToString : DeadEnd -> String
+deadEndToString dead =
+    case dead.problem of
+        Expecting str ->
+            "Expecting '" ++ str ++ "'"
+
+        ExpectingSymbol str ->
+            "Expecting symbol: " ++ str
+
+        ExpectingKeyword str ->
+            "Expecting a keyword: " ++ str
+
+        ExpectingEnd ->
+            "Expecting the end of input"
+
+        UnexpectedChar ->
+            "Unexpected character in input"
+
+        Problem str ->
+            str
+
+        _ ->
+            "Parsing error"

@@ -11,7 +11,6 @@ create id =
 getId : String -> Result String String
 getId str =
     parse str
-        |> Result.mapError (always "Parsing failed")
         |> Result.andThen checkScheme
         |> Result.andThen extractId
         |> Result.andThen checkId

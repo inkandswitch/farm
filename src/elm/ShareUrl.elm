@@ -25,7 +25,7 @@ parse url =
 parseIds : String -> Result String { codeId : String, dataId : String }
 parseIds url =
     UriParser.parse url
-        |> Result.mapError (always "parsing failed")
+        |> Result.andThen checkScheme
         |> Result.andThen extractIds
 
 
@@ -45,3 +45,13 @@ idPair codeId dataId =
 fromIds : String -> String -> String
 fromIds codeId dataId =
     "realm://" ++ codeId ++ "/" ++ dataId
+
+
+checkScheme : Uri -> Result String Uri
+checkScheme uri =
+    case uri.scheme of
+        "realm" ->
+            Ok uri
+
+        _ ->
+            Err "scheme must be 'realm'"
