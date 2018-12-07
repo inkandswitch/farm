@@ -86,13 +86,16 @@ export default class GizmoElement extends HTMLElement {
     // this.shadowRoot.appendChild(node)
     this.appendChild(node)
 
-    this.gizmo = new ElmGizmo(node, elm, {
-      code: codeUrl,
-      data: dataUrl,
-      all: this.attrs,
-    })
+    ElmGizmo.repo.once(dataUrl, (doc: any) => {
+      this.gizmo = new ElmGizmo(node, elm, {
+        code: codeUrl,
+        data: dataUrl,
+        doc,
+        all: this.attrs,
+      })
 
-    this.gizmo.dispatchEvent = e => this.dispatchEvent(e)
+      this.gizmo.dispatchEvent = e => this.dispatchEvent(e)
+    })
   }
 
   unmount() {

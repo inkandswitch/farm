@@ -1,5 +1,6 @@
-port module Repo exposing (Ref, Url, clone, create, created)
+port module Repo exposing (Ref, Url, clone, create, created, docs, open, rawDocs)
 
+import Doc exposing (Doc, RawDoc)
 import Json.Decode as D
 import Json.Encode as E
 import Result
@@ -14,17 +15,31 @@ type alias Ref =
     String
 
 
+port created : (( Ref, List Url ) -> msg) -> Sub msg
+
+
+port rawDocs : (( Url, RawDoc ) -> msg) -> Sub msg
+
+
+docs : (( Url, Doc ) -> msg) -> Sub msg
+docs mkMsg =
+    rawDocs (Tuple.mapSecond Doc.decode)
+        |> Sub.map mkMsg
+
+
 create : Ref -> Int -> Cmd msg
 create ref n =
     send <| Create ref n
 
 
+open : Url -> Cmd msg
+open url =
+    send <| Open url
+
+
 clone : Ref -> Url -> Cmd msg
 clone ref url =
     send <| Clone ref url
-
-
-port created : (( Ref, List Url ) -> msg) -> Sub msg
 
 
 
@@ -52,7 +67,8 @@ port repoOut : E.Value -> Cmd msg
 
 type OutMsg
     = Create Ref Int -- String ref and number of docs to create
-    | Clone Ref Url -- String ref and url to
+    | Clone Ref Url -- String ref and url of document
+    | Open Url
 
 
 encodeOut : OutMsg -> E.Value
@@ -69,6 +85,12 @@ encodeOut msg =
             E.object
                 [ ( "t", E.string "Clone" )
                 , ( "ref", E.string ref )
+                , ( "url", E.string url )
+                ]
+
+        Open url ->
+            E.object
+                [ ( "t", E.string "Open" )
                 , ( "url", E.string url )
                 ]
 

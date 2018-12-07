@@ -1,4 +1,4 @@
-module Doc exposing (Doc(..), RawDoc, Text, Value(..), asString, debug, decode, decoder, empty, encode, encodeValue, valueAsString, valueDecoder)
+module Doc exposing (Doc, RawDoc, Text, Value(..), asString, debug, decode, decoder, empty, encode, encodeValue, get, rawEmpty, valueAsString, valueDecoder)
 
 import Dict exposing (Dict)
 import Json.Decode as D
@@ -16,10 +16,11 @@ type Value
     | Dict (Dict String Value)
     | List (List Value)
     | Text Text
+    | Null
 
 
-type Doc
-    = Doc (Dict String Value)
+type alias Doc =
+    Dict String Value
 
 
 type alias RawDoc =
@@ -28,10 +29,31 @@ type alias RawDoc =
 
 empty : Doc
 empty =
-    Doc Dict.empty
+    Dict.empty
+
+
+rawEmpty : RawDoc
+rawEmpty =
+    E.null
+
+
+get : String -> Doc -> Value
+get k =
+    Dict.get k >> Maybe.withDefault Null
 
 
 
+-- at : List String -> Doc -> Value
+-- at keys doc =
+--     Dict.get k >> Maybe.withDefault Null
+-- atV : List String -> Value -> Value
+-- atV path val =
+--     case path of
+--         [] ->
+--             val
+--         k :: rest ->
+--     case val of
+--         Dict dict ->
 -- Debug
 
 
@@ -41,7 +63,7 @@ debug doc =
 
 
 asString : Doc -> String
-asString (Doc doc) =
+asString doc =
     Dict doc |> valueAsString
 
 
@@ -66,13 +88,16 @@ valueAsString val =
         Text x ->
             x |> Debug.toString
 
+        Null ->
+            "Null"
+
 
 
 -- Encoders
 
 
-encode : Doc -> E.Value
-encode (Doc doc) =
+encode : Doc -> RawDoc
+encode doc =
     Dict doc |> encodeValue
 
 
@@ -97,19 +122,22 @@ encodeValue val =
         Text x ->
             x |> E.list E.string
 
+        Null ->
+            E.null
+
 
 
 -- Decoders
 
 
-decode : D.Value -> Doc
+decode : RawDoc -> Doc
 decode =
     D.decodeValue decoder >> Result.withDefault empty
 
 
 decoder : D.Decoder Doc
 decoder =
-    D.dict valueDecoder |> D.map Doc
+    D.dict valueDecoder
 
 
 valueDecoder : D.Decoder Value
@@ -121,4 +149,5 @@ valueDecoder =
         , D.lazy (\_ -> D.dict valueDecoder |> D.map Dict)
         , D.lazy (\_ -> D.list valueDecoder |> D.map List)
         , D.list D.string |> D.map Text
+        , D.succeed Null
         ]

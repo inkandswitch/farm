@@ -13,17 +13,23 @@ export interface SendPort<T> {
   send(msg: T): void
 }
 
-export interface Ports {
+export interface ReceivePorts {
   initDoc?: ReceivePort<any>
   saveDoc: ReceivePort<any>
-  loadDoc: SendPort<any>
   command?: ReceivePort<[string, string]>
   emitted?: ReceivePort<[string, string]>
   repoOut?: ReceivePort<any>
-  created?: SendPort<[string, string[]]>
   output?: ReceivePort<string[]>
+}
+
+export interface SendPorts {
+  loadDoc: SendPort<any>
+  created?: SendPort<[string, string[]]>
+  rawDocs?: SendPort<[string, any]>
   navigatedUrls?: SendPort<string>
 }
+
+export type Ports = ReceivePorts & SendPorts
 
 export interface ElmApp {
   ports?: Ports
@@ -32,6 +38,7 @@ export interface ElmApp {
 export interface Attributes {
   code: string
   data: string
+  doc: any
   all: { [k: string]: string }
 }
 
@@ -51,11 +58,13 @@ export default class ElmGizmo {
   app: ElmApp
   repo: Repo
   attrs: Attributes
+  disposables: Array<() => void>
 
   constructor(node: HTMLElement | null, elm: any, attrs: Attributes) {
     this.repo = ElmGizmo.repo
     this.handle = this.repo.open(attrs.data)
     this.attrs = attrs
+    this.disposables = []
 
     this.app = elm.init({
       node,
@@ -65,71 +74,59 @@ export default class ElmGizmo {
       },
     })
 
-    if (this.app.ports) {
-      // console.log("ports", this.app.ports)
-      this.subscribe(this.app.ports)
-    }
+    this.subscribe()
   }
 
   dispatchEvent(e: CustomEvent<Detail>) {}
 
-  subscribe(ports: Ports) {
-    if (!ports.initDoc) {
-      console.error("This looks like an invalid component. Not subscribing.")
-      return
-    }
-    ports.initDoc.subscribe(this.onInit)
-    ports.saveDoc.subscribe(this.onSave)
-    ports.command && ports.command.subscribe(this.onCommand)
-    ports.emitted && ports.emitted.subscribe(this.onEmitted)
-    ports.repoOut && ports.repoOut.subscribe(this.onRepoOut)
-    ports.output && ports.output.subscribe(this.onOutput)
+  subscribeTo<T>(port: ReceivePort<T> | undefined, fn: (msg: T) => void): void {
+    if (!port) return
+    port.subscribe(fn)
+    this.disposables.push(() => port.unsubscribe(fn))
   }
 
-  unsubscribe(ports: Ports) {
-    if (!ports.initDoc) {
-      console.error("This looks like an invalid component. Not unsubscribing.")
-      return
-    }
-    ports.initDoc.unsubscribe(this.onInit)
-    ports.saveDoc.unsubscribe(this.onSave)
+  subscribe() {
+    const { ports } = this.app
+    if (!ports) return
 
-    if (ports.repoOut) {
-      ports.repoOut.unsubscribe(this.onRepoOut)
-    }
-
-    if (ports.command) {
-      ports.command.unsubscribe(this.onCommand)
-    }
-
-    if (ports.emitted) {
-      ports.emitted.unsubscribe(this.onEmitted)
-    }
-
-    if (ports.output) {
-      ports.output.unsubscribe(this.onOutput)
-    }
+    this.subscribeTo(ports.initDoc, this.onInit)
+    this.subscribeTo(ports.saveDoc, this.onSave)
+    this.subscribeTo(ports.command, this.onCommand)
+    this.subscribeTo(ports.emitted, this.onEmitted)
+    this.subscribeTo(ports.repoOut, this.onRepoOut)
+    this.subscribeTo(ports.output, this.onOutput)
   }
 
-  sendDoc(doc: any) {
-    if (this.app.ports) {
+  withPort<K extends keyof Ports>(name: K, fn: (port: Ports[K]) => void) {
+    const port = this.app.ports && this.app.ports[name]
+    if (port) fn(port)
+  }
+
+  send<T>(msg: T): ((port?: SendPort<T>) => void) {
+    return port => {
+      if (!port) return
       try {
-        this.app.ports.loadDoc.send(doc)
+        port.send(msg)
       } catch (e) {
-        console.error("Trying to send invalid doc to Gizmo", doc)
+        console.error("Trying to send invalid message to port", msg)
       }
     }
   }
 
+  sendDoc(doc: any) {
+    this.withPort("loadDoc", this.send(doc))
+  }
+
   sendCreated(ref: string, urls: string[]) {
-    this.app.ports &&
-      this.app.ports.created &&
-      this.app.ports.created.send([ref, urls])
+    this.withPort("created", this.send([ref, urls]))
+  }
+
+  sendOpened(url: string, doc: any) {
+    this.withPort("rawDocs", this.send([url, doc]))
   }
 
   navigateTo(url: string) {
-    const { ports } = this.app
-    ports && ports.navigatedUrls && ports.navigatedUrls.send(url)
+    this.withPort("navigatedUrls", this.send(url))
   }
 
   onSave = ({ doc, prevDoc }: any) => {
@@ -165,6 +162,17 @@ export default class ElmGizmo {
       case "Clone":
         const url = this.repo.clone(msg.url)
         this.sendCreated(msg.ref, [url])
+        break
+
+      case "Open":
+        const handle = this.repo.open(msg.url)
+
+        this.disposables.push(() => handle.close())
+
+        handle.subscribe(doc => {
+          this.sendOpened(msg.url, doc)
+        })
+        break
     }
   }
 
@@ -194,9 +202,9 @@ export default class ElmGizmo {
 
   close() {
     this.handle.close()
-    if (this.app.ports) {
-      this.unsubscribe(this.app.ports)
-    }
+
+    this.disposables.forEach(d => d())
+    this.disposables = []
   }
 }
 

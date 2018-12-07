@@ -16,14 +16,17 @@ port module Gizmo exposing
     , renderWindow
     , renderWith
     , sandbox
+    , send
     )
 
 import Dict exposing (Dict)
+import Doc
 import Html exposing (Html)
 import Html.Attributes as Attr
 import Html.Events as Events
 import Json.Decode as Json
 import Repo exposing (Url)
+import Task
 
 
 port command : ( String, String ) -> Cmd msg
@@ -71,6 +74,7 @@ type alias InputFlags =
     { code : Url
     , data : Url
     , self : Url
+    , doc : Doc.RawDoc
     , all : Json.Value
     }
 
@@ -79,6 +83,8 @@ type alias Flags =
     { code : Url
     , data : Url
     , self : Url
+    , doc : Doc.Doc
+    , rawDoc : Doc.RawDoc
     , all : Attrs
     }
 
@@ -161,6 +167,8 @@ decodeFlags fl =
     { code = fl.code
     , data = fl.data
     , self = fl.self
+    , doc = fl.doc |> Doc.decode
+    , rawDoc = fl.doc
     , all =
         fl.all
             |> Json.decodeValue attrsDecoder
@@ -175,3 +183,8 @@ attrsDecoder =
             [ Json.string
             , Json.succeed ""
             ]
+
+
+send : msg -> Cmd msg
+send =
+    Task.succeed >> Task.perform identity

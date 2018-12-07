@@ -20,9 +20,12 @@ export default class App {
       title: "Navigator data",
       history: [
         {
-          code: this.bootstrapWidget("CreateExample.elm"),
+          code: this.bootstrapWidget("CounterTutorial.elm"),
           data: this.repo.create({
-            title: "CreateExample data",
+            title: "CounterTutorial data",
+            step: 1,
+            codeUrl: this.bootstrapWidget("Counter.elm"),
+            dataUrl: this.repo.create({ title: "Counter data" }),
           }),
         },
       ],
