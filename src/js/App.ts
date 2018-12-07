@@ -16,12 +16,20 @@ export default class App {
 
   rootDataUrl: string = load("rootDataUrl", () =>
     this.repo.create({
-      title: "CreateExample data",
+      title: "Navigator data",
+      history: [
+        {
+          code: this.bootstrapWidget("CreateExample.elm"),
+          data: this.repo.create({
+            title: "CreateExample data",
+          }),
+        },
+      ],
     }),
   )
 
   rootCodeUrl: string = load("rootCodeUrl", () =>
-    this.bootstrapWidget("CreateExample.elm"),
+    this.bootstrapWidget("Navigator.elm"),
   )
 
   selfDataUrl: string = load("selfDataUrl", () =>
@@ -112,7 +120,7 @@ export default class App {
 }
 
 function sourceFor(name: string) {
-  return readFileSync(path.resolve(`src/elm/${name}`)).toString()
+  return readFileSync(path.resolve(`src/elm/examples/${name}`)).toString()
 }
 
 function load(key: string, def: () => string): string {

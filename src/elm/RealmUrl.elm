@@ -1,4 +1,4 @@
-module ShareUrl exposing (create, fromIds, parse, parseIds)
+module RealmUrl exposing (create, fromIds, parse, parseIds)
 
 import Link
 import UriParser exposing (Uri)
