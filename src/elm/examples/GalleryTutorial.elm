@@ -1,4 +1,4 @@
-module Tutorial exposing (Doc, Msg, State, gizmo)
+module GalleryTutorial exposing (Doc, Msg, State, gizmo)
 
 import Css exposing (..)
 import Gizmo exposing (Model)
