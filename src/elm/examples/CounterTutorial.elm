@@ -8,6 +8,7 @@ import Html.Styled as Html exposing (Html, a, br, button, div, h1, h2, p, pre, t
 import Html.Styled.Attributes as Attr exposing (css, href)
 import Html.Styled.Events exposing (onClick)
 import Json.Decode as D
+import RealmUrl
 import Repo
 import VsCode
 
@@ -87,7 +88,7 @@ update msg { state, doc } =
             ( state, doc, Cmd.none )
 
         Next ->
-            ( state, { doc | step = min stepCount (doc.step + 1) }, Cmd.none )
+            ( state, { doc | step = min maxStep (doc.step + 1) }, Cmd.none )
 
         Prev ->
             ( state, { doc | step = max 0 (doc.step - 1) }, Cmd.none )
@@ -101,11 +102,7 @@ update msg { state, doc } =
         DataChanged d ->
             ( { state | data = d }
             , doc
-            , if doc.step == 1 && getCounter d >= 10 then
-                Gizmo.send Next
-
-              else
-                Cmd.none
+            , Cmd.none
             )
 
 
@@ -125,7 +122,7 @@ subscriptions { doc } =
 
 
 view : Model State Doc -> Html Msg
-view ({ doc } as model) =
+view ({ doc, state } as model) =
     div
         [ css
             [ property "display" "grid"
@@ -153,24 +150,25 @@ view ({ doc } as model) =
                 , property "transition" "all 500ms"
                 ]
             ]
-            (viewStep model)
+            [ viewError state
+            , viewStep model
+            ]
         ]
 
 
-viewStep : Model State Doc -> List (Html Msg)
+viewStep : Model State Doc -> Html Msg
 viewStep model =
     case steps |> Array.get model.doc.step of
         Just stepFn ->
-            stepFn model
+            div [] <| stepFn model
 
         Nothing ->
-            [ controls [ prev ]
-            ]
+            controls [ prev, next ]
 
 
-stepCount : Int
-stepCount =
-    Array.length steps
+maxStep : Int
+maxStep =
+    Array.length steps - 1
 
 
 steps : Array (Model State Doc -> List (Html Msg))
@@ -186,10 +184,10 @@ steps =
             , p []
                 [ text "Your gizmo's journey begins above."
                 , text "Your counter is currently at "
-                , code <| String.fromInt <| getCounter state.data
+                , viewCounter state
                 , text ". Click the counter until it reaches 10 to continue."
                 ]
-            , controls [ prev ]
+            , controls [ prev, nextIf (getCounter state.data >= 10) ]
             ]
         , \{ doc } ->
             [ title "Download the Hypermerge VS Code extension"
@@ -232,66 +230,82 @@ steps =
                 ]
             , controls [ prev, next ]
             ]
-        , \_ ->
+        , \{ state } ->
             [ title "Edit your gizmo's data"
             , p []
                 [ text "You can find your documents in VS Code's Explorer view, below your files. "
                 , text "You may have to expand the section labeled 'HypermergeFS'. "
                 , text "Select the document titled 'Counter data'. "
+                , text "To continue, set the \"counter\" value to over 9000."
+                ]
+            , controls [ prev, nextIf (getCounter state.data >= 9000) ]
+            ]
+        , \_ ->
+            [ title "Get some Incsight"
+            , p []
+                [ text "Find the first line of the 'update' function: "
+                , code "case msg of"
+                , text ". Change that line to "
+                , code "case Debug.log \"msg\" msg of"
+                , text ". Open the console and bask in the glory of Inc."
                 ]
             , controls [ prev, next ]
             ]
         , \_ ->
-            [ title "TODO: Add an onClick to each image"
+            [ title "Inc & Switch"
             , p []
-                [ text "add "
-                , code "| Clicked String"
-                , text " to the Msg type."
-                , text "add no-op `Clicked url ->` to `update`"
-                , text "perhaps Debug.log 'msg' msg"
+                [ text "Let's add a way to decrement the counter. "
+                , text "First, let's add a "
+                , code "Dec"
+                , text " variant to our "
+                , code "Msg"
+                , text " type: "
+                , codeBlock
+                    [ text "type Msg\n    = Inc\n    | Dec"
+                    ]
                 ]
             , controls [ prev, next ]
             ]
         , \_ ->
-            [ title "TODO: Store a `selected` image"
+            [ title "Errors!"
             , p []
-                [ text "Add `selected : Maybe String` to `State`. "
-                , text "set `selected` in `update`. "
-                , text "Display the `selected` url in `view`"
+                [ text "We added a new variant, but we aren't handling it in our case expression. "
+                , text "Duplicate the Inc branch, and update it for Dec. "
+                , codeBlock
+                    [ text "No sample code for you!"
+                    ]
                 ]
             , controls [ prev, next ]
             ]
         , \_ ->
-            [ title "TODO: Display actual image using Gizmo.render"
+            [ title "TODO: Add a decrement button"
             , p []
                 []
             , controls [ prev, next ]
             ]
-        , \_ ->
-            [ title "TODO: Add 'esc' keyboard handling to deselect"
+        , \{ doc } ->
+            [ title "Done!"
             , p []
-                []
-            , controls [ prev, next ]
-            ]
-        , \_ ->
-            [ title "TODO: Add lightbox css styles"
-            , p []
-                []
-            , controls [ prev, next ]
-            ]
-        , \_ ->
-            [ title "TODO: Add a 'shield' div to hide lightbox on click"
-            , p []
-                []
-            , controls [ prev, next ]
-            ]
-        , \_ ->
-            [ title "TODO: Add your gizmo to launcher"
-            , p []
-                []
-            , controls [ prev, next ]
+                [ text "Your counter gizmo is done! "
+                , text "Copy this handy Realm url to link your friends and "
+                , text "family pets directly to your gizmo."
+                , case RealmUrl.create { data = doc.dataUrl, code = doc.codeUrl } of
+                    Ok url ->
+                        codeBlock
+                            [ a [ href url ] [ text url ]
+                            ]
+
+                    Err err ->
+                        text <| "Uh oh, something went wrong: " ++ err
+                ]
+            , controls [ prev ]
             ]
         ]
+
+
+viewCounter : State -> Html Msg
+viewCounter =
+    code << String.fromInt << getCounter << .data
 
 
 getCounter : Doc.RawDoc -> Int
@@ -299,6 +313,24 @@ getCounter data =
     data
         |> D.decodeValue (D.field "counter" D.int)
         |> Result.withDefault 0
+
+
+viewError : State -> Html Msg
+viewError state =
+    if hasError state.code then
+        div [ css [ color (hex "f00") ] ]
+            [ text "Yikes! Looks like your gizmo has a syntax error. Check the source in VSCode."
+            ]
+
+    else
+        text ""
+
+
+hasError : Doc.RawDoc -> Bool
+hasError codeDoc =
+    codeDoc
+        |> D.decodeValue (D.field "hypermergeFsDiagnostics" (D.succeed True))
+        |> Result.withDefault False
 
 
 codeBlock : List (Html msg) -> Html msg
@@ -360,6 +392,15 @@ next =
             ]
         ]
         [ text "Continue" ]
+
+
+nextIf : Bool -> Html Msg
+nextIf b =
+    if b then
+        next
+
+    else
+        text ""
 
 
 controls : List (Html msg) -> Html msg
