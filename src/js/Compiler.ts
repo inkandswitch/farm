@@ -20,8 +20,9 @@ export default class Compiler {
       handle.change((state: any) => {
         switch (msg.t) {
           case "Compiled":
-            if (state.error) state.error = ""
-            if (state.hypermergeFsDiagnostics) state.hypermergeFsDiagnostics = null
+            delete state.error
+            delete state.hypermergeFsDiagnostics
+
             if (getJsSource(state) !== msg.output) {
               state["Source.js"] = msg.output
             }
@@ -29,7 +30,10 @@ export default class Compiler {
 
           case "CompileError":
             state.error = msg.error
-            state.hypermergeFsDiagnostics = this.produceDiagnosticsFromMessage(msg.error)
+
+            state.hypermergeFsDiagnostics = this.produceDiagnosticsFromMessage(
+              msg.error,
+            )
             break
         }
       })
@@ -42,14 +46,14 @@ export default class Compiler {
     const jsonString = error.substring(error.indexOf("\n") + 1)
     const json = JSON.parse(jsonString)
 
-    const nestedProblems = json.errors.map((error: any) => 
-      error.problems.map((problem: any) =>{
+    const nestedProblems = json.errors.map((error: any) =>
+      error.problems.map((problem: any) => {
         const message = problem.message
-          .map((message: any) =>
-            typeof message === 'string'
-              ? message
-              : '' + message.string + '', // VSCode still needs to add formatting
-          ).join('')
+          .map(
+            (message: any) =>
+              typeof message === "string" ? message : "" + message.string + "", // VSCode still needs to add formatting
+          )
+          .join("")
 
         return {
           severity: "error",
@@ -57,13 +61,13 @@ export default class Compiler {
           startLine: problem.region.start.line - 1,
           startColumn: problem.region.start.column - 1,
           endLine: problem.region.end.line - 1,
-          endColumn: problem.region.end.column - 1
+          endColumn: problem.region.end.column - 1,
         }
-      })
+      }),
     )
 
     console.log(nestedProblems)
-    return { "Source.elm": [].concat(...nestedProblems) } 
+    return { "Source.elm": [].concat(...nestedProblems) }
   }
 
   add(url: string): this {
