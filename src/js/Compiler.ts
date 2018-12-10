@@ -76,11 +76,12 @@ export default class Compiler {
     this.docUrls.add(url)
 
     this.repo.open(url).subscribe(
-      whenChanged(getElmSource, source => {
+      whenChanged(getElmSource, (source, doc) => {
         this.worker.send({
           t: "Compile",
           url,
           source,
+          debug: doc.debug,
         })
       }),
     )

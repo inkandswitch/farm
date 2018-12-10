@@ -7,6 +7,9 @@
   "author": "Jeff Peterson <jeff@yak.sh>",
   "license": "MIT",
   "private": true,
+  "workspaces": [
+    "src/vscode"
+  ],
   "scripts": {
     "start": "concurrently 'yarn server' 'sleep 3 && yarn start-app'",
     "server": "node -r ts-node/register ./src/server",

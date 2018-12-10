@@ -1,0 +1,25 @@
+{
+  "name": "realm",
+  "version": "0.0.1",
+  "displayName": "Realm",
+  "publisher": "inkandswitch",
+  "description": "An extension into Realm.",
+  "scripts": {
+    "local": "ln -s `realpath .` ~/.vscode/extensions/"
+  },
+  "extensionDependencies": [
+    "inkandswitch.hypermerge"
+  ],
+  "engines": {
+    "vscode": "^1.29.1"
+  },
+  "main": "dist/index.js",
+  "repository": "https://github.com/inkandswitch/realm.git",
+  "license": "MIT",
+  "private": false,
+  "devDependencies": {
+    "@types/node": "^10.12.12",
+    "typescript": "^3.2.2",
+    "vscode": "^1.1.26"
+  }
+}

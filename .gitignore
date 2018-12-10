@@ -1,4 +1,5 @@
 /node_modules
+/src/vscode/node_modules
 /elm-stuff
 /dist
 .data*

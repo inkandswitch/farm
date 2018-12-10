@@ -45,7 +45,8 @@ function work(msg: ToCompiler) {
 
           const out = await elm.compileToString([filename], {
             output: ".js",
-            report: "json"
+            report: "json",
+            debug: msg.debug,
           })
 
           const output = `
