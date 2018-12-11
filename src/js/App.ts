@@ -2,8 +2,8 @@ import Repo from "./Repo"
 import { readFileSync } from "fs"
 import path from "path"
 import Compiler from "./Compiler"
-import Gizmo from "./Gizmo"
-import GizmoWindow from "./GizmoWindow"
+import * as Gizmo from "./Gizmo"
+import * as GizmoWindow from "./GizmoWindow"
 
 // make the web worker thread-safe:
 ;(<any>process).dlopen = () => {
@@ -13,7 +13,7 @@ import GizmoWindow from "./GizmoWindow"
 export default class App {
   repo = new Repo("./repo.worker.js")
   compiler: Compiler = new Compiler(this.repo, "./compile.worker.js")
-  root: Gizmo
+  root: any
 
   rootDataUrl: string = load("rootDataUrl", () =>
     this.repo.create({
@@ -44,12 +44,12 @@ export default class App {
 
   constructor() {
     ;(self as any).repo = this.repo
-    Gizmo.repo = this.repo
-    Gizmo.compiler = this.compiler
-    Gizmo.selfDataUrl = this.selfDataUrl
+    Gizmo.setRepo(this.repo)
+    Gizmo.setCompiler(this.compiler)
+    Gizmo.setSelfDataUrl(this.selfDataUrl)
 
-    customElements.define("realm-ui", Gizmo)
-    customElements.define("realm-window", GizmoWindow)
+    customElements.define("realm-ui", Gizmo.constructorForWindow(window))
+    customElements.define("realm-window", GizmoWindow.constructorForWindow(window))
 
     const style = document.createElement("style")
     style.innerHTML = `
@@ -108,10 +108,9 @@ export default class App {
         display: contents;
       }
     `
-    GizmoWindow.styleNode = style.cloneNode(true)
     document.body.appendChild(style)
 
-    this.root = document.createElement("realm-ui") as Gizmo
+    this.root = document.createElement("realm-ui")
     this.root.setAttribute("code", this.rootCodeUrl)
     this.root.setAttribute("data", this.rootDataUrl)
     document.body.appendChild(this.root)
