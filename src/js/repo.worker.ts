@@ -7,7 +7,7 @@ if ((self as any).module) {
 
 import raf from "random-access-file"
 import { RepoBackend } from "hypermerge"
-import Client from "discovery-cloud/Client"
+const Client = require("discovery-swarm")
 
 const storagePath = process.env.REPO_ROOT || "./.data"
 
@@ -26,6 +26,5 @@ repo.replicate(
   new Client({
     id: repo.id,
     stream: repo.stream,
-    url: "wss://discovery-cloud.herokuapp.com",
   }),
 )

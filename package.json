@@ -65,6 +65,7 @@
     "commander": "^2.19.0",
     "debug": "^4.1.0",
     "deep-diff": "github:jeffpeterson/diff",
+    "discovery-swarm": "^5.1.2",
     "electron-context-menu": "^0.10.1",
     "express-ws": "^4.0.0",
     "hypercore": "^6.21.0",
