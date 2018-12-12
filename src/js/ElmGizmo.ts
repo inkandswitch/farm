@@ -2,7 +2,7 @@ import { defaults, times } from "lodash"
 import { observableDiff, applyChange } from "deep-diff"
 import Repo from "./Repo"
 import Compiler from "./Compiler"
-import Handle from "hypermerge/dist/Handle"
+import { Handle } from "hypermerge/dist/Handle"
 
 export interface ReceivePort<T> {
   subscribe(fn: (msg: T) => void): void

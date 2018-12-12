@@ -1,7 +1,8 @@
 import { RepoFrontend } from "hypermerge/dist/RepoFrontend"
 import * as Link from "./Link"
-import Handle from "hypermerge/dist/Handle"
+import { Handle } from "hypermerge/dist/Handle"
 import QueuedWorker from "./QueuedWorker"
+
 
 export default class Repo {
   worker: QueuedWorker<any, any>

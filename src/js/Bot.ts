@@ -1,5 +1,5 @@
 import Repo from "./Repo"
-import Handle from "hypermerge/dist/Handle"
+import { Handle } from "hypermerge/dist/Handle"
 import { whenChanged } from "./Subscription"
 import Compiler from "./Compiler"
 import ElmGizmo from "./ElmGizmo"
