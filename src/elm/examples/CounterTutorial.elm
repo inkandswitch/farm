@@ -5,7 +5,7 @@ import Css exposing (..)
 import Doc
 import Gizmo exposing (Flags, Model)
 import Html.Styled as Html exposing (Html, a, br, button, div, h1, h2, p, pre, text)
-import Html.Styled.Attributes as Attr exposing (css, href)
+import Html.Styled.Attributes as Attr exposing (css, href, disabled)
 import Html.Styled.Events exposing (onClick)
 import Json.Decode as D
 import RealmUrl
@@ -146,7 +146,8 @@ view ({ doc, state } as model) =
             ]
         , div
             [ css
-                [ padding (px 20)
+                [ width (pct 80)
+                , padding (px 20)
                 , property "transition" "all 500ms"
                 ]
             ]
@@ -177,6 +178,7 @@ steps =
         [ \_ ->
             [ title "Welcome to Realm"
             , p [] [ text "This tutorial will guide you through the creation of your first Realm gizmo." ]
+            , p [] [ text "A gizmo is a pairing of a program with data that lives on your computer and can be reused and shared with anyone."]
             , controls [ next ]
             ]
         , \{ state } ->
@@ -192,27 +194,8 @@ steps =
         , \{ doc } ->
             [ title "Download the Hypermerge VS Code extension"
             , p []
-                [ text "We'll install with a .vsix package. "
-                , text "The latest release can be found on the "
-                , a
-                    [ href "https://github.com/inkandswitch/hypermergefs-vscode/releases"
-                    , onClick Next
-                    ]
-                    [ text "Releases page" ]
-                , text "."
-                ]
-            , controls [ prev, next ]
-            ]
-        , \_ ->
-            [ title "Install the .vsix package"
-            , p []
-                [ text "In VS Code, open the Command Palette (Cmd-Shift-P) and type "
-                , code "vsix"
-                , text ". "
-                , br [] []
-                , text "Select "
-                , code "Extensions: Install from VSIX..."
-                , text " and open the vscode-hypermergefs.vsix package from the file picker."
+                [ text "We'll install from the extensions registry. "
+                , text "Select the nested squares icon and search for Hypermerge."
                 ]
             , controls [ prev, next ]
             ]
@@ -227,7 +210,9 @@ steps =
                 , code "Open document"
                 , text " command. Paste the copied URL into the input box, "
                 , text "and confirm with Enter. "
-                ]
+                , text "You'll see the file arrive in your VSCode install as "
+                , text "an editable block of JSON. "
+                , text "In fact, you could open that URL from any computer in the world."]
             , controls [ prev, next ]
             ]
         , \{ state } ->
@@ -248,9 +233,14 @@ steps =
                 , text "Or, click "
                 , a [ href (VsCode.link doc.codeUrl) ]
                     [ text "here" ]
-                , text " to open it automatically."
+                , text " to load it automatically."
                 ]
+            , p []
+                [ text "Once it opens, unfold the document and click on the "
+                , code "Source.elm"
+                , text " field to view the code behind your counter."]
             , codeBlock [ a [ href doc.codeUrl ] [ text doc.codeUrl ] ]
+            , controls [ prev, next ]
             ]
         , \_ ->
             [ title "Get some Incsight"
@@ -259,8 +249,29 @@ steps =
                 , code "case msg of"
                 , text ". Change that line to "
                 , code "case Debug.log \"msg\" msg of"
-                , text ". Open the console and bask in the glory of Inc."
+                , text ". Open the Developer Tools console here in Realm, "
+                , text "then click the button a few times. You'll see the Inc "
+                , text "message arriving to the update function each time you click."
                 ]
+            , controls [ prev, next ]
+            ]
+        , \_ ->
+            [ title "What just happened?"
+            , p []
+                [ text "Every Gizmo is a little Elm language program which "
+                , text "lives on your computer and gets re-compiled when you make changes."
+                ]
+            , p []
+                [ text "Everytime the data document changes or you modify your local "
+                , code "state"
+                , text " variable, Elm will run your "
+                , code "view"
+                , text " function and produce new HTML for you to look at. When you "
+                , text "send a message ("
+                , code "Msg"
+                , text ") from somewhere like a button, Elm will pass that to your "
+                , code "update"
+                , text " function... which will probably trigger a new view! So easy!"]
             , controls [ prev, next ]
             ]
         , \_ ->
@@ -282,24 +293,41 @@ steps =
             [ title "Errors!"
             , p []
                 [ text "We added a new variant, but we aren't handling it in our case expression. "
-                , text "Duplicate the Inc branch, and update it for Dec. "
-                , codeBlock
-                    [ text "No sample code for you!"
-                    ]
+                , text "Duplicate the Inc branch, and update it for Dec. I think you'll be able to "
+                , text "figure this one out on your own, but if you have trouble, Elm has great "
+                , text "compiler errors to guide you."
                 ]
             , controls [ prev, next ]
             ]
         , \_ ->
-            [ title "TODO: Add a decrement button"
+            [ title "Pushbutton problems"
             , p []
-                []
+                [ text "We've added support for sending Decrement messages, "
+                , text "but we don't have any way of sending them yet. Whoops!"
+                ]
+            , p []
+                [ text "Your next task is to add a button that sends the Dec message. "
+                , text "(You should be fine with this, right?)"]
+            , controls [ prev, next ]
+            ]
+        , \_ ->
+            [ title "Congratulations!"
+            , p []
+                [ text "The gizmo you've created can count up and down now, "
+                , text "and you should be proud of your work."
+                ]
+            , p []
+                [ text "From here, you can build anything. Take a look at how "
+                , text "the other gizmos are built. You can inspect anything in Realm "
+                , text "since all the code lives on your computer! We've "
+                , text "tried to keep your starting gizmos simple and easy to learn from." ]
             , controls [ prev, next ]
             ]
         , \{ doc } ->
-            [ title "Done!"
+            [ title "Sharing is Caring"
             , p []
-                [ text "Your counter gizmo is done! "
-                , text "Copy this handy Realm url to link your friends and "
+                [ text "Your counter gizmo deserves to see the world! "
+                , text "You can share this handy Realm url to link your friends and "
                 , text "family pets directly to your gizmo."
                 , case RealmUrl.create { data = doc.dataUrl, code = doc.codeUrl } of
                     Ok url ->
@@ -405,6 +433,15 @@ next =
         ]
         [ text "Continue" ]
 
+disabledNext : Html Msg
+disabledNext = 
+    button
+        [ disabled True
+        , css
+            [ marginLeft auto
+            ]
+        ]
+        [ text "Not yet!" ]
 
 nextIf : Bool -> Html Msg
 nextIf b =
@@ -412,7 +449,7 @@ nextIf b =
         next
 
     else
-        text ""
+        disabledNext
 
 
 controls : List (Html msg) -> Html msg
