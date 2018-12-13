@@ -12,6 +12,7 @@ type alias Attrs =
 type alias Flags =
     { code : String
     , data : String
+    , config : Dict String String
     , all : Attrs
     }
 
@@ -19,6 +20,7 @@ type alias Flags =
 type alias InputFlags =
     { code : String
     , data : String
+    , config : Json.Value
     , all : Json.Value
     }
 

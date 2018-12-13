@@ -74,6 +74,7 @@ type alias InputFlags =
     { code : Url
     , data : Url
     , self : Url
+    , config : Json.Value
     , doc : Doc.RawDoc
     , all : Json.Value
     }
@@ -83,6 +84,7 @@ type alias Flags =
     { code : Url
     , data : Url
     , self : Url
+    , config : Dict String String
     , doc : Doc.Doc
     , rawDoc : Doc.RawDoc
     , all : Attrs
@@ -167,6 +169,10 @@ decodeFlags fl =
     { code = fl.code
     , data = fl.data
     , self = fl.self
+    , config =
+        fl.config
+            |> Json.decodeValue (Json.dict Json.string)
+            |> Result.withDefault Dict.empty
     , doc = fl.doc |> Doc.decode
     , rawDoc = fl.doc
     , all =

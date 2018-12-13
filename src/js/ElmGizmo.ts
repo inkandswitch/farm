@@ -38,6 +38,7 @@ export interface ElmApp {
 export interface Attributes {
   code: string
   data: string
+  config: any
   doc: any
   all: { [k: string]: string }
 }

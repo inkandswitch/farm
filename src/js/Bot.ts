@@ -32,8 +32,8 @@ export default class Bot {
     ElmGizmo.compiler.add(this.codeUrl)
 
     this.source.subscribe(
-      whenChanged(getJsSource, source => {
-        this.remount(toElm(eval(source)))
+      whenChanged(getJsSource, (source, doc) => {
+        this.remount(toElm(eval(source)), doc)
       }),
     )
   }
@@ -45,16 +45,17 @@ export default class Bot {
     }
   }
 
-  remount(elm: any) {
+  remount(elm: any, codeDoc: any) {
     this.unmount()
-    this.mount(elm)
+    this.mount(elm, codeDoc)
   }
 
-  mount(elm: any) {
+  mount(elm: any, codeDoc: any) {
     ElmGizmo.repo.once(this.dataUrl, (doc: any) => {
       this.gizmo = new ElmGizmo(null, elm, {
         code: this.codeUrl,
         data: this.dataUrl,
+        config: codeDoc.config,
         doc,
         all: {
           code: this.codeUrl,
