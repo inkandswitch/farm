@@ -69,7 +69,7 @@ export function constructorForWindow(window: Window) {
 
       const body = this.openedWindow.document.body
       const styleNode = currentWindow.document.getElementsByTagName('style')[0]
-      GizmoWindowElement.styleNode && body.appendChild(styleNode.cloneNode(true))
+      styleNode && body.appendChild(styleNode.cloneNode(true))
       body.appendChild(root)
       this.openedWindow.addEventListener('beforeunload', this.onBeforeWindowUnload)
     }
