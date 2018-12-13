@@ -20,13 +20,15 @@ export default class App {
       title: "Navigator data",
       history: [
         {
-          code: this.bootstrapWidget("CounterTutorial.elm"),
-          data: this.repo.create({
-            title: "CounterTutorial data",
-            step: 1,
-            codeUrl: this.bootstrapWidget("Counter.elm"),
-            dataUrl: this.repo.create({ title: "Counter data" }),
-          }),
+          code: this.bootstrapWidget("Launcher.elm"),
+          data: this.repo.create()
+          // code: this.bootstrapWidget("CounterTutorial.elm"),
+          // data: this.repo.create({
+          //   title: "CounterTutorial data",
+          //   step: 1,
+          //   codeUrl: this.bootstrapWidget("Counter.elm"),
+          //   dataUrl: this.repo.create({ title: "Counter data" }),
+          // }),
         },
       ],
     }),
