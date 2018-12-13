@@ -21,7 +21,7 @@ export default class App {
       history: [
         {
           code: this.bootstrapWidget("Launcher.elm"),
-          data: this.repo.create()
+          data: this.repo.create(),
           // code: this.bootstrapWidget("CounterTutorial.elm"),
           // data: this.repo.create({
           //   title: "CounterTutorial data",
@@ -51,7 +51,10 @@ export default class App {
     Gizmo.setSelfDataUrl(this.selfDataUrl)
 
     customElements.define("realm-ui", Gizmo.constructorForWindow(window))
-    customElements.define("realm-window", GizmoWindow.constructorForWindow(window))
+    customElements.define(
+      "realm-window",
+      GizmoWindow.constructorForWindow(window),
+    )
 
     const style = document.createElement("style")
     style.innerHTML = `
@@ -122,10 +125,11 @@ export default class App {
     this.root.navigateTo(url)
   }
 
-  bootstrapWidget(file: string): string {
+  bootstrapWidget(file: string, config: { [k: string]: string } = {}): string {
     return this.repo.create({
       title: `${file} code`,
       "Source.elm": sourceFor(file),
+      config,
     })
   }
 }
