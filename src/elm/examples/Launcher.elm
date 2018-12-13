@@ -1,15 +1,15 @@
 module Launcher exposing (Doc, Msg, State, gizmo)
 
+import Clipboard
+import Css exposing (..)
 import Gizmo exposing (Flags, Model)
 import Html.Styled as Html exposing (..)
+import Html.Styled.Attributes exposing (css, placeholder, src, value)
 import Html.Styled.Events exposing (..)
-import Html.Styled.Attributes exposing (css, value, placeholder, src)
-import Css exposing (..)
-import Repo exposing (Ref, Url, create)
 import Json.Decode as D
-import Task
-import Clipboard
 import RealmUrl
+import Repo exposing (Ref, Url, create)
+import Task
 
 
 gizmo : Gizmo.Program State Doc Msg
@@ -21,23 +21,28 @@ gizmo =
         , subscriptions = subscriptions
         }
 
-type alias DocumentUrl = String
+
+type alias DocumentUrl =
+    String
+
 
 type alias Gadget =
-    { code: DocumentUrl
-    , data: DocumentUrl
+    { code : DocumentUrl
+    , data : DocumentUrl
     }
+
 
 type alias State =
     { launchedGadgets : List Gadget -- yikes
     , ownDoc : String
-    , gadgetTypeToCreate: Maybe DocumentUrl
-    , showingGadgetTypes: Bool
+    , gadgetTypeToCreate : Maybe DocumentUrl
+    , showingGadgetTypes : Bool
     }
 
-type alias Doc = 
+
+type alias Doc =
     { gadgets : List Gadget
-    , gadgetTypes: List DocumentUrl
+    , gadgetTypes : List DocumentUrl
     }
 
 
@@ -45,39 +50,50 @@ iconGizmo : DocumentUrl
 iconGizmo =
     "hypermerge:/AF5v9eADKuMLQG872ncxMit5YWzGQSBJE6U6TdBY5q5T"
 
+
 titleGizmo : DocumentUrl
 titleGizmo =
     "hypermerge:/DS7HfFUVj2UP8wit1iQDjKtc2MB4NnQxm7uvfDaLA373"
+
 
 noteGizmo : DocumentUrl
 noteGizmo =
     "hypermerge:/6y4Xqc7dsCArxjYwzupzWwRxTeduwHnDHKJA2av9vYuJ"
 
+
 imageGalleryGizmo : DocumentUrl
 imageGalleryGizmo =
     "hypermerge:/Ce3op8tbbPSkR3HnkibEv54dXD5K3neTZ2rMfU5nuCUQ"
 
+
+
+-- tutorial : Gadget
+-- tutorial =
+--     { code = "hypermerge:/5Wv5Yn7566V6j4xcFMosMRRgU1SzK9yaMrKgV75a1S85"
+--     , data = "hypermerge:/8BQwezwE9PGavzc2etD4aJPixkqueLUJZ2o3dAxz89mS"
+--     }
 -- chatGizmo : DocumentUrl
 -- chatGizmo =
 --     "hypermerge:/En2v3gRuYC9MMzJXTXYcEeLma55xL1p7hEQnPTxNjLkZ"
-    -- "hypermerge:/2AZAQPmkT4vTguZkkSHg7iqtPCFBPqgPfaz41Kfj2gD6"
-
-
+-- "hypermerge:/2AZAQPmkT4vTguZkkSHg7iqtPCFBPqgPfaz41Kfj2gD6"
 
 
 defaultGadgets : List Gadget
 defaultGadgets =
-    [
+    [ tutorial
     ]
+
 
 defaultGadgetTypes : List DocumentUrl
 defaultGadgetTypes =
     [ noteGizmo
     , imageGalleryGizmo
     ]
-    -- , chatGizmo
-    -- ]
 
+
+
+-- , chatGizmo
+-- ]
 
 
 {-| What are Flags?
@@ -93,16 +109,17 @@ init flags =
     , Cmd.none
     )
 
+
 {-| Message type for modifying State and Doc inside update
 -}
 type Msg
-  = NoOp
-  | Launch Gadget
-  | ShowGadgetTypes
-  | HideGadgetTypes
-  | CreateGadget DocumentUrl
-  | GadgetDataDocCreated ( Ref, List String )
-  | Share Gadget
+    = NoOp
+    | Launch Gadget
+    | ShowGadgetTypes
+    | HideGadgetTypes
+    | CreateGadget DocumentUrl
+    | GadgetDataDocCreated ( Ref, List String )
+    | Share Gadget
 
 
 update : Msg -> Model State Doc -> ( State, Doc, Cmd Msg )
@@ -112,7 +129,7 @@ update msg { state, doc } =
             ( state, doc, Cmd.none )
 
         Launch gadget ->
-            ( { state | launchedGadgets = state.launchedGadgets ++ [gadget] }
+            ( { state | launchedGadgets = state.launchedGadgets ++ [ gadget ] }
             , doc
             , Cmd.none
             )
@@ -136,14 +153,17 @@ update msg { state, doc } =
             )
 
         GadgetDataDocCreated ( ref, urls ) ->
-            case (state.gadgetTypeToCreate, List.head urls) of
-                (Just gadgetType, Just url) ->
+            case ( state.gadgetTypeToCreate, List.head urls ) of
+                ( Just gadgetType, Just url ) ->
                     let
-                        gadget = { code = gadgetType, data = url }
+                        gadget =
+                            { code = gadgetType, data = url }
                     in
-                        ( { state | gadgetTypeToCreate = Nothing, showingGadgetTypes = False, launchedGadgets = state.launchedGadgets ++ [gadget] }
-                        , { doc | gadgets = gadget :: doc.gadgets }
-                        , Cmd.none)
+                    ( { state | gadgetTypeToCreate = Nothing, showingGadgetTypes = False, launchedGadgets = state.launchedGadgets ++ [ gadget ] }
+                    , { doc | gadgets = gadget :: doc.gadgets }
+                    , Cmd.none
+                    )
+
                 _ ->
                     ( { state | showingGadgetTypes = False, gadgetTypeToCreate = Nothing }
                     , doc
@@ -157,14 +177,12 @@ update msg { state, doc } =
                     , doc
                     , Clipboard.copy url
                     )
+
                 Err err ->
                     ( state
                     , doc
                     , Cmd.none
                     )
-
-
-
 
 
 view : Model State Doc -> Html Msg
@@ -174,21 +192,21 @@ view { flags, state, doc } =
             [ width (vw 100)
             , height (vh 100)
             , backgroundColor (hex "#f5f5f5")
-            , fontFamilies ["system-ui"]
+            , fontFamilies [ "system-ui" ]
             , displayFlex
             , justifyContent center
             , alignItems center
             ]
         ]
         [ div
-            [ css 
+            [ css
                 [ width (vw 100)
                 , height (vh 100)
                 , backgroundColor (hex "#fff")
                 , padding (px 20)
                 ]
             ]
-            [ div 
+            [ div
                 [ css
                     [ property "display" "grid"
                     , property "grid-template-columns" "repeat(auto-fit, minmax(100px, 1fr))"
@@ -197,19 +215,21 @@ view { flags, state, doc } =
                     , property "gap" "1rem"
                     ]
                 ]
-                ((viewCreateGizmoLauncher flags.code) :: (List.map viewGadgetLauncher doc.gadgets))
+                (viewCreateGizmoLauncher flags.code :: List.map viewGadgetLauncher doc.gadgets)
             ]
         , if state.showingGadgetTypes then
             viewCreateGadget doc.gadgetTypes
+
           else
             Html.text ""
         , div [] (List.map viewGadget state.launchedGadgets)
         ]
 
+
 viewCreateGizmoLauncher : DocumentUrl -> Html Msg
 viewCreateGizmoLauncher ownUrl =
     div
-        [ onClick ShowGadgetTypes 
+        [ onClick ShowGadgetTypes
         , css
             [ displayFlex
             , flexDirection column
@@ -231,9 +251,10 @@ viewCreateGizmoLauncher ownUrl =
                 , marginTop (px 5)
                 ]
             ]
-            [ text "Create Gizmo" 
+            [ text "Create Gizmo"
             ]
         ]
+
 
 viewGadget : Gadget -> Html Msg
 viewGadget gadget =
@@ -279,19 +300,22 @@ viewGadgetLauncher gadget =
             [ text "share" ]
         ]
 
+
 onClickNoPropagation : msg -> Attribute msg
 onClickNoPropagation msg =
     stopPropagationOn "click" (D.map alwaysTrue (D.succeed msg))
 
+
 alwaysTrue : msg -> ( msg, Bool )
 alwaysTrue msg =
-    (msg, True)
+    ( msg, True )
+
 
 viewLauncherIcon : Msg -> Html Msg -> Html Msg -> Html Msg
 viewLauncherIcon onClickMsg icon title =
     div
-        [ onClick onClickMsg 
-        , css 
+        [ onClick onClickMsg
+        , css
             [ displayFlex
             , flexDirection column
             , alignItems center
@@ -320,18 +344,20 @@ viewLauncherIcon onClickMsg icon title =
                 , cursor pointer
                 ]
             ]
-            [text "share"]
+            [ text "share" ]
         ]
+
 
 viewCreateGadget : List DocumentUrl -> Html Msg
 viewCreateGadget gadgetTypes =
     viewWindow
-        (viewWindowBar HideGadgetTypes [text "Select Gizmo Type"])
+        (viewWindowBar HideGadgetTypes [ text "Select Gizmo Type" ])
         [ div
             [ css [ padding2 zero (px 30) ]
             ]
             (List.map viewGadgetType gadgetTypes)
         ]
+
 
 viewGadgetType : DocumentUrl -> Html Msg
 viewGadgetType gadgetType =
@@ -375,7 +401,7 @@ viewWindowBar onBackClick title =
         ]
         [ div
             [ onClick onBackClick
-            , css 
+            , css
                 [ padding2 (px 2) (px 5)
                 , cursor pointer
                 ]
@@ -390,6 +416,7 @@ viewWindowBar onBackClick title =
             title
         , div [] []
         ]
+
 
 viewWindow : Html Msg -> List (Html Msg) -> Html Msg
 viewWindow bar contents =
