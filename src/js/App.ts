@@ -33,7 +33,15 @@ export default class App {
               imageGallery: this.bootstrapWidget("SimpleImageGallery.elm", {
                 title: "Simple Image Gallery",
                 icon: assetDataUrl("image_gallery_icon.png")
-              })
+              }),
+              // todo: this.bootstrapWidget("Todos.elm", {
+              //   title: "Todos",
+              //   icon: assetDataUrl("todo_icon.png")
+              // }),
+              // chat: this.bootstrapWidget("Chat.elm", {
+              //   title: "Chat",
+              //   icon: assetDataUrl("chat_icon.png")
+              // })
             }
           }),
           data: this.repo.create({

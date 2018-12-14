@@ -57,6 +57,11 @@ init flags =
 
         imageGallerySource =
             Maybe.withDefault "" (Dict.get "imageGallery" flags.config)
+
+        -- todoSource =
+        --     Maybe.withDefault "" (Dict.get "todo" flags.config)
+        -- chatSource =
+        --     Maybe.withDefault "" (Dict.get "chat" flags.config)
     in
     ( { launchedGadgets = []
       , ownDoc = flags.data
@@ -64,6 +69,7 @@ init flags =
       , showingGadgetTypes = False
       }
     , { gadgets = [], gadgetTypes = [ noteSource, imageGallerySource ] }
+      --, todoSource, chatSource ] }
     , Cmd.none
     )
 
