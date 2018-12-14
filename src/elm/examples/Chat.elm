@@ -1,6 +1,7 @@
 module Chat exposing (Doc, Msg, State, gizmo)
 
 import Css exposing (..)
+import Dict
 import Gizmo exposing (Model)
 import Html
 import Html.Styled exposing (..)
@@ -89,21 +90,20 @@ update msg { flags, state, doc } =
                 ( state, doc )
 
 
-avatarGizmo =
-    "hypermerge://9DJcvkXLyRU8KmqvyzhNY3zCpkKXVkHVJ8vBNr6iizGQ/"
-
-
-titleGizmo =
-    "hypermerge://E19jZZNm4QceSWwwiZGLtrduFVDwmdtM3PGFAfMMS55S/"
-
-
 view : Model State Doc -> Html Msg
-view { state, doc } =
+view { flags, state, doc } =
+    let
+        avatarGizmo =
+            Maybe.withDefault "" (Dict.get "avatar" flags.config)
+
+        titleGizmo =
+            Maybe.withDefault "" (Dict.get "title" flags.config)
+    in
     div [ css [ padding (px 24) ] ]
         [ div []
             (groupWhile (\a b -> a.author == b.author)
                 (List.reverse doc.messages)
-                |> List.map viewGroup
+                |> List.map (viewGroup ( avatarGizmo, titleGizmo ))
             )
         , viewInput state
         ]
@@ -117,8 +117,8 @@ viewInput state =
         ]
 
 
-viewGroup : ( Message, List Message ) -> Html Msg
-viewGroup ( authorMessage, messages ) =
+viewGroup : ( String, String ) -> ( Message, List Message ) -> Html Msg
+viewGroup ( avatarGizmo, titleGizmo ) ( authorMessage, messages ) =
     div
         [ css
             [ displayFlex

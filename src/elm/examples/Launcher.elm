@@ -60,15 +60,15 @@ init flags =
 
         -- todoSource =
         --     Maybe.withDefault "" (Dict.get "todo" flags.config)
-        -- chatSource =
-        --     Maybe.withDefault "" (Dict.get "chat" flags.config)
+        chatSource =
+            Maybe.withDefault "" (Dict.get "chat" flags.config)
     in
     ( { launchedGadgets = []
       , ownDoc = flags.data
       , gadgetTypeToCreate = Nothing
       , showingGadgetTypes = False
       }
-    , { gadgets = [], gadgetTypes = [ noteSource, imageGallerySource ] }
+    , { gadgets = [], gadgetTypes = [ noteSource, imageGallerySource, chatSource ] }
       --, todoSource, chatSource ] }
     , Cmd.none
     )

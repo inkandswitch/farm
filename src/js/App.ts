@@ -15,8 +15,10 @@ export default class App {
   compiler: Compiler = new Compiler(this.repo, "./compile.worker.js")
   root: any
 
-  rootDataUrl: string = load("rootDataUrl", () =>
-    this.repo.create({
+  rootDataUrl: string = load("rootDataUrl", () => {
+    const title = this.bootstrapWidget("Title.elm")
+
+    return this.repo.create({
       title: "Navigator data",
       history: [
         {
@@ -25,7 +27,7 @@ export default class App {
             icon: assetDataUrl('create_icon.png'),
             config: {
               icon: this.bootstrapWidget("Icon.elm"),
-              title: this.bootstrapWidget("Title.elm"),
+              title,
               note: this.bootstrapWidget("Note.elm", {
                 title: "Note",
                 icon: assetDataUrl('note_icon.png')
@@ -38,10 +40,14 @@ export default class App {
               //   title: "Todos",
               //   icon: assetDataUrl("todo_icon.png")
               // }),
-              // chat: this.bootstrapWidget("Chat.elm", {
-              //   title: "Chat",
-              //   icon: assetDataUrl("chat_icon.png")
-              // })
+              chat: this.bootstrapWidget("Chat.elm", {
+                title: "Chat",
+                icon: assetDataUrl("chat_icon.png"),
+                config: {
+                  title,
+                  avatar: this.bootstrapWidget("Avatar.elm")
+                }
+              })
             }
           }),
           data: this.repo.create({
@@ -61,9 +67,9 @@ export default class App {
             ]
           }),
         },
-      ],
-    }),
-  )
+      ]
+    })
+  })
 
   rootCodeUrl: string = load("rootCodeUrl", () =>
     this.bootstrapWidget("Navigator.elm"),
