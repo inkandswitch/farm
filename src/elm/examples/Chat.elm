@@ -99,7 +99,7 @@ view { flags, state, doc } =
         titleGizmo =
             Maybe.withDefault "" (Dict.get "title" flags.config)
     in
-    div [ css [ padding (px 24) ] ]
+    div [ css [ padding (px 24), fontFamilies [ "system-ui" ] ] ]
         [ div []
             (groupWhile (\a b -> a.author == b.author)
                 (List.reverse doc.messages)
