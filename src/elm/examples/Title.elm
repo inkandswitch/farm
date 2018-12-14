@@ -5,6 +5,7 @@ import Gizmo exposing (Flags, Model)
 import Html.Styled as Html exposing (..)
 import Html.Styled.Attributes exposing (css, placeholder, value)
 import Html.Styled.Events exposing (..)
+import String
 
 
 gizmo : Gizmo.Program State Doc Msg
@@ -58,7 +59,14 @@ view : Model State Doc -> Html Msg
 view { doc } =
     span
         []
-        [ text doc.title ]
+        [ text
+            (if String.isEmpty doc.title then
+                "Untitled"
+
+             else
+                doc.title
+            )
+        ]
 
 
 subscriptions : Model State Doc -> Sub Msg

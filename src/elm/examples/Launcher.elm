@@ -47,49 +47,6 @@ type alias Doc =
     }
 
 
-
--- iconGizmo : DocumentUrl
--- iconGizmo =
---     "hypermerge:/AF5v9eADKuMLQG872ncxMit5YWzGQSBJE6U6TdBY5q5T"
--- titleGizmo : DocumentUrl
--- titleGizmo =
---     "hypermerge:/DS7HfFUVj2UP8wit1iQDjKtc2MB4NnQxm7uvfDaLA373"
-
-
-noteGizmo : DocumentUrl
-noteGizmo =
-    "hypermerge:/6y4Xqc7dsCArxjYwzupzWwRxTeduwHnDHKJA2av9vYuJ"
-
-
-imageGalleryGizmo : DocumentUrl
-imageGalleryGizmo =
-    "hypermerge:/Ce3op8tbbPSkR3HnkibEv54dXD5K3neTZ2rMfU5nuCUQ"
-
-
-
--- tutorial : Gadget
--- tutorial =
---     { code = "hypermerge:/5Wv5Yn7566V6j4xcFMosMRRgU1SzK9yaMrKgV75a1S85"
---     , data = "hypermerge:/8BQwezwE9PGavzc2etD4aJPixkqueLUJZ2o3dAxz89mS"
---     }
--- chatGizmo : DocumentUrl
--- chatGizmo =
---     "hypermerge:/En2v3gRuYC9MMzJXTXYcEeLma55xL1p7hEQnPTxNjLkZ"
--- "hypermerge:/2AZAQPmkT4vTguZkkSHg7iqtPCFBPqgPfaz41Kfj2gD6"
-
-
-defaultGadgets : List Gadget
-defaultGadgets =
-    []
-
-
-defaultGadgetTypes : List DocumentUrl
-defaultGadgetTypes =
-    [ noteGizmo
-    , imageGalleryGizmo
-    ]
-
-
 {-| What are Flags?
 -}
 init : Flags -> ( State, Doc, Cmd Msg )
@@ -101,14 +58,14 @@ init flags =
         imageGallerySource =
             Maybe.withDefault "" (Dict.get "imageGallery" flags.config)
     in
-        ( { launchedGadgets = []
-        , ownDoc = flags.data
-        , gadgetTypeToCreate = Nothing
-        , showingGadgetTypes = False
-        }
-        , { gadgets = defaultGadgets, gadgetTypes = [noteSource, imageGallerySource] }
-        , Cmd.none
-        )
+    ( { launchedGadgets = []
+      , ownDoc = flags.data
+      , gadgetTypeToCreate = Nothing
+      , showingGadgetTypes = False
+      }
+    , { gadgets = [], gadgetTypes = [ noteSource, imageGallerySource ] }
+    , Cmd.none
+    )
 
 
 {-| Message type for modifying State and Doc inside update
@@ -195,8 +152,7 @@ view { flags, state, doc } =
         titleSource =
             Maybe.withDefault "" (Dict.get "title" flags.config)
     in
-    Debug.log ("ICON: " ++ iconSource)
-        div
+    div
         [ css
             [ width (vw 100)
             , height (vh 100)

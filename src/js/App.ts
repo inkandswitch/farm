@@ -20,18 +20,31 @@ export default class App {
       title: "Navigator data",
       history: [
         {
-          code: this.bootstrapWidget("Launcher.elm", "Launcher", {
-            icon: this.bootstrapWidget("Icon.elm"),
-            title: this.bootstrapWidget("Title.elm"),
-            note: this.bootstrapWidget("Note.elm", "Note"),
-            imageGallery: this.bootstrapWidget("SimpleImageGallery.elm", "Simple Image Gallery")
+          code: this.bootstrapWidget("Launcher.elm", {
+            title: "Launcher",
+            icon: assetDataUrl('create_icon.png'),
+            config: {
+              icon: this.bootstrapWidget("Icon.elm"),
+              title: this.bootstrapWidget("Title.elm"),
+              note: this.bootstrapWidget("Note.elm", {
+                title: "Note",
+                icon: assetDataUrl('note_icon.png')
+              }),
+              imageGallery: this.bootstrapWidget("SimpleImageGallery.elm", {
+                title: "Simple Image Gallery",
+                icon: assetDataUrl("image_gallery_icon.png")
+              })
+            }
           }),
           data: this.repo.create({
             gadgets: [
               {
-              code: this.bootstrapWidget("CounterTutorial.elm"),
+              code: this.bootstrapWidget("CounterTutorial.elm", {
+                title: "Counter Tutorial",
+                icon: assetDataUrl("tutorial_icon.png")
+              }),
                 data: this.repo.create({
-                  title: "Tutorial",
+                  title: "Counter Tutorial",
                   step: 1,
                   codeUrl: this.bootstrapWidget("Counter.elm"),
                   dataUrl: this.repo.create({ title: "Counter data" }),
@@ -135,17 +148,26 @@ export default class App {
     this.root.navigateTo(url)
   }
 
-  bootstrapWidget(file: string, title: string = "", config: { [k: string]: string } = {}): string {
-    return this.repo.create({
-      title: title || `${file} code`,
-      "Source.elm": sourceFor(file),
-      config,
-    })
+  bootstrapWidget(file: string, opts: { [k: string]: any } = {}): string {
+    opts.title = opts.title || `${file} source`
+    return this.repo.create({...opts, "Source.elm": sourceFor(file)})
   }
+  // bootstrapWidget(file: string, title: string = "", config: { [k: string]: string } = {}): string {
+  //   return this.repo.create({
+  //     title: title || `${file} code`,
+  //     "Source.elm": sourceFor(file),
+  //     config,
+  //   })
+  // }
 }
 
 function sourceFor(name: string) {
   return readFileSync(path.resolve(`src/elm/examples/${name}`)).toString()
+}
+
+function assetDataUrl(filename: string) {
+  const base64 = readFileSync(path.resolve(`assets/${filename}`), 'base64')
+  return `data:image/png;base64,${base64}`
 }
 
 function load(key: string, def: () => string): string {
