@@ -94,14 +94,21 @@ defaultGadgetTypes =
 -}
 init : Flags -> ( State, Doc, Cmd Msg )
 init flags =
-    ( { launchedGadgets = []
-      , ownDoc = flags.data
-      , gadgetTypeToCreate = Nothing
-      , showingGadgetTypes = False
-      }
-    , { gadgets = defaultGadgets, gadgetTypes = defaultGadgetTypes }
-    , Cmd.none
-    )
+    let
+        noteSource =
+            Maybe.withDefault "" (Dict.get "note" flags.config)
+
+        imageGallerySource =
+            Maybe.withDefault "" (Dict.get "imageGallery" flags.config)
+    in
+        ( { launchedGadgets = []
+        , ownDoc = flags.data
+        , gadgetTypeToCreate = Nothing
+        , showingGadgetTypes = False
+        }
+        , { gadgets = defaultGadgets, gadgetTypes = [noteSource, imageGallerySource] }
+        , Cmd.none
+        )
 
 
 {-| Message type for modifying State and Doc inside update

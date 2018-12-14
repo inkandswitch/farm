@@ -20,11 +20,11 @@ export default class App {
       title: "Navigator data",
       history: [
         {
-          code: this.bootstrapWidget("Launcher.elm", {
+          code: this.bootstrapWidget("Launcher.elm", "Launcher", {
             icon: this.bootstrapWidget("Icon.elm"),
             title: this.bootstrapWidget("Title.elm"),
-            note: this.bootstrapWidget("Note.elm"),
-            imageGallery: this.bootstrapWidget("SimpleImageGallery.elm")
+            note: this.bootstrapWidget("Note.elm", "Note"),
+            imageGallery: this.bootstrapWidget("SimpleImageGallery.elm", "Simple Image Gallery")
           }),
           data: this.repo.create({
             gadgets: [
@@ -135,9 +135,9 @@ export default class App {
     this.root.navigateTo(url)
   }
 
-  bootstrapWidget(file: string, config: { [k: string]: string } = {}): string {
+  bootstrapWidget(file: string, title: string = "", config: { [k: string]: string } = {}): string {
     return this.repo.create({
-      title: `${file} code`,
+      title: title || `${file} code`,
       "Source.elm": sourceFor(file),
       config,
     })
