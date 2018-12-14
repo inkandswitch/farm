@@ -21,17 +21,17 @@ export default class App {
       history: [
         {
           code: this.bootstrapWidget("Launcher.elm", {
-            icon: this.bootstrapWidget("Icon.elm", {}),
-            title: this.bootstrapWidget("Title.elm", {}),
-            note: this.bootstrapWidget("Note.elm", {}),
-            imageGallery: this.bootstrapWidget("SimpleImageGallery.elm", {})
+            icon: this.bootstrapWidget("Icon.elm"),
+            title: this.bootstrapWidget("Title.elm"),
+            note: this.bootstrapWidget("Note.elm"),
+            imageGallery: this.bootstrapWidget("SimpleImageGallery.elm")
           }),
           data: this.repo.create({
             gadgets: [
               {
               code: this.bootstrapWidget("CounterTutorial.elm"),
                 data: this.repo.create({
-                  title: "CounterTutorial",
+                  title: "Tutorial",
                   step: 1,
                   codeUrl: this.bootstrapWidget("Counter.elm"),
                   dataUrl: this.repo.create({ title: "Counter data" }),
