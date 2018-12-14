@@ -2,6 +2,7 @@ module Launcher exposing (Doc, Msg, State, gizmo)
 
 import Clipboard
 import Css exposing (..)
+import Dict
 import Gizmo exposing (Flags, Model)
 import Html.Styled as Html exposing (..)
 import Html.Styled.Attributes exposing (css, placeholder, src, value)
@@ -46,14 +47,13 @@ type alias Doc =
     }
 
 
-iconGizmo : DocumentUrl
-iconGizmo =
-    "hypermerge:/AF5v9eADKuMLQG872ncxMit5YWzGQSBJE6U6TdBY5q5T"
 
-
-titleGizmo : DocumentUrl
-titleGizmo =
-    "hypermerge:/DS7HfFUVj2UP8wit1iQDjKtc2MB4NnQxm7uvfDaLA373"
+-- iconGizmo : DocumentUrl
+-- iconGizmo =
+--     "hypermerge:/AF5v9eADKuMLQG872ncxMit5YWzGQSBJE6U6TdBY5q5T"
+-- titleGizmo : DocumentUrl
+-- titleGizmo =
+--     "hypermerge:/DS7HfFUVj2UP8wit1iQDjKtc2MB4NnQxm7uvfDaLA373"
 
 
 noteGizmo : DocumentUrl
@@ -88,11 +88,6 @@ defaultGadgetTypes =
     [ noteGizmo
     , imageGalleryGizmo
     ]
-
-
-
--- , chatGizmo
--- ]
 
 
 {-| What are Flags?
@@ -186,7 +181,15 @@ update msg { state, doc } =
 
 view : Model State Doc -> Html Msg
 view { flags, state, doc } =
-    div
+    let
+        iconSource =
+            Maybe.withDefault "" (Dict.get "icon" flags.config)
+
+        titleSource =
+            Maybe.withDefault "" (Dict.get "title" flags.config)
+    in
+    Debug.log ("ICON: " ++ iconSource)
+        div
         [ css
             [ width (vw 100)
             , height (vh 100)
@@ -214,10 +217,12 @@ view { flags, state, doc } =
                     , property "gap" "1rem"
                     ]
                 ]
-                (viewCreateGizmoLauncher flags.code :: List.map viewGadgetLauncher doc.gadgets)
+                (viewCreateGizmoLauncher flags.code iconSource
+                    :: List.map (viewGadgetLauncher titleSource iconSource) doc.gadgets
+                )
             ]
         , if state.showingGadgetTypes then
-            viewCreateGadget doc.gadgetTypes
+            viewCreateGadget iconSource titleSource doc.gadgetTypes
 
           else
             Html.text ""
@@ -225,8 +230,8 @@ view { flags, state, doc } =
         ]
 
 
-viewCreateGizmoLauncher : DocumentUrl -> Html Msg
-viewCreateGizmoLauncher ownUrl =
+viewCreateGizmoLauncher : DocumentUrl -> DocumentUrl -> Html Msg
+viewCreateGizmoLauncher ownUrl iconSource =
     div
         [ onClick ShowGadgetTypes
         , css
@@ -241,7 +246,7 @@ viewCreateGizmoLauncher ownUrl =
                 , width (px 50)
                 ]
             ]
-            [ Html.fromUnstyled (Gizmo.render iconGizmo ownUrl)
+            [ Html.fromUnstyled (Gizmo.render iconSource ownUrl)
             ]
         , span
             [ css
@@ -260,8 +265,8 @@ viewGadget gadget =
     Html.fromUnstyled <| Gizmo.renderWindow gadget.code gadget.data
 
 
-viewGadgetLauncher : Gadget -> Html Msg
-viewGadgetLauncher gadget =
+viewGadgetLauncher : String -> String -> Gadget -> Html Msg
+viewGadgetLauncher titleSource iconSource gadget =
     div
         [ onClick (Launch gadget)
         , css
@@ -276,7 +281,7 @@ viewGadgetLauncher gadget =
                 , width (px 50)
                 ]
             ]
-            [ Html.fromUnstyled (Gizmo.render iconGizmo gadget.code)
+            [ Html.fromUnstyled (Gizmo.render iconSource gadget.code)
             ]
         , span
             [ css
@@ -285,7 +290,7 @@ viewGadgetLauncher gadget =
                 , marginTop (px 5)
                 ]
             ]
-            [ Html.fromUnstyled (Gizmo.render titleGizmo gadget.data)
+            [ Html.fromUnstyled (Gizmo.render titleSource gadget.data)
             ]
         , div
             [ css
@@ -347,19 +352,19 @@ viewLauncherIcon onClickMsg icon title =
         ]
 
 
-viewCreateGadget : List DocumentUrl -> Html Msg
-viewCreateGadget gadgetTypes =
+viewCreateGadget : String -> String -> List DocumentUrl -> Html Msg
+viewCreateGadget iconSource titleSource gadgetTypes =
     viewWindow
         (viewWindowBar HideGadgetTypes [ text "Select Gizmo Type" ])
         [ div
             [ css [ padding2 zero (px 30) ]
             ]
-            (List.map viewGadgetType gadgetTypes)
+            (List.map (viewGadgetType iconSource titleSource) gadgetTypes)
         ]
 
 
-viewGadgetType : DocumentUrl -> Html Msg
-viewGadgetType gadgetType =
+viewGadgetType : DocumentUrl -> DocumentUrl -> DocumentUrl -> Html Msg
+viewGadgetType iconSource titleSource gadgetType =
     div
         [ onClick (CreateGadget gadgetType)
         , css
@@ -379,9 +384,9 @@ viewGadgetType gadgetType =
                 , marginRight (px 15)
                 ]
             ]
-            [ Html.fromUnstyled <| Gizmo.render iconGizmo gadgetType
+            [ Html.fromUnstyled <| Gizmo.render iconSource gadgetType
             ]
-        , Html.fromUnstyled <| Gizmo.render titleGizmo gadgetType
+        , Html.fromUnstyled <| Gizmo.render titleSource gadgetType
         ]
 
 
