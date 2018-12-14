@@ -10,10 +10,21 @@ import {
   MenuItemConstructorOptions,
 } from "electron"
 import contextMenu from "electron-context-menu"
+import path from "path"
 
 app.on("ready", createWindow)
 
 app.setAsDefaultProtocolClient("realm")
+
+// If we are running a non-packaged version of the app
+if (process.defaultApp) {
+  // If we have the path to our app we set the protocol client to launch electron.exe with the path to our app
+  if (process.argv.length >= 2) {
+    app.setAsDefaultProtocolClient("realm", process.execPath, [path.resolve(process.argv[1])])
+  }
+} else {
+  app.setAsDefaultProtocolClient("realm")
+}
 
 app.on("open-url", (_event, url) => {
   getWindow().webContents.send("open-url", url)
