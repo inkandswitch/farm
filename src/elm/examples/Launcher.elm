@@ -80,8 +80,7 @@ imageGalleryGizmo =
 
 defaultGadgets : List Gadget
 defaultGadgets =
-    [ tutorial
-    ]
+    []
 
 
 defaultGadgetTypes : List DocumentUrl
