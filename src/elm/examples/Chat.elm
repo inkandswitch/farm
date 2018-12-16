@@ -192,10 +192,12 @@ viewGroup ( avatarGizmo, titleGizmo ) ( authorMessage, messages ) =
             , paddingBottom (px 10)
             ]
         ]
-        [ div
+        [ fromUnstyled <| Gizmo.render avatarGizmo authorMessage.author
+        , div
             [ css
                 [ displayFlex
                 , flexDirection column
+                , marginLeft (px 10)
                 ]
             ]
             [ div
