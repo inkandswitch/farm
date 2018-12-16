@@ -111,7 +111,7 @@ view { flags, state, doc } =
                 , placeholder "Untitled"
                 , css
                     [ border zero
-                    , borderBottom3 (px 1) solid (hex "#aaa")
+                    , borderBottom3 (px 1) solid (hex "#ff69b4")
                     , padding zero
                     , paddingBottom (px 1)
                     , fontSize inherit

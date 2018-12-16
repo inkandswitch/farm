@@ -132,7 +132,7 @@ view { flags, state, doc } =
 
 
 titleBar : List (Html Msg) -> Html Msg
-titleBar =
+titleBar content =
     div
         [ css
             [ borderBottom3 (px 1) solid (hex "#ddd")
@@ -142,6 +142,17 @@ titleBar =
             , boxShadow4 (px 0) (px 0) (px 5) (rgba 0 0 0 0.2)
             ]
         ]
+        ([ span
+            [ css
+                [ color (hex "#ff69b4")
+                , marginRight (px 1)
+                ]
+            ]
+            [ text "#"
+            ]
+         ]
+            ++ content
+        )
 
 
 inputBar : State -> Html Msg
