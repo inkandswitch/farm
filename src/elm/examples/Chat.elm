@@ -136,7 +136,7 @@ titleBar content =
     div
         [ css
             [ borderBottom3 (px 1) solid (hex "#ddd")
-            , padding (px 20)
+            , padding2 (px 10) (px 20)
             , fontSize (Css.em 1.1)
             , fontWeight bold
             , boxShadow4 (px 0) (px 0) (px 5) (rgba 0 0 0 0.2)
