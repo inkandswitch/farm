@@ -2,21 +2,23 @@ module Chat exposing (Doc, Msg, State, gizmo)
 
 import Css exposing (..)
 import Dict
-import Gizmo exposing (Model)
-import Html
-import Html.Styled exposing (..)
+import Gizmo exposing (Flags, Model)
+import Html.Styled as Html exposing (..)
 import Html.Styled.Attributes as Attr exposing (autofocus, css, href, placeholder, src, value)
 import Html.Styled.Events exposing (keyCode, on, onBlur, onClick, onInput)
 import Json.Decode as Json
 import List.Extra exposing (groupWhile)
+import Task
+import Time
 
 
 gizmo : Gizmo.Program State Doc Msg
 gizmo =
-    Gizmo.sandbox
+    Gizmo.element
         { init = init
         , update = update
-        , view = toUnstyled << view
+        , view = Html.toUnstyled << view
+        , subscriptions = subscriptions
         }
 
 
@@ -30,6 +32,7 @@ type alias State =
 type alias Message =
     { author : String
     , message : String
+    , time : Int
     }
 
 
@@ -42,13 +45,14 @@ type alias Doc =
     }
 
 
-init : ( State, Doc )
-init =
+init : Flags -> ( State, Doc, Cmd Msg )
+init flags =
     ( { input = "" }
     , { counter = 0
       , messages = []
       , title = "Untitled Chat"
       }
+    , Cmd.none
     )
 
 
@@ -57,6 +61,7 @@ init =
 type Msg
     = Change String
     | Submit
+    | OnTime Time.Posix
     | KeyDown Int
 
 
@@ -65,31 +70,40 @@ onKeyDown tagger =
     on "keydown" (Json.map tagger keyCode)
 
 
-update : Msg -> Model State Doc -> ( State, Doc )
+update : Msg -> Model State Doc -> ( State, Doc, Cmd Msg )
 update msg { flags, state, doc } =
     case msg of
         Change typing ->
-            ( { state | input = typing }, doc )
+            ( { state | input = typing }, doc, Cmd.none )
 
         Submit ->
+            ( state
+            , doc
+            , Task.perform OnTime Time.now
+            )
+
+        OnTime time ->
             ( { state | input = "" }
             , { doc
                 | messages =
                     { author = flags.self
                     , message = state.input
+                    , time = Time.posixToMillis time
                     }
                         :: doc.messages
               }
+            , Cmd.none
             )
 
         KeyDown key ->
             if key == 13 then
-                ( { state | input = "" }
-                , { doc | messages = { author = flags.self, message = state.input } :: doc.messages }
+                ( state
+                , doc
+                , Task.perform OnTime Time.now
                 )
 
             else
-                ( state, doc )
+                ( state, doc, Cmd.none )
 
 
 view : Model State Doc -> Html Msg
@@ -215,9 +229,20 @@ viewGroup ( avatarGizmo, titleGizmo ) ( authorMessage, messages ) =
                 [ css
                     [ fontWeight bold
                     , marginBottom (px 5)
+                    , displayFlex
+                    , alignItems center
                     ]
                 ]
                 [ fromUnstyled <| Gizmo.render titleGizmo authorMessage.author
+                , span
+                    [ css
+                        [ color (hex "#777")
+                        , fontSize (Css.em 0.9)
+                        , marginLeft (px 5)
+                        , fontWeight lighter
+                        ]
+                    ]
+                    [ text (displayTime authorMessage.time) ]
                 ]
             , div
                 []
@@ -234,3 +259,17 @@ viewMessage { message, author } =
             ]
         ]
         [ text message ]
+
+
+displayTime : Int -> String
+displayTime time =
+    let
+        posix =
+            Time.millisToPosix time
+    in
+    String.fromInt (Time.toHour Time.utc posix) ++ ":" ++ String.fromInt (Time.toMinute Time.utc posix)
+
+
+subscriptions : Model State Doc -> Sub Msg
+subscriptions model =
+    Sub.none
