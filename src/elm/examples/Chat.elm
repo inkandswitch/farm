@@ -38,6 +38,7 @@ type alias Message =
 type alias Doc =
     { counter : Int
     , messages : List Message
+    , title : String
     }
 
 
@@ -46,6 +47,7 @@ init =
     ( { input = "" }
     , { counter = 0
       , messages = []
+      , title = "Untitled Chat"
       }
     )
 
@@ -97,23 +99,87 @@ view { flags, state, doc } =
             Maybe.withDefault "" (Dict.get "avatar" flags.config)
 
         titleGizmo =
-            Maybe.withDefault "" (Dict.get "title" flags.config)
+            Maybe.withDefault "" (Dict.get "editableTitle" flags.config)
     in
-    div [ css [ padding (px 24), fontFamilies [ "system-ui" ] ] ]
-        [ div []
+    div
+        [ css
+            [ displayFlex
+            , flexDirection column
+            , fontFamilies [ "system-ui" ]
+            , height (pct 100)
+            , width (pct 100)
+            ]
+        ]
+        [ titleBar
+            [ fromUnstyled <| Gizmo.render titleGizmo flags.data
+            ]
+        , div
+            [ css
+                [ flexGrow (int 1)
+                , padding (px 20)
+                , displayFlex
+                , fontSize (Css.em 0.9)
+                , flexDirection column
+                , overflowY scroll
+                ]
+            ]
             (groupWhile (\a b -> a.author == b.author)
                 (List.reverse doc.messages)
                 |> List.map (viewGroup ( avatarGizmo, titleGizmo ))
             )
-        , viewInput state
+        , inputBar state
         ]
 
 
-viewInput : State -> Html Msg
-viewInput state =
-    div []
-        [ input [ onKeyDown KeyDown, onInput Change, value state.input ] []
-        , button [ onClick Submit ] [ text "Send" ]
+titleBar : List (Html Msg) -> Html Msg
+titleBar =
+    div
+        [ css
+            [ borderBottom3 (px 1) solid (hex "#ddd")
+            , padding (px 20)
+            , fontSize (Css.em 1.1)
+            , fontWeight bold
+            , boxShadow4 (px 0) (px 0) (px 5) (rgba 0 0 0 0.2)
+            ]
+        ]
+
+
+inputBar : State -> Html Msg
+inputBar state =
+    div
+        [ css
+            [ displayFlex
+            , margin (px 10)
+            , border3 (px 2) solid (hex "#ccc")
+            , borderRadius (px 3)
+            , padding (px 10)
+            ]
+        ]
+        [ input
+            [ onKeyDown KeyDown
+            , onInput Change
+            , value state.input
+            , css
+                [ flexGrow (int 1)
+                , border zero
+                , fontSize (Css.em 1)
+                ]
+            ]
+            []
+        , button
+            [ onClick Submit
+            , css
+                [ border zero
+                , margin (px -10)
+                , padding (px 10)
+                , fontSize (Css.em 0.9)
+                , fontWeight (int 600)
+                , borderLeft3 (px 2) solid (hex "#ccc")
+                , color (hex "#777")
+                ]
+            ]
+            [ text "Send"
+            ]
         ]
 
 
@@ -123,14 +189,26 @@ viewGroup ( avatarGizmo, titleGizmo ) ( authorMessage, messages ) =
         [ css
             [ displayFlex
             , flexDirection row
-            , paddingLeft (px 12)
             , paddingBottom (px 10)
             ]
         ]
-        [ div [] [ fromUnstyled (Gizmo.render avatarGizmo authorMessage.author) ]
-        , div [ css [ displayFlex, flexDirection column, paddingLeft (px 12) ] ]
-            [ div [ css [ fontWeight bold, marginBottom (px 5) ] ] [ fromUnstyled (Gizmo.render titleGizmo authorMessage.author) ]
-            , div [] ((authorMessage :: messages) |> List.map viewMessage)
+        [ div
+            [ css
+                [ displayFlex
+                , flexDirection column
+                ]
+            ]
+            [ div
+                [ css
+                    [ fontWeight bold
+                    , marginBottom (px 5)
+                    ]
+                ]
+                [ fromUnstyled <| Gizmo.render titleGizmo authorMessage.author
+                ]
+            , div
+                []
+                ((authorMessage :: messages) |> List.map viewMessage)
             ]
         ]
 
@@ -139,8 +217,7 @@ viewMessage : Message -> Html Msg
 viewMessage { message, author } =
     div
         [ css
-            [ backgroundColor (hex "")
-            , marginBottom (px 5)
+            [ marginBottom (px 5)
             ]
         ]
         [ text message ]

@@ -44,7 +44,7 @@ export default class App {
                 title: "Chat",
                 icon: assetDataUrl("chat_icon.png"),
                 config: {
-                  title,
+                  editableTitle: this.bootstrapWidget("EditableTitle.elm"),
                   avatar: this.bootstrapWidget("Avatar.elm")
                 }
               })
