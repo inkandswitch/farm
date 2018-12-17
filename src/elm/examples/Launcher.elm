@@ -8,6 +8,7 @@ import Html.Styled as Html exposing (..)
 import Html.Styled.Attributes exposing (css, placeholder, src, value)
 import Html.Styled.Events exposing (..)
 import Json.Decode as D
+import Navigation
 import RealmUrl
 import Repo exposing (Ref, Url, create)
 import Task
@@ -84,6 +85,7 @@ type Msg
     | CreateGadget DocumentUrl
     | GadgetDataDocCreated ( Ref, List String )
     | Share Gadget
+    | Navigate String
 
 
 update : Msg -> Model State Doc -> ( State, Doc, Cmd Msg )
@@ -147,6 +149,17 @@ update msg { state, doc } =
                     , doc
                     , Cmd.none
                     )
+
+        Navigate url ->
+            case RealmUrl.parse url of
+                Ok gadget ->
+                    ( { state | launchedGadgets = state.launchedGadgets ++ [ gadget ] }
+                    , { doc | gadgets = gadget :: doc.gadgets }
+                    , Cmd.none
+                    )
+
+                Err _ ->
+                    ( state, doc, Cmd.none )
 
 
 view : Model State Doc -> Html Msg
@@ -419,4 +432,7 @@ viewWindow bar contents =
 
 subscriptions : Model State Doc -> Sub Msg
 subscriptions model =
-    Repo.created GadgetDataDocCreated
+    Sub.batch
+        [ Repo.created GadgetDataDocCreated
+        , Navigation.currentUrl Navigate
+        ]
