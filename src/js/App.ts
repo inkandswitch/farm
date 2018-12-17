@@ -16,64 +16,56 @@ export default class App {
   root: any
 
   rootDataUrl: string = load("rootDataUrl", () => {
-    const title = this.bootstrapWidget("Title.elm")
-
     return this.repo.create({
-      title: "Navigator data",
-      history: [
+      gadgets: [
         {
-          code: this.bootstrapWidget("Launcher.elm", {
-            title: "Launcher",
-            icon: assetDataUrl('create_icon.png'),
-            config: {
-              icon: this.bootstrapWidget("Icon.elm"),
-              title,
-              note: this.bootstrapWidget("Note.elm", {
-                title: "Note",
-                icon: assetDataUrl('note_icon.png')
-              }),
-              imageGallery: this.bootstrapWidget("SimpleImageGallery.elm", {
-                title: "Simple Image Gallery",
-                icon: assetDataUrl("image_gallery_icon.png")
-              }),
-              // todo: this.bootstrapWidget("Todos.elm", {
-              //   title: "Todos",
-              //   icon: assetDataUrl("todo_icon.png")
-              // }),
-              chat: this.bootstrapWidget("Chat.elm", {
-                title: "Chat",
-                icon: assetDataUrl("chat_icon.png"),
-                config: {
-                  editableTitle: this.bootstrapWidget("EditableTitle.elm"),
-                  avatar: this.bootstrapWidget("SimpleAvatar.elm")
-                }
-              })
-            }
+          code: this.bootstrapWidget("CounterTutorial.elm", {
+            title: "Counter Tutorial",
+            icon: assetDataUrl("tutorial_icon.png"),
           }),
           data: this.repo.create({
-            gadgets: [
-              {
-              code: this.bootstrapWidget("CounterTutorial.elm", {
-                title: "Counter Tutorial",
-                icon: assetDataUrl("tutorial_icon.png")
-              }),
-                data: this.repo.create({
-                  title: "Counter Tutorial",
-                  step: 1,
-                  codeUrl: this.bootstrapWidget("Counter.elm"),
-                  dataUrl: this.repo.create({ title: "Counter data" }),
-                })
-              }
-            ]
+            title: "Counter Tutorial",
+            step: 1,
+            codeUrl: this.bootstrapWidget("Counter.elm"),
+            dataUrl: this.repo.create({ title: "Counter data" }),
           }),
         },
-      ]
+      ],
     })
   })
 
-  rootCodeUrl: string = load("rootCodeUrl", () =>
-    this.bootstrapWidget("Navigator.elm"),
-  )
+  rootCodeUrl: string = load("rootCodeUrl", () => {
+    const title = this.bootstrapWidget("Title.elm")
+
+    return this.bootstrapWidget("Launcher.elm", {
+      title: "Launcher",
+      icon: assetDataUrl("create_icon.png"),
+      config: {
+        icon: this.bootstrapWidget("Icon.elm"),
+        title,
+        note: this.bootstrapWidget("Note.elm", {
+          title: "Note",
+          icon: assetDataUrl("note_icon.png"),
+        }),
+        imageGallery: this.bootstrapWidget("SimpleImageGallery.elm", {
+          title: "Simple Image Gallery",
+          icon: assetDataUrl("image_gallery_icon.png"),
+        }),
+        // todo: this.bootstrapWidget("Todos.elm", {
+        //   title: "Todos",
+        //   icon: assetDataUrl("todo_icon.png")
+        // }),
+        chat: this.bootstrapWidget("Chat.elm", {
+          title: "Chat",
+          icon: assetDataUrl("chat_icon.png"),
+          config: {
+            editableTitle: this.bootstrapWidget("EditableTitle.elm"),
+            avatar: this.bootstrapWidget("SimpleAvatar.elm"),
+          },
+        }),
+      },
+    })
+  })
 
   selfDataUrl: string = load("selfDataUrl", () =>
     this.repo.create({
@@ -164,7 +156,7 @@ export default class App {
 
   bootstrapWidget(file: string, opts: { [k: string]: any } = {}): string {
     opts.title = opts.title || `${file} source`
-    return this.repo.create({...opts, "Source.elm": sourceFor(file)})
+    return this.repo.create({ ...opts, "Source.elm": sourceFor(file) })
   }
   // bootstrapWidget(file: string, title: string = "", config: { [k: string]: string } = {}): string {
   //   return this.repo.create({
@@ -180,7 +172,7 @@ function sourceFor(name: string) {
 }
 
 function assetDataUrl(filename: string) {
-  const base64 = readFileSync(path.resolve(`assets/${filename}`), 'base64')
+  const base64 = readFileSync(path.resolve(`assets/${filename}`), "base64")
   return `data:image/png;base64,${base64}`
 }
 
