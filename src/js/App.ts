@@ -162,13 +162,6 @@ export default class App {
     opts.title = opts.title || `${file} source`
     return this.repo.create({ ...opts, "Source.elm": sourceFor(file) })
   }
-  // bootstrapWidget(file: string, title: string = "", config: { [k: string]: string } = {}): string {
-  //   return this.repo.create({
-  //     title: title || `${file} code`,
-  //     "Source.elm": sourceFor(file),
-  //     config,
-  //   })
-  // }
 }
 
 function sourceFor(name: string) {
