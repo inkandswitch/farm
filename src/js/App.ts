@@ -41,7 +41,11 @@ export default class App {
       title: "Launcher",
       icon: assetDataUrl("create_icon.png"),
       config: {
-        icon: this.bootstrapWidget("Icon.elm"),
+        icon: this.bootstrapWidget("Icon.elm", {
+          config: {
+            defaultIcon: assetDataUrl("default_gizmo_icon.png")
+          }
+        }),
         title,
         note: this.bootstrapWidget("Note.elm", {
           title: "Note",

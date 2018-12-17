@@ -1,10 +1,12 @@
 module Icon exposing (Doc, Msg, State, gizmo)
 
 import Css exposing (..)
+import Dict
 import Gizmo exposing (Flags, Model)
 import Html.Styled as Html exposing (..)
 import Html.Styled.Attributes exposing (css, placeholder, value)
 import Html.Styled.Events exposing (..)
+import Maybe
 
 
 gizmo : Gizmo.Program State Doc Msg
@@ -26,14 +28,14 @@ type alias State =
 {-| Document state
 -}
 type alias Doc =
-    { icon : String
+    { icon : Maybe String
     }
 
 
 init : Flags -> ( State, Doc, Cmd Msg )
 init flags =
     ( {}
-    , { icon = "" }
+    , { icon = Nothing }
     , Cmd.none
     )
 
@@ -55,12 +57,16 @@ update msg { state, doc } =
 
 
 view : Model State Doc -> Html Msg
-view { doc } =
+view { flags, doc } =
+    let
+        defaultIconSrc =
+            Maybe.withDefault "" (Dict.get "defaultIcon" flags.config)
+    in
     div
         [ css
             [ width (pct 100)
             , height (pct 100)
-            , backgroundImage (url doc.icon)
+            , backgroundImage (url <| Maybe.withDefault defaultIconSrc doc.icon)
             , backgroundPosition center
             , backgroundSize cover
             ]
