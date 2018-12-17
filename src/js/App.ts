@@ -1,9 +1,9 @@
 import Repo from "./Repo"
-import { readFileSync } from "fs"
-import path from "path"
 import Compiler from "./Compiler"
 import * as Gizmo from "./Gizmo"
 import * as GizmoWindow from "./GizmoWindow"
+import * as Launcher from "./bootstrap/Launcher"
+import * as Identity from "./bootstrap/Identity"
 
 // make the web worker thread-safe:
 ;(<any>process).dlopen = () => {
@@ -15,67 +15,9 @@ export default class App {
   compiler: Compiler = new Compiler(this.repo, "./compile.worker.js")
   root: any
 
-  rootDataUrl: string = load("rootDataUrl", () => {
-    return this.repo.create({
-      gadgets: [
-        {
-          code: this.bootstrapWidget("CounterTutorial.elm", {
-            title: "Counter Tutorial",
-            icon: assetDataUrl("tutorial_icon.png"),
-          }),
-          data: this.repo.create({
-            title: "Counter Tutorial",
-            step: 1,
-            codeUrl: this.bootstrapWidget("Counter.elm"),
-            dataUrl: this.repo.create({ title: "Counter data" }),
-          }),
-        },
-      ],
-    })
-  })
-
-  rootCodeUrl: string = load("rootCodeUrl", () => {
-    const title = this.bootstrapWidget("Title.elm")
-
-    return this.bootstrapWidget("Launcher.elm", {
-      title: "Launcher",
-      icon: assetDataUrl("create_icon.png"),
-      config: {
-        icon: this.bootstrapWidget("Icon.elm", {
-          config: {
-            defaultIcon: assetDataUrl("default_gizmo_icon.png")
-          }
-        }),
-        title,
-        note: this.bootstrapWidget("Note.elm", {
-          title: "Note",
-          icon: assetDataUrl("note_icon.png"),
-        }),
-        imageGallery: this.bootstrapWidget("SimpleImageGallery.elm", {
-          title: "Simple Image Gallery",
-          icon: assetDataUrl("image_gallery_icon.png"),
-        }),
-        // todo: this.bootstrapWidget("Todos.elm", {
-        //   title: "Todos",
-        //   icon: assetDataUrl("todo_icon.png")
-        // }),
-        chat: this.bootstrapWidget("Chat.elm", {
-          title: "Chat",
-          icon: assetDataUrl("chat_icon.png"),
-          config: {
-            editableTitle: this.bootstrapWidget("EditableTitle.elm"),
-            avatar: this.bootstrapWidget("SimpleAvatar.elm"),
-          },
-        }),
-      },
-    })
-  })
-
-  selfDataUrl: string = load("selfDataUrl", () =>
-    this.repo.create({
-      title: "Mysterious Stranger",
-    }),
-  )
+  rootDataUrl: string = load("rootDataUrl", () => Launcher.data(this.repo))
+  rootCodeUrl: string = load("rootCodeUrl", () => Launcher.code(this.repo))
+  selfDataUrl: string = load("selfDataUrl", () => Identity.data(this.repo))
 
   constructor() {
     ;(self as any).repo = this.repo
@@ -157,20 +99,6 @@ export default class App {
   handleUrl(url: string) {
     this.root.navigateTo(url)
   }
-
-  bootstrapWidget(file: string, opts: { [k: string]: any } = {}): string {
-    opts.title = opts.title || `${file} source`
-    return this.repo.create({ ...opts, "Source.elm": sourceFor(file) })
-  }
-}
-
-function sourceFor(name: string) {
-  return readFileSync(path.resolve(`src/elm/examples/${name}`)).toString()
-}
-
-function assetDataUrl(filename: string) {
-  const base64 = readFileSync(path.resolve(`assets/${filename}`), "base64")
-  return `data:image/png;base64,${base64}`
 }
 
 function load(key: string, def: () => string): string {
