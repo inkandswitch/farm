@@ -70,12 +70,18 @@ export default [
   }),
 
   config({
+    name: "realm",
+    entry: ["./src/js/cli/realm"],
+    target: "node",
+  }),
+
+  config({
     name: "renderer",
     entry: [hmrClient("renderer"), "./src/js"],
     target: "electron-renderer",
     plugins: [
       new webpack.HotModuleReplacementPlugin({}),
-      new HtmlWebpackPlugin({title: "Realm"}),
+      new HtmlWebpackPlugin({ title: "Realm" }),
     ],
     devServer: {
       hot: true,

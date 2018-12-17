@@ -20,6 +20,9 @@ app.use(
   devServer(webpackCompiler, {
     publicPath: "/",
     logLevel: "warn",
+    writeToDisk(filename: string): boolean {
+      return /(realm|\.worker)\.js$/.test(filename)
+    },
   }),
 )
 

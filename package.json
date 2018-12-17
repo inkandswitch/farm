@@ -19,7 +19,7 @@
     "types": "./bin/types.sh",
     "counter": "yarn build --config-name=counter && node dist/counter.js",
     "cat": "yarn build --config-name=doccat && node dist/doccat.js",
-    "realm": "cross-env REPO_ROOT=./.data/bots node -r ts-node/register ./src/js/cli/realm.ts",
+    "realm": "cross-env REPO_ROOT=./.data/bots node ./dist/realm.js",
     "bot": "yarn realm bot"
   },
   "devDependencies": {

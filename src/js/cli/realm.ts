@@ -1,5 +1,3 @@
-#!/usr/bin/env ts-node
-
 ;(<any>global).Worker = require("tiny-worker")
 
 import program from "commander"
@@ -7,7 +5,8 @@ import program from "commander"
 import Repo from "../Repo"
 import Compiler from "../Compiler"
 import Bot from "../Bot"
-import fs from "fs"
+import * as Bs from "../bootstrap"
+import * as RealmUrl from "../RealmUrl"
 
 program.version("0.1.0")
 
@@ -34,16 +33,25 @@ program
   })
 
 program
-  .command("create <elmFile>")
-  .description("create a realm bot from an elm file")
-  .action(filename => {
-    const source = fs.readFileSync("./src/elm/examples/" + filename).toString()
-    const url = repo.create({
-      title: filename + " source",
-      "Source.elm": source,
-    })
+  .command("bootstrap <gizmo-name>")
+  .description("Bootstrap a gizmo from src/js/bootstrap.")
+  .action((gizmo: string) => {
+    const bs = require("../bootstrap/" + gizmo)
+    const code = bs.code(repo)
+    const data = bs.data(repo)
+    console.log("\n\ncode url:", code, "\n\n")
+    console.log("\n\ndata url:", data, "\n\n")
 
-    console.log("\n\nbot code url:", url, "\n\n")
+    const realmUrl = RealmUrl.create({ code, data })
+    console.log("\n\nrealm url:", realmUrl, "\n\n")
+  })
+
+program
+  .command("create <elmFile>")
+  .description("Create a realm gizmo from an elm file")
+  .action(filename => {
+    const url = Bs.code(repo, filename)
+    console.log("\n\ngizmo code url:", url, "\n\n")
   })
 
 program.on("command:*", () => {
