@@ -107,16 +107,4 @@ export default [
       hot: true,
     },
   }),
-
-  config({
-    name: "counter",
-    entry: ["./src/counter"],
-    target: "node",
-  }),
-
-  config({
-    name: "doccat",
-    entry: ["./src/doccat"],
-    target: "node",
-  }),
 ]
