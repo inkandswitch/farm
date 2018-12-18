@@ -4181,6 +4181,11 @@ object.pick@^1.3.0:
   dependencies:
     isobject "^3.0.1"
 
+odiff@^1.2.0:
+  version "1.2.0"
+  resolved "https://registry.yarnpkg.com/odiff/-/odiff-1.2.0.tgz#989a9e4b19a715447ab10004cebc00b9d69df4ce"
+  integrity sha512-bhaNJn1j6mIPGhWL2NKOE/Z+6DivTJoJWGhivSmHq7m8Ps5wKGbej8nqNf59lmlJDSe6NbQbBJ/CziZmDY3UJg==
+
 on-finished@~2.3.0:
   version "2.3.0"
   resolved "https://registry.yarnpkg.com/on-finished/-/on-finished-2.3.0.tgz#20f1336481b083cd75337992a16971aa2d906947"

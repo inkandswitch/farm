@@ -1,5 +1,5 @@
 import { defaults, times } from "lodash"
-import { observableDiff, applyChange } from "deep-diff"
+import * as Diff from "./Diff"
 import Repo from "./Repo"
 import Compiler from "./Compiler"
 import { Handle } from "hypermerge/dist/Handle"
@@ -134,10 +134,10 @@ export default class ElmGizmo {
     this.handle.change((state: any) => {
       if (!prevDoc) return
 
-      observableDiff(prevDoc, doc, (change: any) => {
-        // console.log("Applying", change)
-        applyChange(state, doc, change)
-      })
+      const changes = Diff.getChanges(prevDoc, doc)
+      console.log("applying changes", changes)
+
+      Diff.applyChanges(state, changes)
     })
   }
 
