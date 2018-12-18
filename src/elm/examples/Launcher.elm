@@ -91,6 +91,7 @@ type Msg
     | GadgetDataDocCreated ( Ref, List String )
     | Share Gadget
     | Navigate String
+    | RemoveGizmo Gadget
 
 
 update : Msg -> Model State Doc -> ( State, Doc, Cmd Msg )
@@ -140,6 +141,12 @@ update msg { state, doc } =
                     , doc
                     , Cmd.none
                     )
+
+        RemoveGizmo gadget ->
+            ( state
+            , { doc | gadgets = List.filter ((/=) gadget) doc.gadgets }
+            , Cmd.none
+            )
 
         Share gadget ->
             case RealmUrl.create gadget of
@@ -315,6 +322,19 @@ viewGadgetLauncher titleSource iconSource gadget =
                     ]
                 ]
                 [ pinkLink ( VsCode.link gadget.data, "edit data" )
+                ]
+            , div
+                [ css
+                    [ paddingTop (px 5)
+                    , cursor pointer
+                    , color hotPink
+                    , hover
+                        [ textDecoration underline
+                        ]
+                    ]
+                , onClick (RemoveGizmo gadget)
+                ]
+                [ text "remove"
                 ]
             ]
         ]
