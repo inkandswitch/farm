@@ -97,10 +97,18 @@ type Msg
     | RemoveGizmo Gadget
     | SetAddGizmoUrl String
     | SubmitAddGizmo
+    | OnAddGizmoKeyDown Int
 
 
 update : Msg -> Model State Doc -> ( State, Doc, Cmd Msg )
-update msg { state, doc } =
+update msg model =
+    let
+        state =
+            model.state
+
+        doc =
+            model.doc
+    in
     case msg of
         NoOp ->
             ( state, doc, Cmd.none )
@@ -184,6 +192,17 @@ update msg { state, doc } =
             , Cmd.none
             )
 
+        OnAddGizmoKeyDown key ->
+            case key of
+                13 ->
+                    update SubmitAddGizmo model
+
+                _ ->
+                    ( state
+                    , doc
+                    , Cmd.none
+                    )
+
         SubmitAddGizmo ->
             case state.addGizmoUrl of
                 Nothing ->
@@ -258,6 +277,7 @@ view { flags, state, doc } =
                 [ value <| Maybe.withDefault "" state.addGizmoUrl
                 , placeholder "Gizmo url (e.g. realm:/...)"
                 , onInput SetAddGizmoUrl
+                , onKeyDown OnAddGizmoKeyDown
                 , css
                     [ border zero
                     , padding (px 10)
@@ -535,3 +555,8 @@ subscriptions model =
         [ Repo.created GadgetDataDocCreated
         , Navigation.currentUrl Navigate
         ]
+
+
+onKeyDown : (Int -> msg) -> Attribute msg
+onKeyDown tagger =
+    on "keydown" (D.map tagger keyCode)
