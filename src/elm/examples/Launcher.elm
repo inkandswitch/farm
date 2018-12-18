@@ -297,6 +297,7 @@ viewGadgetLauncher titleSource iconSource gadget =
                         [ textDecoration underline
                         ]
                     ]
+                , onClick (Share gadget)
                 ]
                 [ text "share"
                 ]
