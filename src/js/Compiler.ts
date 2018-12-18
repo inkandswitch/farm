@@ -46,18 +46,32 @@ export default class Compiler {
     const jsonString = error.substring(error.indexOf("\n") + 1)
     const json = JSON.parse(jsonString)
 
+    const messageReformat = (message: any[]) =>
+      message
+      .map(
+        (message: any) =>
+        typeof message === "string" ? message : "" + message.string + "", // VSCode still needs to add formatting
+      )
+      .join("")
+
+
+    if (json.type === "error") {
+      return ({ "Source.elm": [{
+        severity: "error",
+        message: messageReformat(json.message),
+        startLine: 0,
+        startColumn: 0,
+        endLine: 0,
+        endColumn: 1,
+      }] })
+    }
+
     const nestedProblems = json.errors.map((error: any) =>
       error.problems.map((problem: any) => {
-        const message = problem.message
-          .map(
-            (message: any) =>
-              typeof message === "string" ? message : "" + message.string + "", // VSCode still needs to add formatting
-          )
-          .join("")
-
+        
         return {
           severity: "error",
-          message,
+          message: messageReformat(problem.message),
           startLine: problem.region.start.line - 1,
           startColumn: problem.region.start.column - 1,
           endLine: problem.region.end.line - 1,
