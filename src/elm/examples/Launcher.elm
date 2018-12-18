@@ -5,13 +5,18 @@ import Css exposing (..)
 import Dict
 import Gizmo exposing (Flags, Model)
 import Html.Styled as Html exposing (..)
-import Html.Styled.Attributes exposing (css, placeholder, src, value)
+import Html.Styled.Attributes exposing (css, href, placeholder, src, value)
 import Html.Styled.Events exposing (..)
 import Json.Decode as D
 import Navigation
 import RealmUrl
 import Repo exposing (Ref, Url, create)
 import Task
+import VsCode
+
+
+hotPink =
+    hex "#ff69b4"
 
 
 gizmo : Gizmo.Program State Doc Msg
@@ -250,40 +255,83 @@ viewGadget gadget =
 viewGadgetLauncher : String -> String -> Gadget -> Html Msg
 viewGadgetLauncher titleSource iconSource gadget =
     div
-        [ onClick (Launch gadget)
-        , css
-            [ displayFlex
-            , flexDirection column
-            , alignItems center
-            ]
-        ]
+        []
         [ div
-            [ css
-                [ height (px 50)
-                , width (px 50)
+            [ onClick (Launch gadget)
+            , css
+                [ displayFlex
+                , flexDirection column
+                , alignItems center
                 ]
             ]
-            [ Html.fromUnstyled (Gizmo.render iconSource gadget.code)
-            ]
-        , span
-            [ css
-                [ fontSize (Css.em 0.8)
-                , textAlign center
-                , marginTop (px 5)
+            [ div
+                [ css
+                    [ height (px 50)
+                    , width (px 50)
+                    ]
                 ]
-            ]
-            [ Html.fromUnstyled (Gizmo.render titleSource gadget.data)
+                [ Html.fromUnstyled (Gizmo.render iconSource gadget.code)
+                ]
+            , span
+                [ css
+                    [ fontSize (Css.em 0.8)
+                    , textAlign center
+                    , marginTop (px 5)
+                    ]
+                ]
+                [ Html.fromUnstyled (Gizmo.render titleSource gadget.data)
+                ]
             ]
         , div
             [ css
                 [ fontSize (Css.em 0.7)
-                , paddingTop (px 5)
-                , cursor pointer
-                , color (hex "#ff69b4")
+                , textAlign center
                 ]
-            , onClickNoPropagation (Share gadget)
             ]
-            [ text "share" ]
+            [ div
+                [ css
+                    [ paddingTop (px 5)
+                    , cursor pointer
+                    , color hotPink
+                    , hover
+                        [ textDecoration underline
+                        ]
+                    ]
+                ]
+                [ text "share"
+                ]
+            , div
+                [ css
+                    [ paddingTop (px 5)
+                    , cursor pointer
+                    ]
+                ]
+                [ pinkLink ( VsCode.link gadget.code, "edit source" ) ]
+            , div
+                [ css
+                    [ paddingTop (px 5)
+                    , cursor pointer
+                    ]
+                ]
+                [ pinkLink ( VsCode.link gadget.data, "edit data" )
+                ]
+            ]
+        ]
+
+
+pinkLink : ( String, String ) -> Html Msg
+pinkLink ( hrefVal, textVal ) =
+    a
+        [ css
+            [ color hotPink
+            , textDecoration none
+            , hover
+                [ textDecoration underline
+                ]
+            ]
+        , href hrefVal
+        ]
+        [ text textVal
         ]
 
 
@@ -295,43 +343,6 @@ onClickNoPropagation msg =
 alwaysTrue : msg -> ( msg, Bool )
 alwaysTrue msg =
     ( msg, True )
-
-
-viewLauncherIcon : Msg -> Html Msg -> Html Msg -> Html Msg
-viewLauncherIcon onClickMsg icon title =
-    div
-        [ onClick onClickMsg
-        , css
-            [ displayFlex
-            , flexDirection column
-            , alignItems center
-            ]
-        ]
-        [ div
-            [ css
-                [ height (px 50)
-                , width (px 50)
-                ]
-            ]
-            [ icon
-            ]
-        , span
-            [ css
-                [ fontSize (Css.em 0.8)
-                , textAlign center
-                , marginTop (px 5)
-                ]
-            ]
-            [ title ]
-        , div
-            [ css
-                [ fontSize (Css.em 0.6)
-                , paddingTop (px 5)
-                , cursor pointer
-                ]
-            ]
-            [ text "share" ]
-        ]
 
 
 viewCreateGadget : String -> String -> List DocumentUrl -> Html Msg
