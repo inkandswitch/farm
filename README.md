@@ -4,10 +4,19 @@ Runtime-editable elm inside electron.
 
 ## Setup
 
+Clone this repo, and then install dependencies:
+
 ```bash
 yarn
 yarn start
 ```
+
+To make edits, we need the [Hypermerge vscode extension](https://github.com/inkandswitch/vscode-hypermerge). Install the extension by clicking [this shortcut](vscode://inkandswitch.hypermerge/), or searching for
+"hypermerge" in the extension marketplace.
+
+Then, we need a patched version of the Elm vscode extension. Download the [latest Release](https://github.com/inkandswitch/vscode-elm/releases/latest). Install by selecting
+"Extensions: Install from VSX..." from the Command Palette, and selecting the downloaded
+.vsx file.
 
 ## TODO
 
