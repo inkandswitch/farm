@@ -19,6 +19,10 @@ hotPink =
     hex "#ff69b4"
 
 
+darkerHotPink =
+    hex "#ff1a8c"
+
+
 gizmo : Gizmo.Program State Doc Msg
 gizmo =
     Gizmo.element
@@ -44,6 +48,7 @@ type alias State =
     , ownDoc : String
     , gadgetTypeToCreate : Maybe DocumentUrl
     , showingGadgetTypes : Bool
+    , addGizmoUrl : Maybe String
     }
 
 
@@ -64,8 +69,6 @@ init flags =
         imageGallerySource =
             Maybe.withDefault "" (Dict.get "imageGallery" flags.config)
 
-        -- todoSource =
-        --     Maybe.withDefault "" (Dict.get "todo" flags.config)
         chatSource =
             Maybe.withDefault "" (Dict.get "chat" flags.config)
     in
@@ -73,9 +76,9 @@ init flags =
       , ownDoc = flags.data
       , gadgetTypeToCreate = Nothing
       , showingGadgetTypes = False
+      , addGizmoUrl = Nothing
       }
     , { gadgets = [], gadgetTypes = [ noteSource, imageGallerySource, chatSource ] }
-      --, todoSource, chatSource ] }
     , Cmd.none
     )
 
@@ -92,6 +95,8 @@ type Msg
     | Share Gadget
     | Navigate String
     | RemoveGizmo Gadget
+    | SetAddGizmoUrl String
+    | SubmitAddGizmo
 
 
 update : Msg -> Model State Doc -> ( State, Doc, Cmd Msg )
@@ -173,6 +178,32 @@ update msg { state, doc } =
                 Err _ ->
                     ( state, doc, Cmd.none )
 
+        SetAddGizmoUrl url ->
+            ( { state | addGizmoUrl = Just url }
+            , doc
+            , Cmd.none
+            )
+
+        SubmitAddGizmo ->
+            case state.addGizmoUrl of
+                Nothing ->
+                    ( state, doc, Cmd.none )
+
+                Just url ->
+                    let
+                        gadget =
+                            RealmUrl.parse url
+                    in
+                    case gadget of
+                        Err urlErr ->
+                            ( state, doc, Cmd.none )
+
+                        Ok newGadget ->
+                            ( { state | addGizmoUrl = Nothing }
+                            , { doc | gadgets = newGadget :: doc.gadgets }
+                            , Cmd.none
+                            )
+
 
 view : Model State Doc -> Html Msg
 view { flags, state, doc } =
@@ -190,6 +221,7 @@ view { flags, state, doc } =
             , backgroundColor (hex "#f5f5f5")
             , fontFamilies [ "system-ui" ]
             , displayFlex
+            , flexDirection column
             , justifyContent center
             , alignItems center
             ]
@@ -197,9 +229,9 @@ view { flags, state, doc } =
         [ div
             [ css
                 [ width (vw 100)
-                , height (vh 100)
                 , backgroundColor (hex "#fff")
                 , padding (px 20)
+                , flexGrow (int 1)
                 ]
             ]
             [ div
@@ -214,6 +246,41 @@ view { flags, state, doc } =
                 (viewCreateGizmoLauncher flags.code iconSource
                     :: List.map (viewGadgetLauncher titleSource iconSource) doc.gadgets
                 )
+            ]
+        , div
+            [ css
+                [ displayFlex
+                , borderTop3 (px 1) solid hotPink
+                , width (pct 100)
+                ]
+            ]
+            [ input
+                [ value <| Maybe.withDefault "" state.addGizmoUrl
+                , placeholder "Gizmo url (e.g. realm:/...)"
+                , onInput SetAddGizmoUrl
+                , css
+                    [ border zero
+                    , padding (px 10)
+                    , width (pct 100)
+                    , color hotPink
+                    ]
+                ]
+                []
+            , button
+                [ css
+                    [ backgroundColor hotPink
+                    , color (hex "#fff")
+                    , border zero
+                    , borderLeft3 (px 1) solid hotPink
+                    , whiteSpace noWrap
+                    , cursor pointer
+                    , hover
+                        [ backgroundColor darkerHotPink
+                        ]
+                    ]
+                , onClick SubmitAddGizmo
+                ]
+                [ text "Add Gizmo" ]
             ]
         , if state.showingGadgetTypes then
             viewCreateGadget iconSource titleSource doc.gadgetTypes
