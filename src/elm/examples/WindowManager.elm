@@ -4,6 +4,7 @@ import Array exposing (Array)
 import Browser.Events
 import Clipboard
 import Css exposing (..)
+import Dict
 import Extra.Array as Array
 import Gizmo exposing (Flags, Model)
 import Html.Styled as Html exposing (Html, button, div, fromUnstyled, input, text, toUnstyled)
@@ -41,12 +42,19 @@ type Modal
     | OpenModal Point String
 
 
+type alias Deps =
+    { title : String -> Html Msg
+    , empty : String -> Html Msg
+    }
+
+
 {-| Ephemeral state not saved to the doc
 -}
 type alias State =
     { action : Action
     , menu : Menu
     , modal : Modal
+    , deps : Deps
     }
 
 
@@ -74,12 +82,29 @@ init flags =
     ( { action = None
       , menu = NoMenu
       , modal = NoModal
+      , deps = makeDeps flags
       }
     , { windows = Array.empty
       , maxZ = 0
       }
     , Cmd.none
     )
+
+
+makeDeps : Flags -> Deps
+makeDeps { config } =
+    let
+        make =
+            \name ->
+                config
+                    |> Dict.get name
+                    |> Maybe.map Gizmo.render
+                    |> Maybe.map ((<<) fromUnstyled)
+                    |> Maybe.withDefault (always <| text (name ++ " gizmo missing"))
+    in
+    { title = make "title"
+    , empty = make "empty"
+    }
 
 
 {-| Message type for modifying State and Doc inside update
@@ -334,15 +359,15 @@ view { doc, state } =
             (doc
                 |> applyAction state.action
                 |> .windows
-                |> Array.indexedMap viewWindow
+                |> Array.indexedMap (viewWindow state.deps)
                 |> Array.toList
             )
         , viewModal state.modal
         ]
 
 
-viewWindow : Int -> Window -> Html Msg
-viewWindow n win =
+viewWindow : Deps -> Int -> Window -> Html Msg
+viewWindow deps n win =
     div
         [ css
             [ property "display" "grid"
@@ -356,7 +381,7 @@ viewWindow n win =
             ]
         , onMouseUp (Click n)
         ]
-        [ viewTitleBar n win
+        [ viewTitleBar deps n win
         , div
             [ css
                 [ overflow hidden
@@ -367,23 +392,23 @@ viewWindow n win =
                     fromUnstyled <| Gizmo.render win.code data
 
                 Nothing ->
-                    viewEmptyWindow n win
+                    viewEmptyWindow deps n win
             ]
         , viewResize n
         ]
 
 
-viewEmptyWindow : Int -> Window -> Html Msg
-viewEmptyWindow n win =
+viewEmptyWindow : Deps -> Int -> Window -> Html Msg
+viewEmptyWindow deps n win =
     div
         [ Attr.fromUnstyled <| Gizmo.onEmit "OpenDocument" (.value >> SetWindowData n)
         ]
-        [ viewEmptyGizmo win.code
+        [ deps.empty win.code
         ]
 
 
-viewTitleBar : Int -> Window -> Html Msg
-viewTitleBar n win =
+viewTitleBar : Deps -> Int -> Window -> Html Msg
+viewTitleBar deps n win =
     div
         [ css
             [ padding (px 2)
