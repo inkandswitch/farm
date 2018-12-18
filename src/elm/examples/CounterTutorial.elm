@@ -5,7 +5,7 @@ import Css exposing (..)
 import Doc
 import Gizmo exposing (Flags, Model)
 import Html.Styled as Html exposing (Html, a, br, button, div, h1, h2, p, pre, text)
-import Html.Styled.Attributes as Attr exposing (css, href, disabled)
+import Html.Styled.Attributes as Attr exposing (css, disabled, href)
 import Html.Styled.Events exposing (onClick)
 import Json.Decode as D
 import RealmUrl
@@ -133,7 +133,7 @@ view ({ doc, state } as model) =
             , lineHeight (num 1.5)
             , property "justify-items" "center"
             , property "transition" "all 500ms"
-            , height (vh 100)
+            , height (pct 100)
             ]
         ]
         [ div
@@ -178,7 +178,7 @@ steps =
         [ \_ ->
             [ title "Welcome to Realm"
             , p [] [ text "This tutorial will guide you through the creation of your first Realm gizmo." ]
-            , p [] [ text "A gizmo is a pairing of a program with data that lives on your computer and can be reused and shared with anyone."]
+            , p [] [ text "A gizmo is a pairing of a program with data that lives on your computer and can be reused and shared with anyone." ]
             , controls [ next ]
             ]
         , \{ state } ->
@@ -212,7 +212,8 @@ steps =
                 , text "and confirm with Enter. "
                 , text "You'll see the file arrive in your VSCode install as "
                 , text "an editable block of JSON. "
-                , text "In fact, you could open that URL from any computer in the world."]
+                , text "In fact, you could open that URL from any computer in the world."
+                ]
             , controls [ prev, next ]
             ]
         , \{ state } ->
@@ -238,7 +239,8 @@ steps =
             , p []
                 [ text "Once it opens, unfold the document and click on the "
                 , code "Source.elm"
-                , text " field to view the code behind your counter."]
+                , text " field to view the code behind your counter."
+                ]
             , codeBlock [ a [ href doc.codeUrl ] [ text doc.codeUrl ] ]
             , controls [ prev, next ]
             ]
@@ -271,7 +273,8 @@ steps =
                 , code "Msg"
                 , text ") from somewhere like a button, Elm will pass that to your "
                 , code "update"
-                , text " function... which will probably trigger a new view! So easy!"]
+                , text " function... which will probably trigger a new view! So easy!"
+                ]
             , controls [ prev, next ]
             ]
         , \_ ->
@@ -307,7 +310,8 @@ steps =
                 ]
             , p []
                 [ text "Your next task is to add a button that sends the Dec message. "
-                , text "(You should be fine with this, right?)"]
+                , text "(You should be fine with this, right?)"
+                ]
             , controls [ prev, next ]
             ]
         , \_ ->
@@ -320,7 +324,8 @@ steps =
                 [ text "From here, you can build anything. Take a look at how "
                 , text "the other gizmos are built. You can inspect anything in Realm "
                 , text "since all the code lives on your computer! We've "
-                , text "tried to keep your starting gizmos simple and easy to learn from." ]
+                , text "tried to keep your starting gizmos simple and easy to learn from."
+                ]
             , controls [ prev, next ]
             ]
         , \{ doc } ->
@@ -433,8 +438,9 @@ next =
         ]
         [ text "Continue" ]
 
+
 disabledNext : Html Msg
-disabledNext = 
+disabledNext =
     button
         [ disabled True
         , css
@@ -442,6 +448,7 @@ disabledNext =
             ]
         ]
         [ text "Not yet!" ]
+
 
 nextIf : Bool -> Html Msg
 nextIf b =
