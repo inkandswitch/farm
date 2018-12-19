@@ -152,18 +152,27 @@ export default class ElmGizmo {
 
   onRepoOut = (msg: any) => {
     switch (msg.t) {
-      case "Create":
+      case "Create": {
         const urls = times(msg.n, () => this.repo.create())
         console.log("sending urls", urls)
         this.sendCreated(msg.ref, urls)
         break
+      }
 
-      case "Clone":
+      case "CreateSource": {
+        const url = this.repo.create({ title: "New Source Doc", "Source.elm": ""})
+        console.log("sending source url", url)
+        this.sendCreated(msg.ref, [url])
+        break
+      }
+
+      case "Clone": {
         const url = this.repo.clone(msg.url)
         this.sendCreated(msg.ref, [url])
         break
+      }
 
-      case "Open":
+      case "Open": {
         const handle = this.repo.open(msg.url)
 
         this.disposables.push(() => handle.close())
@@ -172,6 +181,7 @@ export default class ElmGizmo {
           this.sendOpened(msg.url, doc)
         })
         break
+      }
     }
   }
 

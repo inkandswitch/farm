@@ -55,7 +55,6 @@ type alias GizmoConfig =
 type alias State =
     { launchedGizmos : List GizmoConfig -- yikes
     , gizmoTypeToCreate : Maybe SourceUrl
-    , creatingSource : Bool
     , showingGizmoTypes : Bool
     , addGizmoUrl : Maybe String
     }
@@ -73,7 +72,6 @@ init flags =
       , gizmoTypeToCreate = Nothing
       , showingGizmoTypes = False
       , addGizmoUrl = Nothing
-      , creatingSource = False
       }
     , { gizmos = []
       , gizmoTypes =
@@ -140,22 +138,26 @@ update msg model =
             )
 
         DocCreated ( ref, urls ) ->
-            if state.creatingSource then
-                update (GizmoTypeSourceDocCreated ( ref, urls )) model
+            case ref of
+                "GizmoSourceDoc" ->
+                    update (GizmoTypeSourceDocCreated ( ref, urls )) model
 
-            else
-                update (GizmoDataDocCreated ( ref, urls )) model
+                "GizmoDataDoc" ->
+                    update (GizmoDataDocCreated ( ref, urls )) model
+
+                _ ->
+                    ( state, doc, Cmd.none )
 
         CreateGizmoTypeSourceDoc ->
-            ( { state | creatingSource = True }
+            ( state
             , doc
-            , Repo.create "CreateOne" 1
+            , Repo.createSource "GizmoSourceDoc"
             )
 
         GizmoTypeSourceDocCreated ( ref, urls ) ->
             case List.head urls of
                 Just url ->
-                    ( { state | creatingSource = False }
+                    ( state
                     , { doc | gizmoTypes = url :: doc.gizmoTypes }
                     , BrowserNav.load (VsCode.link url)
                     )
@@ -166,7 +168,7 @@ update msg model =
         CreateGizmo gizmoType ->
             ( { state | gizmoTypeToCreate = Just gizmoType }
             , doc
-            , Repo.create "CreateOne" 1
+            , Repo.create "GizmoDataDoc" 1
             )
 
         GizmoDataDocCreated ( ref, urls ) ->

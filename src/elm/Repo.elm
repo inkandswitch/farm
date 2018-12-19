@@ -1,4 +1,4 @@
-port module Repo exposing (Ref, Url, clone, create, created, docs, open, rawDocs)
+port module Repo exposing (Ref, Url, clone, create, createSource, created, docs, open, rawDocs)
 
 import Doc exposing (Doc, RawDoc)
 import Json.Decode as D
@@ -30,6 +30,11 @@ docs mkMsg =
 create : Ref -> Int -> Cmd msg
 create ref n =
     send <| Create ref n
+
+
+createSource : Ref -> Cmd msg
+createSource ref =
+    send <| CreateSource ref
 
 
 open : Url -> Cmd msg
@@ -68,6 +73,7 @@ port repoOut : E.Value -> Cmd msg
 type OutMsg
     = Create Ref Int -- String ref and number of docs to create
     | Clone Ref Url -- String ref and url of document
+    | CreateSource Ref -- String ref
     | Open Url
 
 
@@ -79,6 +85,12 @@ encodeOut msg =
                 [ ( "t", E.string "Create" )
                 , ( "ref", E.string ref )
                 , ( "n", E.int n )
+                ]
+
+        CreateSource ref ->
+            E.object
+                [ ( "t", E.string "CreateSource" )
+                , ( "ref", E.string ref )
                 ]
 
         Clone ref url ->
