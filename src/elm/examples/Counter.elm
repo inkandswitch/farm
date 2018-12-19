@@ -1,8 +1,10 @@
 module Counter exposing (Doc, Msg, State, gizmo)
 
 import Gizmo exposing (Model)
-import Html exposing (Html, button, div, text)
-import Html.Events exposing (onClick)
+import Css exposing (..)
+import Html.Styled exposing (..)
+import Html.Styled.Attributes exposing (..)
+import Html.Styled.Events exposing (..)
 
 
 gizmo : Gizmo.Program State Doc Msg
@@ -10,7 +12,7 @@ gizmo =
     Gizmo.sandbox
         { init = init
         , update = update
-        , view = view
+        , view = toUnstyled << view
         }
 
 
@@ -42,14 +44,14 @@ type Msg
 
 
 update : Msg -> Model State Doc -> ( State, Doc )
-update msg { doc } =
+update msg { state, doc } =
     case msg of
         Inc ->
-            ( {}, { doc | counter = doc.counter + 1 } )
+            ( state, { doc | counter = doc.counter + 1 } )
 
 
 view : Model State Doc -> Html Msg
-view { doc } =
+view { state, doc } =
     div []
-        [ button [ onClick Inc ] [ text <| String.fromInt doc.counter ]
+        [ button [ onClick Inc ] [ text (String.fromInt doc.counter) ]
         ]
