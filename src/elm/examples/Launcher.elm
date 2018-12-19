@@ -67,8 +67,6 @@ type alias Doc =
     }
 
 
-{-| What are Flags?
--}
 init : Flags -> ( State, Doc, Cmd Msg )
 init flags =
     ( { launchedGizmos = []
@@ -296,6 +294,7 @@ view { flags, state, doc } =
                 , backgroundColor (hex "#fff")
                 , padding (px 20)
                 , flexGrow (int 1)
+                , overflowY auto
                 ]
             ]
             [ grid
