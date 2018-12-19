@@ -72,7 +72,7 @@
     "hypermerge": "github:automerge/hypermerge#fork",
     "lodash": "^4.17.11",
     "node-elm-compiler": "^5.0.1",
-    "odiff": "^1.2.0",
+    "odiff": "github:inkandswitch/odiff",
     "random-access-file": "^2.0.1",
     "random-access-memory": "^3.0.0",
     "tiny-worker": "^2.1.2",
