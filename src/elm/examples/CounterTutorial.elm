@@ -237,6 +237,8 @@ steps =
             , p []
                 [ text "It's time to upgrade this counter. "
                 , text "Click the URL below to open in VS Code. "
+                , text "If the code doesn't have syntax highlighting, "
+                , text "you should install the VSCode Elm plugin."
                 ]
             , codeBlock
                 [ a
@@ -253,7 +255,7 @@ steps =
             , controls [ prev, next ]
             ]
         , \_ ->
-            [ title "Get some Incsight"
+            [ title "Get some Inc-sight"
             , p []
                 [ text "Find the first line of the 'update' function: "
                 , code "case msg of"
