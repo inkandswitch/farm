@@ -135,8 +135,6 @@ export default class ElmGizmo {
       if (!prevDoc) return
 
       const changes = Diff.getChanges(prevDoc, doc)
-      console.log("applying changes", changes)
-
       Diff.applyChanges(state, changes)
     })
   }
