@@ -202,14 +202,18 @@ steps =
         , \{ doc } ->
             [ title "Open your gizmo's data document"
             , p []
-                [ text "Copy the URL below. "
+                [ text "Click the URL below to open it in VS Code. "
                 ]
-            , codeBlock [ a [ href doc.dataUrl ] [ text doc.dataUrl ] ]
+            , codeBlock
+                [ a
+                    [ href (VsCode.link doc.dataUrl)
+                    ]
+                    [ text (VsCode.link doc.dataUrl)
+                    ]
+                ]
             , p []
-                [ text "Use the Command Palette to select the "
-                , code "Open document"
-                , text " command. Paste the copied URL into the input box, "
-                , text "and confirm with Enter. "
+                [ text "In VS Code, confirm you want to open the document "
+                , text "by clicking \"Open\". "
                 , text "You'll see the file arrive in your VSCode install as "
                 , text "an editable block of JSON. "
                 , text "In fact, you could open that URL from any computer in the world."
@@ -219,7 +223,9 @@ steps =
         , \{ state } ->
             [ title "Edit your gizmo's data"
             , p []
-                [ text "You can find your documents in VS Code's Explorer view, below your files. "
+                [ text "If you clicked the link in the last step, your"
+                , text "Gizmo's data should be the active window in VS Code. "
+                , text "You can always find your documents in VS Code's Explorer view, below your files. "
                 , text "You may have to expand the section labeled 'HypermergeFS'. "
                 , text "Select the document titled 'Counter data'. "
                 , text "To continue, set the \"counter\" value to over 9000."
@@ -230,18 +236,20 @@ steps =
             [ title "Open your gizmo's code document"
             , p []
                 [ text "It's time to upgrade this counter. "
-                , text "Open the URL below in VS Code. "
-                , text "Or, click "
-                , a [ href (VsCode.link doc.codeUrl) ]
-                    [ text "here" ]
-                , text " to load it automatically."
+                , text "Click the URL below to open in VS Code. "
+                ]
+            , codeBlock
+                [ a
+                    [ href (VsCode.link doc.codeUrl)
+                    ]
+                    [ text (VsCode.link doc.codeUrl)
+                    ]
                 ]
             , p []
                 [ text "Once it opens, unfold the document and click on the "
                 , code "Source.elm"
                 , text " field to view the code behind your counter."
                 ]
-            , codeBlock [ a [ href doc.codeUrl ] [ text doc.codeUrl ] ]
             , controls [ prev, next ]
             ]
         , \_ ->
@@ -387,6 +395,7 @@ codeBlock =
             , fontFamily monospace
             , padding (px 10)
             , margin2 (px 10) zero
+            , overflowX auto
             ]
         ]
 
