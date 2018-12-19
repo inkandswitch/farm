@@ -1,6 +1,5 @@
 import express from "express"
 import devServer from "webpack-dev-middleware"
-import hot from "webpack-hot-middleware"
 import webpack from "webpack"
 import config from "../../webpack.config"
 
@@ -23,12 +22,6 @@ app.use(
     writeToDisk(filename: string): boolean {
       return /(realm|\.worker)\.js$/.test(filename)
     },
-  }),
-)
-
-app.use(
-  hot(webpackCompiler, {
-    path: "/__webpack_hmr",
   }),
 )
 
