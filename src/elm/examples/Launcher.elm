@@ -38,25 +38,32 @@ type alias DocumentUrl =
     String
 
 
-type alias Gadget =
-    { code : DocumentUrl
-    , data : DocumentUrl
+type alias SourceUrl =
+    DocumentUrl
+
+
+type alias DataUrl =
+    DocumentUrl
+
+
+type alias GizmoConfig =
+    { code : SourceUrl
+    , data : DataUrl
     }
 
 
 type alias State =
-    { launchedGadgets : List Gadget -- yikes
-    , ownDoc : String
-    , gadgetTypeToCreate : Maybe DocumentUrl
+    { launchedGizmos : List GizmoConfig -- yikes
+    , gizmoTypeToCreate : Maybe SourceUrl
     , creatingSource : Bool
-    , showingGadgetTypes : Bool
+    , showingGizmoTypes : Bool
     , addGizmoUrl : Maybe String
     }
 
 
 type alias Doc =
-    { gadgets : List Gadget
-    , gadgetTypes : List DocumentUrl
+    { gizmos : List GizmoConfig
+    , gizmoTypes : List SourceUrl
     }
 
 
@@ -64,24 +71,21 @@ type alias Doc =
 -}
 init : Flags -> ( State, Doc, Cmd Msg )
 init flags =
-    let
-        noteSource =
-            Maybe.withDefault "" (Dict.get "note" flags.config)
-
-        imageGallerySource =
-            Maybe.withDefault "" (Dict.get "imageGallery" flags.config)
-
-        chatSource =
-            Maybe.withDefault "" (Dict.get "chat" flags.config)
-    in
-    ( { launchedGadgets = []
-      , ownDoc = flags.data
-      , gadgetTypeToCreate = Nothing
-      , showingGadgetTypes = False
+    ( { launchedGizmos = []
+      , gizmoTypeToCreate = Nothing
+      , showingGizmoTypes = False
       , addGizmoUrl = Nothing
       , creatingSource = False
       }
-    , { gadgets = [], gadgetTypes = [ noteSource, imageGallerySource, chatSource ] }
+    , { gizmos = []
+      , gizmoTypes =
+            List.filter
+                (not << String.isEmpty)
+                [ Maybe.withDefault "" (Dict.get "note" flags.config)
+                , Maybe.withDefault "" (Dict.get "imageGallery" flags.config)
+                , Maybe.withDefault "" (Dict.get "chat" flags.config)
+                ]
+      }
     , Cmd.none
     )
 
@@ -90,19 +94,19 @@ init flags =
 -}
 type Msg
     = NoOp
-    | Launch Gadget
-    | ShowGadgetTypes
-    | HideGadgetTypes
-    | CreateGadget DocumentUrl
-    | GadgetDataDocCreated ( Ref, List String )
-    | Share Gadget
+    | LaunchGizmo GizmoConfig
+    | ShowGizmoTypeSelector
+    | HideGizmoTypeSelector
+    | CreateGizmo SourceUrl
+    | GizmoDataDocCreated ( Ref, List String )
+    | CopyShareLink GizmoConfig
     | Navigate String
-    | RemoveGizmo Gadget
-    | SetAddGizmoUrl String
-    | SubmitAddGizmo
-    | OnAddGizmoKeyDown Int
-    | CreateGizmoSourceDoc
-    | GizmoSourceDocCreated ( Ref, List String )
+    | RemoveGizmo GizmoConfig
+    | SetAddGizmoInputUrl String
+    | SubmitAddGizmoInput
+    | OnAddGizmoInputKeyDown Int
+    | CreateGizmoTypeSourceDoc
+    | GizmoTypeSourceDocCreated ( Ref, List String )
     | DocCreated ( Ref, List String )
 
 
@@ -119,80 +123,80 @@ update msg model =
         NoOp ->
             ( state, doc, Cmd.none )
 
-        Launch gadget ->
-            ( { state | launchedGadgets = state.launchedGadgets ++ [ gadget ] }
+        LaunchGizmo gizmoConfig ->
+            ( { state | launchedGizmos = state.launchedGizmos ++ [ gizmoConfig ] }
             , doc
             , Cmd.none
             )
 
-        ShowGadgetTypes ->
-            ( { state | showingGadgetTypes = True }
+        ShowGizmoTypeSelector ->
+            ( { state | showingGizmoTypes = True }
             , doc
             , Cmd.none
             )
 
-        HideGadgetTypes ->
-            ( { state | showingGadgetTypes = False }
+        HideGizmoTypeSelector ->
+            ( { state | showingGizmoTypes = False }
             , doc
             , Cmd.none
             )
 
-        CreateGizmoSourceDoc ->
+        DocCreated ( ref, urls ) ->
+            if state.creatingSource then
+                update (GizmoTypeSourceDocCreated ( ref, urls )) model
+
+            else
+                update (GizmoDataDocCreated ( ref, urls )) model
+
+        CreateGizmoTypeSourceDoc ->
             ( { state | creatingSource = True }
             , doc
             , Repo.create "CreateOne" 1
             )
 
-        DocCreated ( ref, urls ) ->
-            if state.creatingSource then
-                update (GizmoSourceDocCreated ( ref, urls )) model
-
-            else
-                update (GadgetDataDocCreated ( ref, urls )) model
-
-        GizmoSourceDocCreated ( ref, urls ) ->
+        GizmoTypeSourceDocCreated ( ref, urls ) ->
             case List.head urls of
                 Just url ->
                     ( { state | creatingSource = False }
-                    , { doc | gadgetTypes = url :: doc.gadgetTypes }
+                    , { doc | gizmoTypes = url :: doc.gizmoTypes }
                     , BrowserNav.load (VsCode.link url)
                     )
 
                 _ ->
                     ( state, doc, Cmd.none )
 
-        CreateGadget gadgetType ->
-            ( { state | gadgetTypeToCreate = Just gadgetType }
+        CreateGizmo gizmoType ->
+            ( { state | gizmoTypeToCreate = Just gizmoType }
             , doc
             , Repo.create "CreateOne" 1
             )
 
-        GadgetDataDocCreated ( ref, urls ) ->
-            case ( state.gadgetTypeToCreate, List.head urls ) of
-                ( Just gadgetType, Just url ) ->
+        GizmoDataDocCreated ( ref, urls ) ->
+            case ( state.gizmoTypeToCreate, List.head urls ) of
+                ( Just gizmoType, Just url ) ->
                     let
-                        gadget =
-                            { code = gadgetType, data = url }
+                        gizmoConfig =
+                            { code = gizmoType, data = url }
                     in
-                    ( { state | gadgetTypeToCreate = Nothing, showingGadgetTypes = False, launchedGadgets = state.launchedGadgets ++ [ gadget ] }
-                    , { doc | gadgets = gadget :: doc.gadgets }
+                    ( { state | gizmoTypeToCreate = Nothing, showingGizmoTypes = False, launchedGizmos = state.launchedGizmos ++ [ gizmoConfig ] }
+                    , { doc | gizmos = gizmoConfig :: doc.gizmos }
                     , Cmd.none
                     )
 
                 _ ->
-                    ( { state | showingGadgetTypes = False, gadgetTypeToCreate = Nothing }
+                    ( { state | showingGizmoTypes = False, gizmoTypeToCreate = Nothing }
                     , doc
                     , Cmd.none
                     )
 
-        RemoveGizmo gadget ->
+        RemoveGizmo gizmoConfig ->
             ( state
-            , { doc | gadgets = List.filter ((/=) gadget) doc.gadgets }
+            , { doc | gizmos = List.filter ((/=) gizmoConfig) doc.gizmos }
             , Cmd.none
             )
 
-        Share gadget ->
-            case RealmUrl.create gadget of
+        CopyShareLink gizmoConfig ->
+            case RealmUrl.create gizmoConfig of
                 Ok url ->
                     ( state
                     , doc
@@ -207,25 +211,25 @@ update msg model =
 
         Navigate url ->
             case RealmUrl.parse url of
-                Ok gadget ->
-                    ( { state | launchedGadgets = state.launchedGadgets ++ [ gadget ] }
-                    , { doc | gadgets = gadget :: doc.gadgets }
+                Ok gizmoConfig ->
+                    ( { state | launchedGizmos = state.launchedGizmos ++ [ gizmoConfig ] }
+                    , { doc | gizmos = gizmoConfig :: doc.gizmos }
                     , Cmd.none
                     )
 
                 Err _ ->
                     ( state, doc, Cmd.none )
 
-        SetAddGizmoUrl url ->
+        SetAddGizmoInputUrl url ->
             ( { state | addGizmoUrl = Just url }
             , doc
             , Cmd.none
             )
 
-        OnAddGizmoKeyDown key ->
+        OnAddGizmoInputKeyDown key ->
             case key of
                 13 ->
-                    update SubmitAddGizmo model
+                    update SubmitAddGizmoInput model
 
                 _ ->
                     ( state
@@ -233,29 +237,31 @@ update msg model =
                     , Cmd.none
                     )
 
-        SubmitAddGizmo ->
+        SubmitAddGizmoInput ->
             case state.addGizmoUrl of
                 Nothing ->
                     ( state, doc, Cmd.none )
 
                 Just url ->
-                    let
-                        gadget =
-                            RealmUrl.parse url
-                    in
-                    case gadget of
+                    case RealmUrl.parse url of
                         Err urlErr ->
                             ( state, doc, Cmd.none )
 
-                        Ok newGadget ->
+                        Ok gizmoConfig ->
                             ( { state | addGizmoUrl = Nothing }
-                            , { doc | gadgets = newGadget :: doc.gadgets }
+                            , { doc | gizmos = gizmoConfig :: doc.gizmos }
                             , Cmd.none
                             )
 
 
+viewGizmo : SourceUrl -> DataUrl -> Html Msg
+viewGizmo source data =
+    Html.fromUnstyled (Gizmo.render source data)
+
+
 view : Model State Doc -> Html Msg
 view { flags, state, doc } =
+    -- TODO: Clean up this let block
     let
         iconSource =
             Maybe.withDefault "" (Dict.get "icon" flags.config)
@@ -265,6 +271,12 @@ view { flags, state, doc } =
 
         createIcon =
             Maybe.withDefault "" (Dict.get "createIcon" flags.config)
+
+        viewIcon =
+            viewGizmo iconSource
+
+        viewTitle =
+            viewGizmo titleSource
     in
     div
         [ css
@@ -286,68 +298,98 @@ view { flags, state, doc } =
                 , flexGrow (int 1)
                 ]
             ]
-            [ div
-                [ css
-                    [ property "display" "grid"
-                    , property "grid-template-columns" "repeat(auto-fit, minmax(100px, 1fr))"
-                    , property "grid-auto-rows" "1fr"
-                    , justifyContent center
-                    , property "gap" "1rem"
+            [ grid
+                (cell
+                    [ gizmoLauncher (text "Create Gizmo") (viewIcon flags.code) ShowGizmoTypeSelector
                     ]
-                ]
-                (viewCreateGizmoLauncher flags.code iconSource
-                    :: List.map (viewGadgetLauncher titleSource iconSource) doc.gadgets
+                    :: List.map
+                        (\gc ->
+                            cell
+                                [ gizmoLauncher (viewTitle gc.data) (viewIcon gc.code) (LaunchGizmo gc)
+                                , viewPinkLinks gc
+                                ]
+                        )
+                        doc.gizmos
                 )
             ]
-        , div
-            [ css
-                [ displayFlex
-                , borderTop3 (px 1) solid hotPink
-                , width (pct 100)
-                ]
-            ]
-            [ input
-                [ value <| Maybe.withDefault "" state.addGizmoUrl
-                , placeholder "Gizmo url (e.g. realm:/...)"
-                , onInput SetAddGizmoUrl
-                , onKeyDown OnAddGizmoKeyDown
-                , css
-                    [ border zero
-                    , padding (px 10)
-                    , width (pct 100)
-                    , color hotPink
-                    ]
-                ]
-                []
-            , button
-                [ css
-                    [ backgroundColor hotPink
-                    , color (hex "#fff")
-                    , border zero
-                    , borderLeft3 (px 1) solid hotPink
-                    , whiteSpace noWrap
-                    , cursor pointer
-                    , hover
-                        [ backgroundColor darkerHotPink
-                        ]
-                    ]
-                , onClick SubmitAddGizmo
-                ]
-                [ text "Add Gizmo" ]
-            ]
-        , if state.showingGadgetTypes then
-            viewCreateGadget createIcon iconSource titleSource doc.gadgetTypes
+        , viewAddGizmoInput (Maybe.withDefault "" state.addGizmoUrl)
+        , if state.showingGizmoTypes then
+            viewGizmoTypeSelector createIcon viewIcon viewTitle doc.gizmoTypes
 
           else
             Html.text ""
-        , div [] (List.map viewGadget state.launchedGadgets)
+        , div [] (List.map viewGizmoWindow state.launchedGizmos)
         ]
 
 
-viewCreateGizmoLauncher : DocumentUrl -> DocumentUrl -> Html Msg
-viewCreateGizmoLauncher ownUrl iconSource =
+grid : List (Html Msg) -> Html Msg
+grid cells =
     div
-        [ onClick ShowGadgetTypes
+        [ css
+            [ property "display" "grid"
+            , property "grid-template-columns" "repeat(auto-fit, minmax(100px, 1fr))"
+            , property "grid-auto-rows" "1fr"
+            , justifyContent center
+            , property "gap" "1rem"
+            ]
+        ]
+        cells
+
+
+cell : List (Html Msg) -> Html Msg
+cell content =
+    div [] content
+
+
+viewAddGizmoInput : String -> Html Msg
+viewAddGizmoInput inputValue =
+    div
+        [ css
+            [ displayFlex
+            , borderTop3 (px 1) solid hotPink
+            , width (pct 100)
+            ]
+        ]
+        [ input
+            [ value inputValue
+            , placeholder "Gizmo url (e.g. realm:/...)"
+            , onInput SetAddGizmoInputUrl
+            , onKeyDown OnAddGizmoInputKeyDown
+            , css
+                [ border zero
+                , padding (px 10)
+                , width (pct 100)
+                , color hotPink
+                ]
+            ]
+            []
+        , button
+            [ css
+                [ backgroundColor hotPink
+                , color (hex "#fff")
+                , border zero
+                , borderLeft3 (px 1) solid hotPink
+                , whiteSpace noWrap
+                , cursor pointer
+                , hover
+                    [ backgroundColor darkerHotPink
+                    ]
+                ]
+            , onClick SubmitAddGizmoInput
+            ]
+            [ text "Add Gizmo" ]
+        ]
+
+
+viewGizmoWindow : GizmoConfig -> Html Msg
+viewGizmoWindow gizmoConfig =
+    Html.fromUnstyled <| Gizmo.renderWindow gizmoConfig.code gizmoConfig.data
+
+
+gizmoLauncher : Html Msg -> Html Msg -> Msg -> Html Msg
+gizmoLauncher title icon msg =
+    div
+        [ onClick msg
         , css
             [ displayFlex
             , flexDirection column
@@ -360,7 +402,7 @@ viewCreateGizmoLauncher ownUrl iconSource =
                 , width (px 50)
                 ]
             ]
-            [ Html.fromUnstyled (Gizmo.render iconSource ownUrl)
+            [ icon
             ]
         , span
             [ css
@@ -369,93 +411,59 @@ viewCreateGizmoLauncher ownUrl iconSource =
                 , marginTop (px 5)
                 ]
             ]
-            [ text "Create Gizmo"
+            [ title
             ]
         ]
 
 
-viewGadget : Gadget -> Html Msg
-viewGadget gadget =
-    Html.fromUnstyled <| Gizmo.renderWindow gadget.code gadget.data
-
-
-viewGadgetLauncher : String -> String -> Gadget -> Html Msg
-viewGadgetLauncher titleSource iconSource gadget =
+viewPinkLinks : GizmoConfig -> Html Msg
+viewPinkLinks gizmoConfig =
     div
-        []
-        [ div
-            [ onClick (Launch gadget)
-            , css
-                [ displayFlex
-                , flexDirection column
-                , alignItems center
-                ]
+        [ css
+            [ fontSize (Css.em 0.7)
+            , textAlign center
             ]
-            [ div
-                [ css
-                    [ height (px 50)
-                    , width (px 50)
+        ]
+        [ div
+            [ css
+                [ paddingTop (px 5)
+                , cursor pointer
+                , color hotPink
+                , hover
+                    [ textDecoration underline
                     ]
                 ]
-                [ Html.fromUnstyled (Gizmo.render iconSource gadget.code)
-                ]
-            , span
-                [ css
-                    [ fontSize (Css.em 0.8)
-                    , textAlign center
-                    , marginTop (px 5)
-                    ]
-                ]
-                [ Html.fromUnstyled (Gizmo.render titleSource gadget.data)
-                ]
+            , onClick (CopyShareLink gizmoConfig)
+            ]
+            [ text "share"
             ]
         , div
             [ css
-                [ fontSize (Css.em 0.7)
-                , textAlign center
+                [ paddingTop (px 5)
+                , cursor pointer
                 ]
             ]
-            [ div
-                [ css
-                    [ paddingTop (px 5)
-                    , cursor pointer
-                    , color hotPink
-                    , hover
-                        [ textDecoration underline
-                        ]
-                    ]
-                , onClick (Share gadget)
+            [ pinkLink ( VsCode.link gizmoConfig.code, "edit source" ) ]
+        , div
+            [ css
+                [ paddingTop (px 5)
+                , cursor pointer
                 ]
-                [ text "share"
-                ]
-            , div
-                [ css
-                    [ paddingTop (px 5)
-                    , cursor pointer
-                    ]
-                ]
-                [ pinkLink ( VsCode.link gadget.code, "edit source" ) ]
-            , div
-                [ css
-                    [ paddingTop (px 5)
-                    , cursor pointer
+            ]
+            [ pinkLink ( VsCode.link gizmoConfig.data, "edit data" )
+            ]
+        , div
+            [ css
+                [ paddingTop (px 5)
+                , cursor pointer
+                , color hotPink
+                , hover
+                    [ textDecoration underline
                     ]
                 ]
-                [ pinkLink ( VsCode.link gadget.data, "edit data" )
-                ]
-            , div
-                [ css
-                    [ paddingTop (px 5)
-                    , cursor pointer
-                    , color hotPink
-                    , hover
-                        [ textDecoration underline
-                        ]
-                    ]
-                , onClick (RemoveGizmo gadget)
-                ]
-                [ text "remove"
-                ]
+            , onClick (RemoveGizmo gizmoConfig)
+            ]
+            [ text "remove"
             ]
         ]
 
@@ -486,86 +494,75 @@ alwaysTrue msg =
     ( msg, True )
 
 
-viewCreateGadget : String -> String -> String -> List DocumentUrl -> Html Msg
-viewCreateGadget createIcon iconSource titleSource gadgetTypes =
-    viewWindow
-        (viewWindowBar HideGadgetTypes [ text "Select Gizmo Type" ])
-        [ div
-            [ css [ padding2 zero (px 30) ]
-            ]
-            (div
-                [ onClick CreateGizmoSourceDoc
-                , css
-                    [ padding2 (px 20) zero
-                    , borderBottom3 (px 1) solid (hex "#ddd")
-                    , cursor pointer
-                    , displayFlex
-                    , flexDirection row
-                    , alignItems center
-                    , fontSize (Css.em 1.2)
-                    ]
-                ]
-                [ div
-                    [ css
-                        [ height (px 50)
-                        , width (px 50)
-                        , marginRight (px 15)
-                        ]
-                    ]
-                    [ div
-                        [ css
-                            [ width (pct 100)
-                            , height (pct 100)
-                            , backgroundImage (url createIcon)
-                            , backgroundPosition center
-                            , backgroundSize cover
-                            ]
-                        ]
-                        []
-                    ]
-                , div
-                    [ css
-                        [ fontSize (Css.em 1.2)
-                        , color hotPink
-                        ]
-                    ]
-                    [ text "Create New Gizmo"
-                    ]
-                ]
-                :: List.map (viewGadgetType iconSource titleSource) gadgetTypes
+viewGizmoTypeSelector : String -> (String -> Html Msg) -> (String -> Html Msg) -> List SourceUrl -> Html Msg
+viewGizmoTypeSelector createIcon viewIcon viewTitle gizmoTypes =
+    window
+        "Select Gizmo Type"
+        HideGizmoTypeSelector
+        [ list
+            (viewCreateNewGizmoTypeItem createIcon
+                :: List.map
+                    (\g -> item (CreateGizmo g) (viewIcon g) (viewTitle g))
+                    gizmoTypes
             )
         ]
 
 
-viewGadgetType : DocumentUrl -> DocumentUrl -> DocumentUrl -> Html Msg
-viewGadgetType iconSource titleSource gadgetType =
-    div
-        [ onClick (CreateGadget gadgetType)
-        , css
-            [ padding2 (px 20) zero
-            , borderBottom3 (px 1) solid (hex "#ddd")
-            , cursor pointer
-            , displayFlex
-            , flexDirection row
-            , alignItems center
-            , fontSize (Css.em 1.2)
-            ]
-        ]
-        [ div
+viewCreateNewGizmoTypeItem : String -> Html Msg
+viewCreateNewGizmoTypeItem iconSrc =
+    item
+        CreateGizmoTypeSourceDoc
+        (div
             [ css
-                [ height (px 50)
-                , width (px 50)
-                , marginRight (px 15)
+                [ width (pct 100)
+                , height (pct 100)
+                , backgroundImage (url iconSrc)
+                , backgroundPosition center
+                , backgroundSize cover
                 ]
             ]
-            [ Html.fromUnstyled <| Gizmo.render iconSource gadgetType
+            []
+        )
+        (div
+            [ css
+                [ fontSize (Css.em 1.2)
+                , color hotPink
+                ]
             ]
-        , Html.fromUnstyled <| Gizmo.render titleSource gadgetType
+            [ text "Create New Gizmo"
+            ]
+        )
+
+
+window : String -> Msg -> List (Html Msg) -> Html Msg
+window title onClose content =
+    div
+        [ css
+            [ position fixed
+            , top zero
+            , left zero
+            , width (pct 100)
+            , height (pct 100)
+            , displayFlex
+            , flexDirection column
+            , backgroundColor (hex "#fff")
+            ]
+        ]
+        [ windowTitleBar onClose [ text title ]
+        , div
+            [ css
+                [ displayFlex
+                , flex (num 1)
+                , flexDirection column
+                , overflowY auto
+                ]
+            ]
+            content
         ]
 
 
-viewWindowBar : Msg -> List (Html Msg) -> Html Msg
-viewWindowBar onBackClick title =
+windowTitleBar : Msg -> List (Html Msg) -> Html Msg
+windowTitleBar onBackClick title =
     div
         [ css
             [ displayFlex
@@ -596,30 +593,38 @@ viewWindowBar onBackClick title =
         ]
 
 
-viewWindow : Html Msg -> List (Html Msg) -> Html Msg
-viewWindow bar contents =
+list : List (Html Msg) -> Html Msg
+list items =
     div
-        [ css
-            [ position fixed
-            , top zero
-            , left zero
-            , width (pct 100)
-            , height (pct 100)
+        [ css [ padding2 zero (px 30) ]
+        ]
+        items
+
+
+item : Msg -> Html Msg -> Html Msg -> Html Msg
+item onClickMsg icon title =
+    div
+        [ onClick onClickMsg
+        , css
+            [ padding2 (px 20) zero
+            , borderBottom3 (px 1) solid (hex "#ddd")
+            , cursor pointer
             , displayFlex
-            , flexDirection column
-            , backgroundColor (hex "#fff")
+            , flexDirection row
+            , alignItems center
+            , fontSize (Css.em 1.2)
             ]
         ]
-        [ bar
-        , div
+        [ div
             [ css
-                [ displayFlex
-                , flex (num 1)
-                , flexDirection column
-                , overflowY auto
+                [ height (px 50)
+                , width (px 50)
+                , marginRight (px 15)
                 ]
             ]
-            contents
+            [ icon
+            ]
+        , title
         ]
 
 

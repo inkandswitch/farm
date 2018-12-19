@@ -3,7 +3,7 @@ import * as Bs from "."
 
 export function data(repo: Repo) {
   return repo.create({
-    gadgets: [
+    gizmos: [
       {
         code: Bs.code(repo, "CounterTutorial.elm", {
           title: "Counter Tutorial",
