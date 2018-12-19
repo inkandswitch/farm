@@ -27,6 +27,7 @@ export function code(repo: Repo) {
     title: "Launcher",
     icon: Bs.assetDataUrl("create_icon.png"),
     config: {
+      createIcon: Bs.assetDataUrl("create_gizmo_icon.png"),
       icon: Bs.code(repo, "Icon.elm", {
         config: {
           defaultIcon: Bs.assetDataUrl("default_gizmo_icon.png"),

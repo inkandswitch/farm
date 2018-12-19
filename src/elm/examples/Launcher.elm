@@ -1,5 +1,6 @@
 module Launcher exposing (Doc, Msg, State, gizmo)
 
+import Browser.Navigation as BrowserNav
 import Clipboard
 import Css exposing (..)
 import Dict
@@ -47,6 +48,7 @@ type alias State =
     { launchedGadgets : List Gadget -- yikes
     , ownDoc : String
     , gadgetTypeToCreate : Maybe DocumentUrl
+    , creatingSource : Bool
     , showingGadgetTypes : Bool
     , addGizmoUrl : Maybe String
     }
@@ -77,6 +79,7 @@ init flags =
       , gadgetTypeToCreate = Nothing
       , showingGadgetTypes = False
       , addGizmoUrl = Nothing
+      , creatingSource = False
       }
     , { gadgets = [], gadgetTypes = [ noteSource, imageGallerySource, chatSource ] }
     , Cmd.none
@@ -98,6 +101,9 @@ type Msg
     | SetAddGizmoUrl String
     | SubmitAddGizmo
     | OnAddGizmoKeyDown Int
+    | CreateGizmoSourceDoc
+    | GizmoSourceDocCreated ( Ref, List String )
+    | DocCreated ( Ref, List String )
 
 
 update : Msg -> Model State Doc -> ( State, Doc, Cmd Msg )
@@ -130,6 +136,30 @@ update msg model =
             , doc
             , Cmd.none
             )
+
+        CreateGizmoSourceDoc ->
+            ( { state | creatingSource = True }
+            , doc
+            , Repo.create "CreateOne" 1
+            )
+
+        DocCreated ( ref, urls ) ->
+            if state.creatingSource then
+                update (GizmoSourceDocCreated ( ref, urls )) model
+
+            else
+                update (GadgetDataDocCreated ( ref, urls )) model
+
+        GizmoSourceDocCreated ( ref, urls ) ->
+            case List.head urls of
+                Just url ->
+                    ( { state | creatingSource = False }
+                    , { doc | gadgetTypes = url :: doc.gadgetTypes }
+                    , BrowserNav.load (VsCode.link url)
+                    )
+
+                _ ->
+                    ( state, doc, Cmd.none )
 
         CreateGadget gadgetType ->
             ( { state | gadgetTypeToCreate = Just gadgetType }
@@ -232,6 +262,9 @@ view { flags, state, doc } =
 
         titleSource =
             Maybe.withDefault "" (Dict.get "title" flags.config)
+
+        createIcon =
+            Maybe.withDefault "" (Dict.get "createIcon" flags.config)
     in
     div
         [ css
@@ -303,7 +336,7 @@ view { flags, state, doc } =
                 [ text "Add Gizmo" ]
             ]
         , if state.showingGadgetTypes then
-            viewCreateGadget iconSource titleSource doc.gadgetTypes
+            viewCreateGadget createIcon iconSource titleSource doc.gadgetTypes
 
           else
             Html.text ""
@@ -453,14 +486,54 @@ alwaysTrue msg =
     ( msg, True )
 
 
-viewCreateGadget : String -> String -> List DocumentUrl -> Html Msg
-viewCreateGadget iconSource titleSource gadgetTypes =
+viewCreateGadget : String -> String -> String -> List DocumentUrl -> Html Msg
+viewCreateGadget createIcon iconSource titleSource gadgetTypes =
     viewWindow
         (viewWindowBar HideGadgetTypes [ text "Select Gizmo Type" ])
         [ div
             [ css [ padding2 zero (px 30) ]
             ]
-            (List.map (viewGadgetType iconSource titleSource) gadgetTypes)
+            (div
+                [ onClick CreateGizmoSourceDoc
+                , css
+                    [ padding2 (px 20) zero
+                    , borderBottom3 (px 1) solid (hex "#ddd")
+                    , cursor pointer
+                    , displayFlex
+                    , flexDirection row
+                    , alignItems center
+                    , fontSize (Css.em 1.2)
+                    ]
+                ]
+                [ div
+                    [ css
+                        [ height (px 50)
+                        , width (px 50)
+                        , marginRight (px 15)
+                        ]
+                    ]
+                    [ div
+                        [ css
+                            [ width (pct 100)
+                            , height (pct 100)
+                            , backgroundImage (url createIcon)
+                            , backgroundPosition center
+                            , backgroundSize cover
+                            ]
+                        ]
+                        []
+                    ]
+                , div
+                    [ css
+                        [ fontSize (Css.em 1.2)
+                        , color hotPink
+                        ]
+                    ]
+                    [ text "Create New Gizmo"
+                    ]
+                ]
+                :: List.map (viewGadgetType iconSource titleSource) gadgetTypes
+            )
         ]
 
 
@@ -543,6 +616,7 @@ viewWindow bar contents =
                 [ displayFlex
                 , flex (num 1)
                 , flexDirection column
+                , overflowY auto
                 ]
             ]
             contents
@@ -552,7 +626,7 @@ viewWindow bar contents =
 subscriptions : Model State Doc -> Sub Msg
 subscriptions model =
     Sub.batch
-        [ Repo.created GadgetDataDocCreated
+        [ Repo.created DocCreated
         , Navigation.currentUrl Navigate
         ]
 
