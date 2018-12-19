@@ -242,9 +242,9 @@ steps =
                 ]
             , codeBlock
                 [ a
-                    [ href (VsCode.link doc.codeUrl)
+                    [ href (VsCode.link <| doc.codeUrl ++ "/Source.elm" )
                     ]
-                    [ text (VsCode.link doc.codeUrl)
+                    [ text (VsCode.link doc.codeUrl ++ "/Source.elm" )
                     ]
                 ]
             , p []
