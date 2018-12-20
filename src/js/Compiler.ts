@@ -43,32 +43,38 @@ export default class Compiler {
   }
 
   produceDiagnosticsFromMessage(error: string) {
+    // first line is bogus:
     const jsonString = error.substring(error.indexOf("\n") + 1)
-    const json = JSON.parse(jsonString)
+    let json
+    try {
+      json = JSON.parse(jsonString)
+    } catch (e) {
+      const snippedError = jsonString.slice(0, 500)
+      console.groupCollapsed("Compiler error is not valid JSON")
+      console.error(e)
+      console.log("Attempting to parse this string:")
+      console.log(snippedError)
+      console.groupEnd()
+
+      const message = "The compiler threw an error:\n\n" + snippedError
+
+      return rootError("Source.elm", message)
+    }
 
     const messageReformat = (message: any[]) =>
       message
-      .map(
-        (message: any) =>
-        typeof message === "string" ? message : "" + message.string + "", // VSCode still needs to add formatting
-      )
-      .join("")
-
+        .map(
+          (message: any) =>
+            typeof message === "string" ? message : "" + message.string + "", // VSCode still needs to add formatting
+        )
+        .join("")
 
     if (json.type === "error") {
-      return ({ "Source.elm": [{
-        severity: "error",
-        message: messageReformat(json.message),
-        startLine: 0,
-        startColumn: 0,
-        endLine: 0,
-        endColumn: 1,
-      }] })
+      return rootError("Source.elm", messageReformat(json.message))
     }
 
     const nestedProblems = json.errors.map((error: any) =>
       error.problems.map((problem: any) => {
-        
         return {
           severity: "error",
           message: messageReformat(problem.message),
@@ -105,6 +111,19 @@ export default class Compiler {
 
   terminate() {
     this.worker.terminate()
+  }
+}
+
+function rootError(filename: string, ...messages: string[]) {
+  return {
+    [filename]: messages.map(message => ({
+      severity: "error",
+      message,
+      startLine: 0,
+      startColumn: 0,
+      endLine: 0,
+      endColumn: 1,
+    })),
   }
 }
 
