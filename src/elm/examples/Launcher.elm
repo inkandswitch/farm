@@ -263,11 +263,6 @@ update msg model =
                             )
 
 
-viewGizmo : SourceUrl -> DataUrl -> Html Msg
-viewGizmo source data =
-    Html.fromUnstyled (Gizmo.render source data)
-
-
 view : Model State Doc -> Html Msg
 view { flags, state, doc } =
     -- TODO: Clean up this let block
@@ -281,11 +276,23 @@ view { flags, state, doc } =
         createIcon =
             Maybe.withDefault "" (Dict.get "createIcon" flags.config)
 
+        avatarSource =
+            Maybe.withDefault "" (Dict.get "avatar" flags.config)
+
+        editableTitleSource =
+            Maybe.withDefault "" (Dict.get "editableTitle" flags.config)
+
         viewIcon =
             viewGizmo iconSource
 
         viewTitle =
             viewGizmo titleSource
+
+        viewAvatar =
+            viewGizmo avatarSource
+
+        viewEditableTitle =
+            viewGizmo editableTitleSource
     in
     div
         [ css
@@ -299,7 +306,8 @@ view { flags, state, doc } =
             , alignItems center
             ]
         ]
-        [ div
+        [ avatarHeader (viewAvatar flags.self) (viewEditableTitle flags.self)
+        , div
             [ css
                 [ width (vw 100)
                 , backgroundColor (hex "#fff")
@@ -330,6 +338,56 @@ view { flags, state, doc } =
             Html.text ""
         , div [] (List.map viewGizmoWindow state.launchedGizmos)
         ]
+
+
+viewGizmo : SourceUrl -> DataUrl -> Html Msg
+viewGizmo source data =
+    Html.fromUnstyled (Gizmo.render source data)
+
+
+avatarHeader : Html Msg -> Html Msg -> Html Msg
+avatarHeader avatar name =
+    titleBar
+        [ div
+            [ css
+                [ displayFlex
+                , flexDirection row
+                , alignItems center
+                , justifyContent flexStart
+                ]
+            ]
+            [ div
+                [ css
+                    [ height (px 36)
+                    , width (px 36)
+                    ]
+                ]
+                [ avatar
+                ]
+            , div
+                [ css
+                    [ marginLeft (px 5)
+                    ]
+                ]
+                [ name
+                ]
+            ]
+        ]
+
+
+titleBar : List (Html Msg) -> Html Msg
+titleBar content =
+    div
+        [ css
+            [ borderBottom3 (px 1) solid (hex "#ddd")
+            , width (pct 100)
+            , boxShadow4 (px 0) (px 0) (px 5) (rgba 0 0 0 0.2)
+            , backgroundColor (hex "#fff")
+            , zIndex (int 1)
+            , padding (px 10)
+            ]
+        ]
+        content
 
 
 grid : List (Html Msg) -> Html Msg
@@ -556,6 +614,7 @@ window title onClose content =
             , displayFlex
             , flexDirection column
             , backgroundColor (hex "#fff")
+            , zIndex (int 99999)
             ]
         ]
         [ windowTitleBar onClose [ text title ]
@@ -573,33 +632,30 @@ window title onClose content =
 
 windowTitleBar : Msg -> List (Html Msg) -> Html Msg
 windowTitleBar onBackClick title =
-    div
-        [ css
-            [ displayFlex
-            , flexDirection row
-            , padding (px 10)
-            , backgroundColor (hex "#fff")
-            , zIndex (int 1)
-            , boxShadow4 (rgba 0 0 0 0.2) (px 0) (px 2) (px 5)
-            , borderBottom3 (px 1) solid (hex "#ddd")
-            ]
-        ]
+    titleBar
         [ div
-            [ onClick onBackClick
-            , css
-                [ padding2 (px 2) (px 5)
-                , cursor pointer
-                ]
-            ]
-            [ text "X" ]
-        , div
             [ css
-                [ flex (num 1)
-                , textAlign center
+                [ displayFlex
+                , flexDirection row
                 ]
             ]
-            title
-        , div [] []
+            [ div
+                [ onClick onBackClick
+                , css
+                    [ padding2 (px 2) (px 5)
+                    , cursor pointer
+                    ]
+                ]
+                [ text "X" ]
+            , div
+                [ css
+                    [ flex (num 1)
+                    , textAlign center
+                    ]
+                ]
+                title
+            , div [] []
+            ]
         ]
 
 

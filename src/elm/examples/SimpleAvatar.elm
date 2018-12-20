@@ -100,44 +100,54 @@ subscriptions { state, doc } =
 
 view : Gizmo.Model State Doc -> Html Msg
 view { state, doc } =
-    div []
-        [ case doc.imageData of
-            Just data ->
-                imageAvatar data
+    case doc.imageData of
+        Just data ->
+            imageAvatar data
 
-            Nothing ->
-                case doc.title of
-                    Just name ->
-                        textAvatar <| defaultIfEmpty "Mysterious Stanger" name
+        Nothing ->
+            case doc.title of
+                Just name ->
+                    textAvatar <| defaultIfEmpty "Mysterious Stanger" name
 
-                    Nothing ->
-                        textAvatar "Mysterious Stranger"
-        ]
+                Nothing ->
+                    textAvatar "Mysterious Stranger"
 
 
 imageAvatar : String -> Html Msg
 imageAvatar imageSrc =
-    img
+    div
         [ css
-            [ width (px 36)
-            , borderRadius (pct 50)
+            [ maxWidth (px 36)
+            , maxHeight (px 36)
+            , width (pct 100)
+            , height (pct 100)
+            , backgroundImage (url imageSrc)
+            , backgroundPosition center
+            , backgroundRepeat noRepeat
+            , backgroundSize contain
             ]
-        , src imageSrc
         ]
         []
 
 
 textAvatar : String -> Html Msg
 textAvatar name =
-    button
+    div
         [ onClick PickImage
         , css
-            [ border zero
-            , width (px 36)
-            , height (px 36)
+            [ maxWidth (px 36)
+            , maxHeight (px 36)
+            , width (pct 100)
+            , height (pct 100)
             , borderRadius (pct 50)
             , border3 (px 1) solid hotPink
             , color hotPink
+            , padding (px 0)
+            , displayFlex
+            , alignItems center
+            , justifyContent center
+            , fontSize (Css.em 0.9)
+            , overflow hidden
             ]
         ]
         [ text <| initials name

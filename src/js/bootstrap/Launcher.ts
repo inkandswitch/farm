@@ -22,18 +22,22 @@ export function data(repo: Repo) {
 
 export function code(repo: Repo) {
   const title = Bs.code(repo, "Title.elm")
+  const editableTitle = Bs.code(repo, "EditableTitle.elm")
+  const avatar = Bs.code(repo, "SimpleAvatar.elm")
 
   return Bs.code(repo, "Launcher.elm", {
     title: "Launcher",
     icon: Bs.assetDataUrl("create_icon.png"),
     config: {
       createIcon: Bs.assetDataUrl("create_gizmo_icon.png"),
+      title,
+      editableTitle,
+      avatar,
       icon: Bs.code(repo, "Icon.elm", {
         config: {
           defaultIcon: Bs.assetDataUrl("default_gizmo_icon.png"),
         },
       }),
-      title,
       note: Bs.code(repo, "Note.elm", {
         title: "Note",
         icon: Bs.assetDataUrl("note_icon.png"),
@@ -50,8 +54,8 @@ export function code(repo: Repo) {
         title: "Chat",
         icon: Bs.assetDataUrl("chat_icon.png"),
         config: {
-          editableTitle: Bs.code(repo, "EditableTitle.elm"),
-          avatar: Bs.code(repo, "SimpleAvatar.elm"),
+          editableTitle,
+          avatar
         },
       }),
     },
