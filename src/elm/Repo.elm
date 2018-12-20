@@ -1,4 +1,4 @@
-port module Repo exposing (Ref, Url, clone, create, createSource, created, docs, open, rawDocs)
+port module Repo exposing (Props, Ref, Url, clone, create, createWithProps, created, docs, open, rawDocs)
 
 import Doc exposing (Doc, RawDoc)
 import Json.Decode as D
@@ -15,6 +15,10 @@ type alias Ref =
     String
 
 
+type alias Props =
+    List ( String, E.Value )
+
+
 port created : (( Ref, List Url ) -> msg) -> Sub msg
 
 
@@ -29,12 +33,12 @@ docs mkMsg =
 
 create : Ref -> Int -> Cmd msg
 create ref n =
-    send <| Create ref n
+    createWithProps ref n []
 
 
-createSource : Ref -> Cmd msg
-createSource ref =
-    send <| CreateSource ref
+createWithProps : Ref -> Int -> Props -> Cmd msg
+createWithProps ref n props =
+    send <| Create ref n props
 
 
 open : Url -> Cmd msg
@@ -71,26 +75,20 @@ port repoOut : E.Value -> Cmd msg
 
 
 type OutMsg
-    = Create Ref Int -- String ref and number of docs to create
+    = Create Ref Int Props -- String ref and number of docs to create
     | Clone Ref Url -- String ref and url of document
-    | CreateSource Ref -- String ref
     | Open Url
 
 
 encodeOut : OutMsg -> E.Value
 encodeOut msg =
     case msg of
-        Create ref n ->
+        Create ref n props ->
             E.object
                 [ ( "t", E.string "Create" )
                 , ( "ref", E.string ref )
                 , ( "n", E.int n )
-                ]
-
-        CreateSource ref ->
-            E.object
-                [ ( "t", E.string "CreateSource" )
-                , ( "ref", E.string ref )
+                , ( "p", E.object props )
                 ]
 
         Clone ref url ->

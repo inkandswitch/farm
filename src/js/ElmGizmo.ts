@@ -153,16 +153,10 @@ export default class ElmGizmo {
   onRepoOut = (msg: any) => {
     switch (msg.t) {
       case "Create": {
-        const urls = times(msg.n, () => this.repo.create())
+        const props = msg.p || undefined 
+        const urls = times(msg.n, () => this.repo.create(props))
         console.log("sending urls", urls)
         this.sendCreated(msg.ref, urls)
-        break
-      }
-
-      case "CreateSource": {
-        const url = this.repo.create({ title: "New Source Doc", "Source.elm": ""})
-        console.log("sending source url", url)
-        this.sendCreated(msg.ref, [url])
         break
       }
 

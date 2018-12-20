@@ -9,9 +9,10 @@ import Html.Styled as Html exposing (..)
 import Html.Styled.Attributes exposing (css, href, placeholder, src, value)
 import Html.Styled.Events exposing (..)
 import Json.Decode as D
+import Json.Encode as E
 import Navigation
 import RealmUrl
-import Repo exposing (Ref, Url, create)
+import Repo exposing (Props, Ref, Url, create, createWithProps)
 import Task
 import VsCode
 
@@ -64,6 +65,14 @@ type alias Doc =
     { gizmos : List GizmoConfig
     , gizmoTypes : List SourceUrl
     }
+
+
+sourceProps : Repo.Props
+sourceProps =
+    -- Template properties for Source docs
+    [ ( "title", E.string "New Source Doc" )
+    , ( "Source.elm", E.string "" )
+    ]
 
 
 init : Flags -> ( State, Doc, Cmd Msg )
@@ -151,7 +160,7 @@ update msg model =
         CreateGizmoTypeSourceDoc ->
             ( state
             , doc
-            , Repo.createSource "GizmoSourceDoc"
+            , Repo.createWithProps "GizmoSourceDoc" 1 sourceProps
             )
 
         GizmoTypeSourceDocCreated ( ref, urls ) ->
