@@ -33,7 +33,7 @@ function work(msg: ToCompiler) {
       fs.writeFile("./.tmp/Source.elm", source, async err => {
         if (err) {
           port.send({ t: "CompileError", url, error: err.message })
-          workQ.take(work)
+          return workQ.take(work)
         }
 
         try {
@@ -57,11 +57,11 @@ function work(msg: ToCompiler) {
 
           port.send({ t: "Compiled", url, output })
           console.log(`Elm compile success: ${url}`)
-          workQ.take(work)
+          return workQ.take(work)
         } catch (e) {
           port.send({ t: "CompileError", url, error: e.message })
           console.log(`Elm compile error: ${url}`)
-          workQ.take(work)
+          return workQ.take(work)
         }
       })
       break
