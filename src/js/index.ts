@@ -5,7 +5,7 @@ import Debug from "debug"
 import URL from "url"
 import { ipcRenderer, remote } from "electron"
 
-const  { protocol } = remote
+const { protocol } = remote
 
 const app = new App()
 
@@ -14,10 +14,10 @@ Object.assign(self, {
   app,
 })
 
-protocol.registerBufferProtocol('hyperfile', (request, callback) => {
+protocol.registerBufferProtocol("hyperfile", (request, callback) => {
   const id = request.url.slice(12)
   console.log(`HYPERFILE-RENDER6='${id}'`)
-  app.repo.front.readFile(id,(_data, mimeType) => {
+  app.repo.front.readFile(id, (_data, mimeType) => {
     console.log(`HYPERFILE-RENDERb='${_data.length} bytes'`)
     const data = Buffer.from(_data)
     callback({ mimeType, data })
