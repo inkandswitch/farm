@@ -10,6 +10,7 @@ import { ToCompiler, FromCompiler } from "./Msg"
 import fs from "fs"
 import elm from "node-elm-compiler"
 import AsyncQueue from "./AsyncQueue"
+import { lock } from "proper-lockfile"
 
 const port = new QueuedPort<FromCompiler, ToCompiler>(self)
 ;(self as any).port = port
@@ -30,39 +31,48 @@ function work(msg: ToCompiler) {
     case "Compile":
       const source = msg.source.replace(/^module \w+/, "module Source")
 
-      fs.writeFile("./.tmp/Source.elm", source, async err => {
-        if (err) {
-          port.send({ t: "CompileError", url, error: err.message })
-          return workQ.take(work)
-        }
+      const sourceFile = "./.tmp/Source.elm"
 
-        try {
-          const filename = /^main /m.test(source)
-            ? "./.tmp/Source.elm" // Compile directly if `main` function exists
-            : /^gizmo /m.test(source)
-              ? "./src/elm/Harness.elm" // Compile via Harness if `gizmo` function exists
-              : "./src/elm/BotHarness.elm" // Otherwise, compile via BotHarness
+      lock(sourceFile, { stale: 5000, retries: 5 }).then(release => {
+        fs.writeFile(sourceFile, source, async err => {
+          function done() {
+            release()
+            workQ.take(work)
+          }
 
-          const out = await elm.compileToString([filename], {
-            output: ".js",
-            report: "json",
-            debug: msg.debug,
-          })
+          if (err) {
+            port.send({ t: "CompileError", url, error: err.message })
+            return done()
+          }
 
-          const output = `
-            (new function Wrapper() {
-              ${out}
-            }).Elm
-          `
+          try {
+            const filename = /^main /m.test(source)
+              ? "./.tmp/Source.elm" // Compile directly if `main` function exists
+              : /^gizmo /m.test(source)
+                ? "./src/elm/Harness.elm" // Compile via Harness if `gizmo` function exists
+                : "./src/elm/BotHarness.elm" // Otherwise, compile via BotHarness
 
-          port.send({ t: "Compiled", url, output })
-          console.log(`Elm compile success: ${url}`)
-          return workQ.take(work)
-        } catch (e) {
-          port.send({ t: "CompileError", url, error: e.message })
-          console.log(`Elm compile error: ${url}`)
-          return workQ.take(work)
-        }
+            const out = await elm.compileToString([filename], {
+              output: ".js",
+              report: "json",
+              debug: msg.debug,
+            })
+
+            const output = `
+              (new function Wrapper() {
+                ${out}
+              }).Elm
+            `
+
+            port.send({ t: "Compiled", url, output })
+            console.log(`Elm compile success: ${url}`)
+            return done()
+          } catch (e) {
+            port.send({ t: "CompileError", url, error: e.message })
+            console.log(`Elm compile error: ${url}`)
+            return done()
+          }
+        })
       })
       break
   }
