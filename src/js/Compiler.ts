@@ -56,7 +56,15 @@ export default class Compiler {
       console.log(snippedError)
       console.groupEnd()
 
-      const message = "The compiler threw an error:\n\n" + snippedError
+      let message = "The compiler threw an error:\n\n" + snippedError
+
+      if (snippedError.includes("elm ENOENT")) {
+        message =
+          "It looks like your elm npm package broke.\n" +
+          "Try running `yarn add elm && yarn remove elm` " +
+          "in the realm project root.\n\n" +
+          message
+      }
 
       return rootError("Source.elm", message)
     }
