@@ -26,6 +26,7 @@ repo.subscribe(msg => {
 repo.replicate(
   discoverySwarm(
     datDefaults({
+      utp: false,
       port: 0,
       id: repo.id,
       stream: repo.stream,

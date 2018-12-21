@@ -17,7 +17,8 @@
     "counter": "yarn build --config-name=counter && node dist/counter.js",
     "cat": "yarn build --config-name=doccat && node dist/doccat.js",
     "realm": "cross-env REPO_ROOT=./.data/bots node ./dist/realm.js",
-    "bot": "yarn realm bot"
+    "bot": "yarn realm bot",
+    "rebuild": "electron-rebuild --version 3.0.7 -f -w utp-native"
   },
   "devDependencies": {
     "@types/bs58": "^3.0.30",
@@ -35,6 +36,7 @@
     "concurrently": "^4.0.1",
     "cross-env": "^5.2.0",
     "electron": "^3.0.7",
+    "electron-rebuild": "^1.8.2",
     "elm-webpack-loader": "^5.0.0",
     "express": "^4.16.4",
     "html-webpack-plugin": "^3.2.0",
