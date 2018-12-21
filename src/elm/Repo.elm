@@ -1,4 +1,4 @@
-port module Repo exposing (Props, Ref, Url, clone, create, createWithProps, created, docs, open, rawDocs)
+port module Repo exposing (Props, Ref, Url, clone, create, createWithProps, created, docs, fork, open, rawDocs)
 
 import Doc exposing (Doc, RawDoc)
 import Json.Decode as D
@@ -51,6 +51,11 @@ clone ref url =
     send <| Clone ref url
 
 
+fork : Ref -> Url -> Cmd msg
+fork ref url =
+    send <| Fork ref url
+
+
 
 -- type alias Model msg =
 --     { createQ : List (List String -> msg)
@@ -77,6 +82,7 @@ port repoOut : E.Value -> Cmd msg
 type OutMsg
     = Create Ref Int Props -- String ref and number of docs to create
     | Clone Ref Url -- String ref and url of document
+    | Fork Ref Url -- String ref and url of document to fork
     | Open Url
 
 
@@ -89,6 +95,13 @@ encodeOut msg =
                 , ( "ref", E.string ref )
                 , ( "n", E.int n )
                 , ( "p", E.object props )
+                ]
+
+        Fork ref url ->
+            E.object
+                [ ( "t", E.string "Fork" )
+                , ( "ref", E.string ref )
+                , ( "url", E.string url )
                 ]
 
         Clone ref url ->

@@ -13,6 +13,7 @@ import Json.Encode as E
 import Navigation
 import RealmUrl
 import Repo exposing (Props, Ref, Url, create, createWithProps)
+import Set
 import Task
 import VsCode
 
@@ -53,17 +54,26 @@ type alias GizmoConfig =
     }
 
 
+type Tab
+    = Gizmo
+    | Data
+    | Source
+
+
 type alias State =
     { launchedGizmos : List GizmoConfig -- yikes
     , gizmoTypeToCreate : Maybe SourceUrl
+    , gizmoDataForFork : Maybe DataUrl
     , showingGizmoTypes : Bool
     , addGizmoUrl : Maybe String
+    , activeTab : Tab
     }
 
 
 type alias Doc =
     { gizmos : List GizmoConfig
-    , gizmoTypes : List SourceUrl
+    , sources : List SourceUrl
+    , data : List DataUrl
     }
 
 
@@ -81,15 +91,12 @@ init flags =
       , gizmoTypeToCreate = Nothing
       , showingGizmoTypes = False
       , addGizmoUrl = Nothing
+      , gizmoDataForFork = Nothing
+      , activeTab = Gizmo
       }
     , { gizmos = []
-      , gizmoTypes =
-            List.filter
-                (not << String.isEmpty)
-                [ Maybe.withDefault "" (Dict.get "note" flags.config)
-                , Maybe.withDefault "" (Dict.get "imageGallery" flags.config)
-                , Maybe.withDefault "" (Dict.get "chat" flags.config)
-                ]
+      , sources = []
+      , data = []
       }
     , Cmd.none
     )
@@ -100,8 +107,6 @@ init flags =
 type Msg
     = NoOp
     | LaunchGizmo GizmoConfig
-    | ShowGizmoTypeSelector
-    | HideGizmoTypeSelector
     | CreateGizmo SourceUrl
     | GizmoDataDocCreated ( Ref, List String )
     | CopyShareLink GizmoConfig
@@ -113,6 +118,9 @@ type Msg
     | CreateGizmoTypeSourceDoc
     | GizmoTypeSourceDocCreated ( Ref, List String )
     | DocCreated ( Ref, List String )
+    | ForkSource SourceUrl
+    | ForkedGizmoSourceDocCreated ( Ref, List String )
+    | SetTab Tab
 
 
 update : Msg -> Model State Doc -> ( State, Doc, Cmd Msg )
@@ -128,20 +136,14 @@ update msg model =
         NoOp ->
             ( state, doc, Cmd.none )
 
+        SetTab tab ->
+            ( { state | activeTab = tab }
+            , doc
+            , Cmd.none
+            )
+
         LaunchGizmo gizmoConfig ->
             ( { state | launchedGizmos = state.launchedGizmos ++ [ gizmoConfig ] }
-            , doc
-            , Cmd.none
-            )
-
-        ShowGizmoTypeSelector ->
-            ( { state | showingGizmoTypes = True }
-            , doc
-            , Cmd.none
-            )
-
-        HideGizmoTypeSelector ->
-            ( { state | showingGizmoTypes = False }
             , doc
             , Cmd.none
             )
@@ -154,8 +156,12 @@ update msg model =
                 "GizmoDataDoc" ->
                     update (GizmoDataDocCreated ( ref, urls )) model
 
+                "ForkSource" ->
+                    update (ForkedGizmoSourceDocCreated ( ref, urls )) model
+
                 _ ->
-                    ( state, doc, Cmd.none )
+                    Debug.log ref
+                        ( state, doc, Cmd.none )
 
         CreateGizmoTypeSourceDoc ->
             ( state
@@ -167,7 +173,7 @@ update msg model =
             case List.head urls of
                 Just url ->
                     ( state
-                    , { doc | gizmoTypes = url :: doc.gizmoTypes }
+                    , { doc | sources = url :: doc.sources }
                     , BrowserNav.load (VsCode.link url)
                     )
 
@@ -188,7 +194,7 @@ update msg model =
                             { code = gizmoType, data = url }
                     in
                     ( { state | gizmoTypeToCreate = Nothing, showingGizmoTypes = False, launchedGizmos = state.launchedGizmos ++ [ gizmoConfig ] }
-                    , { doc | gizmos = gizmoConfig :: doc.gizmos }
+                    , { doc | gizmos = gizmoConfig :: doc.gizmos, data = url :: doc.data }
                     , Cmd.none
                     )
 
@@ -213,6 +219,26 @@ update msg model =
                     )
 
                 Err err ->
+                    ( state
+                    , doc
+                    , Cmd.none
+                    )
+
+        ForkSource source ->
+            ( state
+            , doc
+            , Repo.fork "ForkSource" source
+            )
+
+        ForkedGizmoSourceDocCreated ( ref, urls ) ->
+            case List.head urls of
+                Just forkedSourceUrl ->
+                    ( state
+                    , { doc | sources = forkedSourceUrl :: doc.sources }
+                    , Cmd.none
+                    )
+
+                _ ->
                     ( state
                     , doc
                     , Cmd.none
@@ -258,47 +284,38 @@ update msg model =
 
                         Ok gizmoConfig ->
                             ( { state | addGizmoUrl = Nothing }
-                            , { doc | gizmos = gizmoConfig :: doc.gizmos }
+                            , { doc
+                                | gizmos = gizmoConfig :: doc.gizmos
+                                , data = gizmoConfig.data :: doc.data
+                                , sources = gizmoConfig.code :: doc.sources
+                              }
                             , Cmd.none
                             )
 
 
 view : Model State Doc -> Html Msg
-view { flags, state, doc } =
+view model =
     -- TODO: Clean up this let block
     let
-        iconSource =
-            Maybe.withDefault "" (Dict.get "icon" flags.config)
+        flags =
+            model.flags
 
-        titleSource =
-            Maybe.withDefault "" (Dict.get "title" flags.config)
+        doc =
+            model.doc
 
-        createIcon =
-            Maybe.withDefault "" (Dict.get "createIcon" flags.config)
-
-        avatarSource =
-            Maybe.withDefault "" (Dict.get "avatar" flags.config)
-
-        editableTitleSource =
-            Maybe.withDefault "" (Dict.get "editableTitle" flags.config)
-
-        viewIcon =
-            viewGizmo iconSource
-
-        viewTitle =
-            viewGizmo titleSource
+        state =
+            model.state
 
         viewAvatar =
-            viewGizmo avatarSource
+            viewGizmo <| Maybe.withDefault "" (Dict.get "avatar" flags.config)
 
         viewEditableTitle =
-            viewGizmo editableTitleSource
+            viewGizmo <| Maybe.withDefault "" (Dict.get "editableTitle" flags.config)
     in
     div
         [ css
             [ width (vw 100)
             , height (vh 100)
-            , backgroundColor (hex "#f5f5f5")
             , fontFamilies [ "system-ui" ]
             , displayFlex
             , flexDirection column
@@ -307,37 +324,210 @@ view { flags, state, doc } =
             ]
         ]
         [ avatarHeader (viewAvatar flags.self) (viewEditableTitle flags.self)
-        , div
+        , viewTabs
+            [ viewTab (SetTab Gizmo) (state.activeTab == Gizmo) "Gizmos"
+            , viewTab (SetTab Source) (state.activeTab == Source) "Source"
+            , viewTab (SetTab Data) (state.activeTab == Data) "Data"
+            ]
+        , tabContent
+            [ case state.activeTab of
+                Gizmo ->
+                    viewGizmos model
+
+                Source ->
+                    viewSources model
+
+                Data ->
+                    viewData model
+            ]
+        , div [] (List.map viewGizmoWindow state.launchedGizmos)
+        ]
+
+
+viewTabs : List (Html Msg) -> Html Msg
+viewTabs tabs =
+    div
+        [ css
+            [ displayFlex
+            , flexDirection row
+            , flexShrink (int 0)
+            , width (pct 100)
+            , backgroundColor (hex "#fff")
+            , borderBottom3 (px 1) solid hotPink
+            ]
+        ]
+        tabs
+
+
+activeTabStyle =
+    [ padding (px 15)
+    , fontWeight bold
+    , color hotPink
+    ]
+
+
+inactiveTabStyle =
+    [ padding (px 15)
+    , cursor pointer
+    , hover
+        [ color hotPink
+        ]
+    ]
+
+
+viewTab : Msg -> Bool -> String -> Html Msg
+viewTab msg isActive title =
+    div
+        [ onClick msg
+        , css
+            (if isActive then
+                activeTabStyle
+
+             else
+                inactiveTabStyle
+            )
+        ]
+        [ text title
+        ]
+
+
+tabContent : List (Html Msg) -> Html Msg
+tabContent content =
+    div
+        [ css
+            [ width (pct 100)
+            , flexGrow (int 1)
+            , displayFlex
+            , flexDirection row
+            , overflowY auto
+            ]
+        ]
+        content
+
+
+viewGizmos : Model State Doc -> Html Msg
+viewGizmos { flags, state, doc } =
+    let
+        viewTitle =
+            viewGizmo <| Maybe.withDefault "" (Dict.get "title" flags.config)
+
+        viewIcon =
+            viewGizmo <| Maybe.withDefault "" (Dict.get "icon" flags.config)
+    in
+    div
+        [ css
+            [ width (vw 100)
+            , backgroundColor (hex "#fff")
+            , flexGrow (int 1)
+            , displayFlex
+            , flexDirection column
+            ]
+        ]
+        [ div
             [ css
-                [ width (vw 100)
-                , backgroundColor (hex "#fff")
-                , padding (px 20)
-                , flexGrow (int 1)
+                [ flexGrow (int 1)
                 , overflowY auto
+                , padding (px 20)
                 ]
             ]
             [ grid
-                (cell
-                    [ gizmoLauncher (text "Create Gizmo") (viewIcon flags.code) ShowGizmoTypeSelector
-                    ]
-                    :: List.map
-                        (\gc ->
-                            cell
-                                [ gizmoLauncher (viewTitle gc.data) (viewIcon gc.code) (LaunchGizmo gc)
-                                , viewPinkLinks gc
-                                ]
-                        )
-                        doc.gizmos
+                (List.map
+                    (\gc ->
+                        cell
+                            [ gizmoLauncher (viewTitle gc.data) (viewIcon gc.code) (LaunchGizmo gc)
+                            , viewPinkLinks gc
+                            ]
+                    )
+                    doc.gizmos
                 )
             ]
         , viewAddGizmoInput (Maybe.withDefault "" state.addGizmoUrl)
-        , if state.showingGizmoTypes then
-            viewGizmoTypeSelector createIcon viewIcon viewTitle doc.gizmoTypes
-
-          else
-            Html.text ""
-        , div [] (List.map viewGizmoWindow state.launchedGizmos)
         ]
+
+
+viewSources : Model State Doc -> Html Msg
+viewSources { flags, state, doc } =
+    let
+        viewTitle =
+            viewGizmo <| Maybe.withDefault "" (Dict.get "title" flags.config)
+
+        viewIcon =
+            viewGizmo <| Maybe.withDefault "" (Dict.get "icon" flags.config)
+
+        createIcon =
+            Maybe.withDefault "" (Dict.get "createIcon" flags.config)
+    in
+    list
+        (viewCreateNewGizmoTypeItem createIcon
+            :: List.map
+                (\s -> sourceListItem s (viewIcon s) (viewTitle s))
+                doc.sources
+        )
+
+
+sourceListItem : String -> Html Msg -> Html Msg -> Html Msg
+sourceListItem source icon title =
+    item
+        icon
+        (div
+            []
+            [ title
+            , div
+                [ css
+                    [ displayFlex
+                    , flexDirection row
+                    , fontSize (Css.em 0.8)
+                    , marginTop (px 5)
+                    ]
+                ]
+                [ span [ css [ marginRight (px 7) ] ] [ pinkText (CreateGizmo source) "create" ]
+                , span [ css [ marginRight (px 7) ] ] [ pinkLink ( VsCode.link source, "edit" ) ]
+                , span [ css [ marginRight (px 7) ] ] [ pinkText (ForkSource source) "fork" ]
+                , span [ css [ color (hex "#777"), marginRight (px 7) ] ] [ text "share" ]
+                , span [ css [ color (hex "#777") ] ] [ text "remove" ]
+                ]
+            ]
+        )
+
+
+viewData : Model State Doc -> Html Msg
+viewData { flags, state, doc } =
+    let
+        viewTitle =
+            viewGizmo <| Maybe.withDefault "" (Dict.get "title" flags.config)
+
+        viewIcon =
+            viewGizmo <| Maybe.withDefault "" (Dict.get "icon" flags.config)
+    in
+    list
+        (List.map
+            (\d -> dataListItem d (viewIcon d) (viewTitle d))
+            doc.data
+        )
+
+
+dataListItem : String -> Html Msg -> Html Msg -> Html Msg
+dataListItem source icon title =
+    item
+        icon
+        (div
+            []
+            [ title
+            , div
+                [ css
+                    [ displayFlex
+                    , flexDirection row
+                    , fontSize (Css.em 0.8)
+                    , marginTop (px 5)
+                    ]
+                ]
+                [ span [ css [ color (hex "#777"), marginRight (px 7) ] ] [ text "openWith" ]
+                , span [ css [ marginRight (px 7) ] ] [ pinkLink ( VsCode.link source, "edit" ) ]
+                , span [ css [ color (hex "#777"), marginRight (px 7) ] ] [ text "share" ]
+                , span [ css [ color (hex "#777") ] ] [ text "remove" ]
+                ]
+            ]
+        )
 
 
 viewGizmo : SourceUrl -> DataUrl -> Html Msg
@@ -366,7 +556,7 @@ avatarHeader avatar name =
                 ]
             , div
                 [ css
-                    [ marginLeft (px 5)
+                    [ marginLeft (px 10)
                     ]
                 ]
                 [ name
@@ -379,12 +569,11 @@ titleBar : List (Html Msg) -> Html Msg
 titleBar content =
     div
         [ css
-            [ borderBottom3 (px 1) solid (hex "#ddd")
-            , width (pct 100)
-            , boxShadow4 (px 0) (px 0) (px 5) (rgba 0 0 0 0.2)
+            [ width (pct 100)
             , backgroundColor (hex "#fff")
             , zIndex (int 1)
             , padding (px 10)
+            , paddingBottom (px 0)
             ]
         ]
         content
@@ -536,6 +725,22 @@ viewPinkLinks gizmoConfig =
         ]
 
 
+pinkText : Msg -> String -> Html Msg
+pinkText msg txt =
+    span
+        [ css
+            [ cursor pointer
+            , color hotPink
+            , hover
+                [ textDecoration underline
+                ]
+            ]
+        , onClick msg
+        ]
+        [ text txt
+        ]
+
+
 pinkLink : ( String, String ) -> Html Msg
 pinkLink ( hrefVal, textVal ) =
     a
@@ -562,135 +767,75 @@ alwaysTrue msg =
     ( msg, True )
 
 
-viewGizmoTypeSelector : String -> (String -> Html Msg) -> (String -> Html Msg) -> List SourceUrl -> Html Msg
-viewGizmoTypeSelector createIcon viewIcon viewTitle gizmoTypes =
-    window
-        "Select Gizmo Type"
-        HideGizmoTypeSelector
-        [ list
-            (viewCreateNewGizmoTypeItem createIcon
-                :: List.map
-                    (\g -> item (CreateGizmo g) (viewIcon g) (viewTitle g))
-                    gizmoTypes
-            )
-        ]
-
-
 viewCreateNewGizmoTypeItem : String -> Html Msg
 viewCreateNewGizmoTypeItem iconSrc =
-    item
-        CreateGizmoTypeSourceDoc
-        (div
-            [ css
-                [ width (pct 100)
-                , height (pct 100)
-                , backgroundImage (url iconSrc)
-                , backgroundPosition center
-                , backgroundSize cover
-                ]
-            ]
-            []
-        )
-        (div
-            [ css
-                [ fontSize (Css.em 1.2)
-                , color hotPink
-                ]
-            ]
-            [ text "Create New Gizmo"
-            ]
-        )
-
-
-window : String -> Msg -> List (Html Msg) -> Html Msg
-window title onClose content =
     div
-        [ css
-            [ position fixed
-            , top zero
-            , left zero
-            , width (pct 100)
-            , height (pct 100)
+        [ onClick CreateGizmoTypeSourceDoc
+        , css
+            [ padding2 (px 15) zero
+            , borderBottom3 (px 1) solid (hex "#ddd")
             , displayFlex
-            , flexDirection column
-            , backgroundColor (hex "#fff")
-            , zIndex (int 99999)
+            , flexDirection row
+            , alignItems center
+            , color hotPink
+            , cursor pointer
             ]
         ]
-        [ windowTitleBar onClose [ text title ]
-        , div
-            [ css
-                [ displayFlex
-                , flex (num 1)
-                , flexDirection column
-                , overflowY auto
-                ]
-            ]
-            content
-        ]
-
-
-windowTitleBar : Msg -> List (Html Msg) -> Html Msg
-windowTitleBar onBackClick title =
-    titleBar
         [ div
             [ css
-                [ displayFlex
-                , flexDirection row
+                [ height (px 25)
+                , width (px 25)
+                , marginRight (px 10)
                 ]
             ]
             [ div
-                [ onClick onBackClick
-                , css
-                    [ padding2 (px 2) (px 5)
-                    , cursor pointer
-                    ]
-                ]
-                [ text "X" ]
-            , div
                 [ css
-                    [ flex (num 1)
-                    , textAlign center
+                    [ width (pct 100)
+                    , height (pct 100)
+                    , backgroundImage (url iconSrc)
+                    , backgroundPosition center
+                    , backgroundSize cover
                     ]
                 ]
-                title
-            , div [] []
+                []
             ]
+        , text "Create New Gizmo"
         ]
 
 
 list : List (Html Msg) -> Html Msg
 list items =
     div
-        [ css [ padding2 zero (px 30) ]
+        [ css
+            [ padding2 zero (px 15)
+            , width (pct 100)
+            ]
         ]
         items
 
 
-item : Msg -> Html Msg -> Html Msg -> Html Msg
-item onClickMsg icon title =
+item : Html Msg -> Html Msg -> Html Msg
+item icon content =
     div
-        [ onClick onClickMsg
-        , css
-            [ padding2 (px 20) zero
+        [ css
+            [ padding2 (px 15) zero
             , borderBottom3 (px 1) solid (hex "#ddd")
-            , cursor pointer
             , displayFlex
             , flexDirection row
             , alignItems center
-            , fontSize (Css.em 1.2)
+            , fontSize (Css.em 1)
             ]
         ]
         [ div
             [ css
-                [ height (px 50)
-                , width (px 50)
-                , marginRight (px 15)
+                [ height (px 25)
+                , width (px 25)
+                , marginRight (px 10)
                 ]
             ]
             [ icon
             ]
-        , title
+        , content
         ]
 
 

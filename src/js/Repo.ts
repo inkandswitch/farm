@@ -62,6 +62,11 @@ export default class Repo {
     return newUrl
   }
 
+  fork = (url: string): string => {
+    const forkedId = this.front.fork(Link.toId(url))
+    return Link.fromId(forkedId)
+  }
+
   terminate() {
     this.worker.terminate()
   }

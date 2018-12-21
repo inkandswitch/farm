@@ -160,6 +160,12 @@ export default class ElmGizmo {
         break
       }
 
+      case "Fork": {
+        const forkedUrl = this.repo.fork(msg.url)
+        this.sendCreated(msg.ref, [forkedUrl])
+        break
+      }
+
       case "Clone": {
         const url = this.repo.clone(msg.url)
         this.sendCreated(msg.ref, [url])
