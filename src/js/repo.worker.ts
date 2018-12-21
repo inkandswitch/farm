@@ -7,7 +7,8 @@ if ((self as any).module) {
 
 import raf from "random-access-file"
 import { RepoBackend } from "hypermerge"
-const Client = require("discovery-swarm")
+import discoverySwarm from "discovery-swarm"
+import datDefaults from "dat-swarm-defaults"
 
 const storagePath = process.env.REPO_ROOT || "./.data"
 
@@ -23,8 +24,11 @@ repo.subscribe(msg => {
 })
 
 repo.replicate(
-  new Client({
-    id: repo.id,
-    stream: repo.stream,
-  }),
+  discoverySwarm(
+    datDefaults({
+      port: 0,
+      id: repo.id,
+      stream: repo.stream,
+    }),
+  ),
 )
