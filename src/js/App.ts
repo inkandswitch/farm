@@ -5,6 +5,8 @@ import * as GizmoWindow from "./GizmoWindow"
 import * as Launcher from "./bootstrap/Launcher"
 import * as Identity from "./bootstrap/Identity"
 
+require("utp-native")
+
 // make the web worker thread-safe:
 ;(<any>process).dlopen = () => {
   throw new Error("Load native module is not thread-safe")

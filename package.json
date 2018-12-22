@@ -64,6 +64,7 @@
     "node-elm-compiler": "^5.0.1",
     "odiff": "github:inkandswitch/odiff",
     "proper-lockfile": "^3.2.0",
+    "pseudo-worker": "^1.2.0",
     "random-access-file": "^2.0.1",
     "random-access-memory": "^3.0.0",
     "tiny-worker": "^2.1.2"

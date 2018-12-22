@@ -4130,6 +4130,11 @@ prr@~1.0.1:
   resolved "https://registry.yarnpkg.com/prr/-/prr-1.0.1.tgz#d3fc114ba06995a45ec6893f484ceb1d78f5f476"
   integrity sha1-0/wRS6BplaRexok/SEzrHXj19HY=
 
+pseudo-worker@^1.2.0:
+  version "1.2.0"
+  resolved "https://registry.yarnpkg.com/pseudo-worker/-/pseudo-worker-1.2.0.tgz#0f3c4c5465aba1c67e0c4ca9c32ff910b465b677"
+  integrity sha512-oCJ7c5JsZugdYuJKQUfqaav1GbChQ3pKcuwDWneaFgLWuEWPEApw5Evu7bSUO2/ujYrsPnAkyy6R84i608uOOw==
+
 pseudomap@^1.0.2:
   version "1.0.2"
   resolved "https://registry.yarnpkg.com/pseudomap/-/pseudomap-1.0.2.tgz#f052a28da70e618917ef0a8ac34c1ae5a68286b3"
