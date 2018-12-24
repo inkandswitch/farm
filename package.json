@@ -12,8 +12,6 @@
     "build": "webpack",
     "app": "yarn build && yarn start-app",
     "types": "./bin/types.sh",
-    "counter": "yarn build --config-name=counter && node dist/counter.js",
-    "cat": "yarn build --config-name=doccat && node dist/doccat.js",
     "realm": "cross-env REPO_ROOT=./.data/bots node ./dist/realm.js",
     "bot": "yarn realm bot",
     "rebuild": "electron-rebuild --version 3.0.7 -f -w utp-native"
