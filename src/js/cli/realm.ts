@@ -44,6 +44,7 @@ program
 
     const realmUrl = RealmUrl.create({ code, data })
     console.log("\n\nrealm url:", realmUrl, "\n\n")
+    setTimeout(() => {}, 99999999) // HACK: without a worker, node exits
   })
 
 program

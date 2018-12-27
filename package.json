@@ -63,6 +63,7 @@
     "pseudo-worker": "^1.2.0",
     "random-access-file": "^2.0.1",
     "random-access-memory": "^3.0.0",
-    "tiny-worker": "^2.1.2"
+    "tiny-worker": "^2.1.2",
+    "xmlhttprequest": "^1.8.0"
   }
 }
