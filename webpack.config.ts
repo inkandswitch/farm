@@ -3,10 +3,6 @@ import webpack from "webpack"
 import HtmlWebpackPlugin from "html-webpack-plugin"
 import nodeExternals from "webpack-node-externals"
 
-interface NamedConfig extends webpack.Configuration {
-  name: string
-}
-
 const shared: webpack.Configuration = {
   mode: "development",
   context: path.resolve(__dirname),
@@ -41,7 +37,7 @@ const shared: webpack.Configuration = {
   },
 }
 
-function config(opts: NamedConfig) {
+function config(opts: webpack.Configuration) {
   return Object.assign(
     {},
     shared,
@@ -49,7 +45,7 @@ function config(opts: NamedConfig) {
       output: {
         path: path.resolve(__dirname, "dist"),
         filename: `${opts.name}.js`,
-        publicPath: "/",
+        publicPath: "./",
         globalObject: "this",
       },
     },

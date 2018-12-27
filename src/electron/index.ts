@@ -44,11 +44,7 @@ function createWindow(): BrowserWindow {
     },
   })
 
-  const url = "http://localhost:4000"
-
-  console.log(`Opening '${url}'...`)
-  win.loadURL(url)
-  // win.loadFile("./dist/index.html") // production
+  win.loadFile("./dist/index.html") // production
 
   win.webContents.on("will-navigate", (e, url) => {
     console.log("Opening externally...", url)
