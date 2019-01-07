@@ -18,15 +18,6 @@ Then, we need a patched version of the Elm vscode extension. Download the [lates
 "Extensions: Install from VSX..." from the Command Palette, and selecting the downloaded
 .vsx file.
 
-## TODO
-
-- bot api
-  - elm custom element wrapping bot
-  - bot compilation bot
-  - elm compilation bot
-  - TS compilation bot
-- render elm widgets as custom elements
-
 ## Idea history
 
 - Connecting different modules

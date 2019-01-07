@@ -13,8 +13,7 @@
     "app": "yarn build && yarn start-app",
     "types": "./bin/types.sh",
     "realm": "cross-env REPO_ROOT=./.data/bots node ./dist/realm.js",
-    "bot": "yarn realm bot",
-    "rebuild": "electron-rebuild --version 3.0.7 -f -w utp-native"
+    "bot": "yarn realm bot"
   },
   "devDependencies": {
     "@types/bs58": "^3.0.30",
