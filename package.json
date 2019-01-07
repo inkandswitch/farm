@@ -8,7 +8,7 @@
   "license": "BSD",
   "private": true,
   "scripts": {
-    "start": "yarn build --config-name=electron && electron .",
+    "start": "yarn build && electron .",
     "build": "webpack",
     "app": "yarn build && yarn start-app",
     "types": "./bin/types.sh",
