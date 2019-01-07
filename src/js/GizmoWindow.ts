@@ -1,4 +1,5 @@
 import * as Gizmo from "./Gizmo"
+import * as RealmUrl from "./RealmUrl"
 
 
 export function constructorForWindow(window: Window) {
@@ -58,10 +59,20 @@ export function constructorForWindow(window: Window) {
       const currentWindow = this.ownerDocument.defaultView
 
       // TODO: use realm url or per-gizmo url once we can auto-focus an already open window.
-      this.openedWindow = open("", "")
+      const windowName = RealmUrl.create({ code: codeUrl, data: dataUrl })
+      this.openedWindow = open("", windowName)
       if (!this.openedWindow) return
-      this.openedWindow.customElements.define('realm-ui', Gizmo.constructorForWindow(this.openedWindow))
-      this.openedWindow.customElements.define('realm-window', constructorForWindow(this.openedWindow))
+
+      if (!this.openedWindow.customElements.get('realm-ui')) {
+        this.openedWindow.customElements.define('realm-ui', Gizmo.constructorForWindow(this.openedWindow))
+      }
+      if (!this.openedWindow.customElements.get('realm-window')) {
+        this.openedWindow.customElements.define('realm-window', constructorForWindow(this.openedWindow))
+      }
+      // TODO: focus window when opened.
+      // Currently doesn't work due to this bug: https://github.com/electron/electron/issues/8969
+      //this.openedWindow.focus()
+
       const root = this.openedWindow.document.createElement("realm-ui")
       root.setAttribute("code", codeUrl)
       root.setAttribute("data", dataUrl)
