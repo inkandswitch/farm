@@ -9,7 +9,7 @@
   "private": true,
   "scripts": {
     "start": "yarn build && electron .",
-    "build": "webpack",
+    "build": "cross-env TS_NODE_CACHE_DIRECTORY=.ts-cache webpack",
     "app": "yarn build && yarn start-app",
     "types": "./bin/types.sh",
     "realm": "cross-env REPO_ROOT=./.data/bots node ./dist/realm.js",

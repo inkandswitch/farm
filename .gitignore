@@ -4,6 +4,7 @@
 /dist
 .data*
 .tmp
+.ts-cache
 
 .DS_Store
 
