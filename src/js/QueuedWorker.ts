@@ -2,7 +2,9 @@ import QueuedPort from "./QueuedPort"
 
 var PseudoWorker = require("pseudo-worker")
 const xhr = require("xmlhttprequest")
-;(<any>global).XMLHttpRequest = xhr.XMLHttpRequest
+if (typeof XMLHttpRequest === "undefined") {
+  ;(<any>global).XMLHttpRequest = xhr.XMLHttpRequest
+}
 
 export default class QueuedWorker<S, R> extends QueuedPort<S, R> {
   worker: Worker
