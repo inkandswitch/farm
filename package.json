@@ -55,6 +55,7 @@
     "debug": "^4.1.0",
     "discovery-swarm": "^5.1.2",
     "electron-context-menu": "^0.10.1",
+    "elm": "^0.19.0-bugfix2",
     "hypercore": "^6.21.0",
     "hypermerge": "github:automerge/hypermerge#fork",
     "lodash": "^4.17.11",

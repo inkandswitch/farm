@@ -41,6 +41,7 @@ function createWindow(): BrowserWindow {
       nodeIntegration: true,
       nodeIntegrationInWorker: true,
       nativeWindowOpen: true,
+      webSecurity: false,
     },
   })
 

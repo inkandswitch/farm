@@ -1689,6 +1689,13 @@ elm@^0.19.0:
   dependencies:
     binwrap "0.1.4"
 
+elm@^0.19.0-bugfix2:
+  version "0.19.0-bugfix2"
+  resolved "https://registry.yarnpkg.com/elm/-/elm-0.19.0-bugfix2.tgz#b2b7ad4dbeb89edf997759330b3694f419f9f1b3"
+  integrity sha512-kEbsC7SzTo6B2aq9ZEhdNZnqSehqVZvdXcm2FBKIAp1eRa1pxQr7VG1WXF5oC/XtYoQaQHVT3QMt5/PqA00ygg==
+  dependencies:
+    binwrap "0.1.4"
+
 emojis-list@^2.0.0:
   version "2.1.0"
   resolved "https://registry.yarnpkg.com/emojis-list/-/emojis-list-2.1.0.tgz#4daa4d9db00f9819880c79fa457ae5b09a1fd389"
