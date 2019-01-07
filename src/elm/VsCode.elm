@@ -3,4 +3,4 @@ module VsCode exposing (link)
 
 link : String -> String
 link url =
-    "vscode://inkandswitch.hypermerge/" ++ url
+    "vscode-insiders://inkandswitch.hypermerge/" ++ url
