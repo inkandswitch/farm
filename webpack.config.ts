@@ -2,6 +2,7 @@ import path from "path"
 import webpack from "webpack"
 import HtmlWebpackPlugin from "html-webpack-plugin"
 import nodeExternals from "webpack-node-externals"
+import HardSourcePlugin from "hard-source-webpack-plugin"
 
 const shared: webpack.Configuration = {
   mode: "development",
@@ -58,30 +59,37 @@ export default [
     name: "electron",
     entry: ["./src/electron"],
     target: "electron-main",
+    plugins: [new HardSourcePlugin()],
   }),
 
   config({
     name: "realm",
     entry: ["./src/js/cli/realm"],
     target: "node",
+    plugins: [new HardSourcePlugin()],
   }),
 
   config({
     name: "renderer",
     entry: ["./src/js"],
     target: "electron-renderer",
-    plugins: [new HtmlWebpackPlugin({ title: "Realm" })],
+    plugins: [
+      new HtmlWebpackPlugin({ title: "Realm" }),
+      new HardSourcePlugin(),
+    ],
   }),
 
   config({
     name: "repo.worker",
     entry: ["./src/js/repo.worker"],
     target: "electron-renderer",
+    plugins: [new HardSourcePlugin()],
   }),
 
   config({
     name: "compile.worker",
     entry: ["./src/js/compile.worker"],
     target: "electron-renderer",
+    plugins: [new HardSourcePlugin()],
   }),
 ]
