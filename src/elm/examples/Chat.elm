@@ -26,6 +26,7 @@ gizmo =
 -}
 type alias State =
     { input : String
+    , zone : Time.Zone
     }
 
 
@@ -47,12 +48,14 @@ type alias Doc =
 
 init : Flags -> ( State, Doc, Cmd Msg )
 init flags =
-    ( { input = "" }
+    ( { input = ""
+      , zone = Time.utc
+      }
     , { counter = 0
       , messages = []
       , title = "Untitled Chat"
       }
-    , Cmd.none
+    , Time.here |> Task.perform SetZone
     )
 
 
@@ -63,6 +66,7 @@ type Msg
     | Submit
     | OnTime Time.Posix
     | KeyDown Int
+    | SetZone Time.Zone
 
 
 onKeyDown : (Int -> msg) -> Attribute msg
@@ -81,6 +85,9 @@ update msg { flags, state, doc } =
             , doc
             , Task.perform OnTime Time.now
             )
+
+        SetZone zone ->
+            ( { state | zone = zone }, doc, Cmd.none )
 
         OnTime time ->
             ( { state | input = "" }
@@ -133,13 +140,13 @@ view { flags, state, doc } =
                 , padding (px 20)
                 , displayFlex
                 , fontSize (Css.em 0.9)
-                , flexDirection column
-                , overflowY scroll
+                , flexDirection columnReverse
+                , overflow auto
                 ]
             ]
-            (groupWhile (\a b -> a.author == b.author)
-                (List.reverse doc.messages)
-                |> List.map (viewGroup ( avatarGizmo, titleGizmo ))
+            (doc.messages
+                |> groupWhile (\a b -> a.author == b.author)
+                |> List.map (viewGroup state ( avatarGizmo, titleGizmo ))
             )
         , inputBar state
         ]
@@ -178,6 +185,7 @@ inputBar state =
             , border3 (px 2) solid (hex "#ccc")
             , borderRadius (px 3)
             , padding (px 10)
+            , flexShrink (int 0)
             ]
         ]
         [ input
@@ -208,13 +216,14 @@ inputBar state =
         ]
 
 
-viewGroup : ( String, String ) -> ( Message, List Message ) -> Html Msg
-viewGroup ( avatarGizmo, titleGizmo ) ( authorMessage, messages ) =
+viewGroup : State -> ( String, String ) -> ( Message, List Message ) -> Html Msg
+viewGroup state ( avatarGizmo, titleGizmo ) ( authorMessage, messages ) =
     div
         [ css
             [ displayFlex
             , flexDirection row
             , paddingBottom (px 10)
+            , flexShrink (int 0)
             ]
         ]
         [ fromUnstyled <| Gizmo.render avatarGizmo authorMessage.author
@@ -234,21 +243,30 @@ viewGroup ( avatarGizmo, titleGizmo ) ( authorMessage, messages ) =
                     ]
                 ]
                 [ fromUnstyled <| Gizmo.render titleGizmo authorMessage.author
-                , span
-                    [ css
-                        [ color (hex "#777")
-                        , fontSize (Css.em 0.9)
-                        , marginLeft (px 5)
-                        , fontWeight lighter
-                        ]
-                    ]
-                    [ text (displayTime authorMessage.time) ]
+                , viewTime state.zone authorMessage.time
                 ]
             , div
-                []
+                [ css
+                    [ displayFlex
+                    , flexDirection columnReverse
+                    ]
+                ]
                 ((authorMessage :: messages) |> List.map viewMessage)
             ]
         ]
+
+
+viewTime : Time.Zone -> Int -> Html Msg
+viewTime zone time =
+    span
+        [ css
+            [ color (hex "#777")
+            , fontSize (Css.em 0.9)
+            , marginLeft (px 5)
+            , fontWeight lighter
+            ]
+        ]
+        [ text (displayTime zone time) ]
 
 
 viewMessage : Message -> Html Msg
@@ -256,18 +274,19 @@ viewMessage { message, author } =
     div
         [ css
             [ marginBottom (px 5)
+            , flexShrink (int 0)
             ]
         ]
         [ text message ]
 
 
-displayTime : Int -> String
-displayTime time =
+displayTime : Time.Zone -> Int -> String
+displayTime zone time =
     let
         posix =
             Time.millisToPosix time
     in
-    String.fromInt (Time.toHour Time.utc posix) ++ ":" ++ String.fromInt (Time.toMinute Time.utc posix)
+    String.fromInt (Time.toHour zone posix) ++ ":" ++ String.fromInt (Time.toMinute zone posix)
 
 
 subscriptions : Model State Doc -> Sub Msg
