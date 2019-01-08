@@ -13,6 +13,7 @@ import Html.Styled.Events as Events exposing (on, onClick, onInput, onMouseDown,
 import Json.Decode as Json exposing (Decoder)
 import Repo exposing (Ref, Url)
 import Tuple exposing (pair)
+import VsCode
 
 
 gizmo : Gizmo.Program State Doc Msg
@@ -485,12 +486,12 @@ viewDocMenu n win =
          , menuButton "Open document..." (EmptyWindow win.code { x = win.x + 20, y = win.y + 20 })
          , menuButton "New document" (NewDocument win.code)
          , menuButton "Copy code url" (CopyText win.code)
-         , menuLink "Edit code in VSCode" (vscodeUrl win.code)
+         , menuLink "Edit code in VSCode" (VsCode.link win.code)
          ]
             ++ (case win.data of
                     Just data ->
                         [ menuButton "Copy data url" (CopyText data)
-                        , menuLink "Edit data in VSCode" (vscodeUrl data)
+                        , menuLink "Edit data in VSCode" (VsCode.link data)
                         ]
 
                     Nothing ->
@@ -533,11 +534,6 @@ viewOpenModal pt str =
             , button "Open" NoOp
             ]
         ]
-
-
-vscodeUrl : String -> String
-vscodeUrl url =
-    "vscode://inkandswitch.vscode-hypermergefs/" ++ url
 
 
 menu : List (Html msg) -> Html msg
