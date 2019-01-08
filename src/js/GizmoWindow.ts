@@ -50,6 +50,7 @@ export function constructorForWindow(window: Window) {
       this.connectedCallback()
     }
 
+    // TODO: a lot going on here
     mount() {
       if (this.openedWindow) return
 
@@ -58,7 +59,6 @@ export function constructorForWindow(window: Window) {
 
       const currentWindow = this.ownerDocument.defaultView
 
-      // TODO: use realm url or per-gizmo url once we can auto-focus an already open window.
       const windowName = RealmUrl.create({ code: codeUrl, data: dataUrl })
       this.openedWindow = open("", windowName)
       if (!this.openedWindow) return
@@ -73,10 +73,19 @@ export function constructorForWindow(window: Window) {
       // Currently doesn't work due to this bug: https://github.com/electron/electron/issues/8969
       //this.openedWindow.focus()
 
+      this.openedWindow.onbeforeunload = () => {
+        console.log("on before unload")
+        this.dispatchEvent(
+          new CustomEvent('windowclose', {
+            bubbles: true,
+            composed: true,
+          })
+        )
+      }
+
       const root = this.openedWindow.document.createElement("realm-ui")
       root.setAttribute("code", codeUrl)
       root.setAttribute("data", dataUrl)
-
 
       const body = this.openedWindow.document.body
       const styleNode = currentWindow.document.getElementsByTagName('style')[0]

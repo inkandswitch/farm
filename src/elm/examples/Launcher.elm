@@ -61,8 +61,7 @@ type Tab
 
 
 type alias State =
-    { launchedGizmos : List GizmoConfig -- yikes
-    , gizmoTypeToCreate : Maybe SourceUrl
+    { gizmoTypeToCreate : Maybe SourceUrl
     , gizmoDataForFork : Maybe DataUrl
     , showingGizmoTypes : Bool
     , addGizmoUrl : Maybe String
@@ -74,6 +73,7 @@ type alias Doc =
     { gizmos : List GizmoConfig
     , sources : List SourceUrl
     , data : List DataUrl
+    , activeGizmos : List String
     }
 
 
@@ -87,8 +87,7 @@ sourceProps =
 
 init : Flags -> ( State, Doc, Cmd Msg )
 init flags =
-    ( { launchedGizmos = []
-      , gizmoTypeToCreate = Nothing
+    ( { gizmoTypeToCreate = Nothing
       , showingGizmoTypes = False
       , addGizmoUrl = Nothing
       , gizmoDataForFork = Nothing
@@ -97,6 +96,7 @@ init flags =
     , { gizmos = []
       , sources = []
       , data = []
+      , activeGizmos = []
       }
     , Cmd.none
     )
@@ -107,6 +107,7 @@ init flags =
 type Msg
     = NoOp
     | LaunchGizmo GizmoConfig
+    | CloseGizmo String
     | CreateGizmo SourceUrl
     | GizmoDataDocCreated ( Ref, List String )
     | CopyShareLink GizmoConfig
@@ -131,6 +132,9 @@ update msg model =
 
         doc =
             model.doc
+
+        activeGizmos =
+            Set.fromList doc.activeGizmos
     in
     case msg of
         NoOp ->
@@ -143,8 +147,21 @@ update msg model =
             )
 
         LaunchGizmo gizmoConfig ->
-            ( { state | launchedGizmos = state.launchedGizmos ++ [ gizmoConfig ] }
-            , doc
+            case RealmUrl.create gizmoConfig of
+                Ok realmUrl  ->
+                    ( state
+                    , { doc | activeGizmos = Set.toList (Set.insert realmUrl activeGizmos) }
+                    , Cmd.none
+                    )
+                _ ->
+                    ( state
+                    , doc
+                    , Cmd.none
+                    )
+
+        CloseGizmo gizmoUrl ->
+            ( state
+            , { doc | activeGizmos = Set.toList (Set.remove gizmoUrl activeGizmos) }
             , Cmd.none
             )
 
@@ -193,10 +210,17 @@ update msg model =
                         gizmoConfig =
                             { code = gizmoType, data = url }
                     in
-                    ( { state | gizmoTypeToCreate = Nothing, showingGizmoTypes = False, launchedGizmos = state.launchedGizmos ++ [ gizmoConfig ] }
-                    , { doc | gizmos = gizmoConfig :: doc.gizmos, data = url :: doc.data }
-                    , Cmd.none
-                    )
+                    case RealmUrl.create gizmoConfig of
+                        Ok realmUrl ->
+                            ( { state | gizmoTypeToCreate = Nothing, showingGizmoTypes = False }
+                            , { doc | gizmos = gizmoConfig :: doc.gizmos, data = url :: doc.data, activeGizmos = Set.toList (Set.insert realmUrl activeGizmos) }
+                            , Cmd.none
+                            )
+                        _ ->
+                            ( { state | showingGizmoTypes = False, gizmoTypeToCreate = Nothing }
+                            , doc
+                            , Cmd.none
+                            )
 
                 _ ->
                     ( { state | showingGizmoTypes = False, gizmoTypeToCreate = Nothing }
@@ -247,8 +271,8 @@ update msg model =
         Navigate url ->
             case RealmUrl.parse url of
                 Ok gizmoConfig ->
-                    ( { state | launchedGizmos = state.launchedGizmos ++ [ gizmoConfig ] }
-                    , { doc | gizmos = gizmoConfig :: doc.gizmos }
+                    ( state
+                    , { doc | gizmos = gizmoConfig :: doc.gizmos, activeGizmos = Set.toList (Set.insert url activeGizmos) }
                     , Cmd.none
                     )
 
@@ -340,7 +364,7 @@ view model =
                 Data ->
                     viewData model
             ]
-        , div [] (List.map viewGizmoWindow state.launchedGizmos)
+        , div [] (List.map viewGizmoWindow doc.activeGizmos)
         ]
 
 
@@ -638,9 +662,13 @@ viewAddGizmoInput inputValue =
         ]
 
 
-viewGizmoWindow : GizmoConfig -> Html Msg
-viewGizmoWindow gizmoConfig =
-    Html.fromUnstyled <| Gizmo.renderWindow gizmoConfig.code gizmoConfig.data
+viewGizmoWindow : String -> Html Msg
+viewGizmoWindow realmUrl =
+    case RealmUrl.parse realmUrl of
+        Ok gizmoConfig ->
+            Html.fromUnstyled <| (Gizmo.renderWindow gizmoConfig.code gizmoConfig.data (CloseGizmo realmUrl))
+        _ ->
+            Html.text ""
 
 
 gizmoLauncher : Html Msg -> Html Msg -> Msg -> Html Msg

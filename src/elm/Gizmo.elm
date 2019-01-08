@@ -150,11 +150,12 @@ renderWith attrs code data =
         []
 
 
-renderWindow : Url -> Url -> Html msg
-renderWindow code data =
+renderWindow : Url -> Url -> msg -> Html msg
+renderWindow code data closeMsg =
     Html.node "realm-window"
         [ attr "code" code
         , attr "data" data
+        , Events.on "windowclose"  (Json.succeed closeMsg)
         ]
         []
 
