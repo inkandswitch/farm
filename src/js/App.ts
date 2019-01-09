@@ -1,6 +1,7 @@
 import Repo from "./Repo"
 import Compiler from "./Compiler"
 import * as Gizmo from "./Gizmo"
+import * as RealmUrl from "./RealmUrl"
 import * as GizmoWindow from "./GizmoWindow"
 import * as Launcher from "./bootstrap/Launcher"
 import * as Identity from "./bootstrap/Identity"
@@ -100,6 +101,17 @@ export default class App {
 
   handleUrl(url: string) {
     this.root.navigateTo(url)
+  }
+
+  bootstrap(name: string) {
+    const bs = require("./bootstrap/" + name)
+    const code = bs.code(this.repo)
+    const data = bs.data(this.repo)
+    console.log("\n\ncode url:", code, "\n\n")
+    console.log("\n\ndata url:", data, "\n\n")
+
+    const realmUrl = RealmUrl.create({ code, data })
+    console.log("\n\nrealm url:", realmUrl, "\n\n")
   }
 }
 

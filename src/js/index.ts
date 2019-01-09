@@ -8,6 +8,7 @@ import { ipcRenderer, remote } from "electron"
 const { protocol } = remote
 
 const app = new App()
+;(<any>self).app = app
 
 Object.assign(self, {
   Debug,
