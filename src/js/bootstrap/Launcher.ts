@@ -26,6 +26,13 @@ export function data(repo: Repo) {
         title: "Simple Image Gallery",
         icon: Bs.assetDataUrl("image_gallery_icon.png"),
       })
+  const wiki = Bs.code(repo, "Wiki.elm", {
+    title: "Wiki",
+    config: {
+      article: Bs.code(repo, "Article.elm"),
+      articleIndex: Bs.code(repo, "ArticleIndex.elm")
+    }
+  })
   const editableTitle = Bs.code(repo, "EditableTitle.elm")
   const avatar = Bs.code(repo, "SimpleAvatar.elm")
   const chat = Bs.code(repo, "Chat.elm", {
@@ -41,7 +48,7 @@ export function data(repo: Repo) {
       { code: counterCode, data: counterData },
       { code: note, data: noteData }
     ],
-    sources: [note, imageGallery, chat, counterCode],
+    sources: [note, imageGallery, chat, counterCode, wiki],
     data: [counterData, noteData]
   })
 }

@@ -17,7 +17,7 @@ export interface ReceivePorts {
   initDoc?: ReceivePort<any>
   saveDoc: ReceivePort<any>
   command?: ReceivePort<[string, string]>
-  emitted?: ReceivePort<[string, string]>
+  emitted?: ReceivePort<[string, any]>
   repoOut?: ReceivePort<any>
   output?: ReceivePort<string[]>
 }
@@ -197,9 +197,10 @@ export default class ElmGizmo {
     }
   }
 
-  onEmitted = ([name, value]: [string, string]) => {
+  onEmitted = ([name, value]: [string, any]) => {
     const { code, data } = this.attrs
     const detail = { name, value, code, data }
+    console.log(detail)
     this.dispatchEvent(
       new CustomEvent(name, {
         detail,

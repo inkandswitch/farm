@@ -25,6 +25,7 @@ import Html exposing (Html)
 import Html.Attributes as Attr
 import Html.Events as Events
 import Json.Decode as Json
+import Json.Encode as E
 import Repo exposing (Url)
 import Task
 
@@ -32,17 +33,17 @@ import Task
 port command : ( String, String ) -> Cmd msg
 
 
-port emitted : ( String, String ) -> Cmd msg
+port emitted : ( String, E.Value ) -> Cmd msg
 
 
-emit : String -> String -> Cmd msg
+emit : String -> E.Value -> Cmd msg
 emit name value =
     emitted ( name, value )
 
 
 type alias EmitDetail =
     { name : String
-    , value : Url
+    , value : E.Value
     , code : Url
     , data : Url
     }
@@ -61,7 +62,7 @@ emitDecoder : Json.Decoder EmitDetail
 emitDecoder =
     Json.map4 EmitDetail
         (Json.at [ "detail", "name" ] Json.string)
-        (Json.at [ "detail", "value" ] Json.string)
+        (Json.at [ "detail", "value" ] Json.value)
         (Json.at [ "detail", "code" ] Json.string)
         (Json.at [ "detail", "data" ] Json.string)
 
