@@ -3,6 +3,8 @@ module Wiki exposing (Doc, Msg, State, gizmo)
 import Gizmo exposing (Flags, Model)
 import Html.Styled as Html exposing (..)
 import Html.Styled.Events as Events
+import Html.Styled.Attributes exposing (css)
+import Css exposing (..)
 import Dict exposing (Dict)
 import Repo exposing (Props, Ref, Url, create, createWithProps)
 import Json.Encode as E
@@ -215,13 +217,15 @@ view { flags, state, doc } =
         , onCreate CreateArticle
         , onRemove RemoveArticle
         , onTitleUpdate UpdateArticleTitle
+        , css
+            [ width (vw 100)
+            , height (vh 100)
+            , property "display" "grid"
+            , property "grid-template-columns" "20% 80%"
+            , backgroundColor (hex "f5f5f5")
+            ]
         ]
         [ viewIndex flags.data
-        , div
-            [ Events.onClick CreateArticle
-            ]
-            [ text "New Article"
-            ]
         , case maybeCurrentArticle state.currentArticle (decodeIndex doc.index) of
             Just article ->
                 viewArticle article
@@ -235,11 +239,11 @@ onNavigate tagger =
 
 onCreate : msg -> Html.Attribute msg
 onCreate msg =
-    Events.on "create" (D.succeed msg)
+    Events.on "createarticle" (D.succeed msg)
 
 onRemove : (ArticleTitle -> msg) -> Html.Attribute msg
 onRemove tagger =
-    Events.on "remove" (D.map tagger detailString)
+    Events.on "removearticle" (D.map tagger detailString)
 
 onTitleUpdate : (ArticleTitle -> ArticleTitle -> msg) -> Html.Attribute msg
 onTitleUpdate tagger =

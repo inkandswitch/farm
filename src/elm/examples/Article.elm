@@ -84,10 +84,13 @@ view : Model State Doc -> Html Msg
 view { doc } =
     div
         [ css
-            [ padding2 (px 25) (px 30)
-            , displayFlex
+            [ displayFlex
             , flexDirection column
-            , height (pct 100)
+            , padding (px 10)
+            , border3 (px 1) solid (hex "ddd")
+            , margin (px 10)
+            , boxShadow4 (hex "ddd") (px 0) (px 0) (px 5)
+            , backgroundColor (hex "fff")
             ]
         ]
         [ input
