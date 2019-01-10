@@ -2582,8 +2582,8 @@ hypercore@^6.21.0:
     unordered-set "^2.0.0"
 
 "hypermerge@github:automerge/hypermerge#fork":
-  version "1.0.20"
-  resolved "https://codeload.github.com/automerge/hypermerge/tar.gz/84a6c301d77176420c865012de9ef573c46c6d67"
+  version "1.0.21"
+  resolved "https://codeload.github.com/automerge/hypermerge/tar.gz/3f3ee472f765ca0f499cac8f3e09da74ad561e23"
   dependencies:
     automerge "0.9.2"
     bs58 "^4.0.1"
