@@ -69,6 +69,7 @@ view { flags, doc } =
             , backgroundImage (url <| Maybe.withDefault defaultIconSrc doc.icon)
             , backgroundPosition center
             , backgroundSize cover
+            , cursor pointer
             ]
         ]
         []
