@@ -1,70 +1,53 @@
 import Repo from "../Repo"
 import * as Bs from "."
+import * as Wiki from "./Wiki"
 
 export function data(repo: Repo) {
   const counterCode = Bs.code(repo, "CounterTutorial.elm", {
-          title: "Counter Tutorial",
-          icon: Bs.assetDataUrl("tutorial_icon.png"),
-        })
+    title: "Counter Tutorial",
+    icon: Bs.assetDataUrl("tutorial_icon.png"),
+  })
   const counterData = repo.create({
-          title: "Counter Tutorial",
-          step: 1,
-          codeUrl: Bs.code(repo, "Counter.elm"),
-          dataUrl: repo.create({ title: "Counter data" }),
-        })
+    title: "Counter Tutorial",
+    step: 1,
+    codeUrl: Bs.code(repo, "Counter.elm"),
+    dataUrl: repo.create({ title: "Counter data" }),
+  })
 
   const noteData = repo.create({
     title: "First Note!",
-    body: "This is my first note!"
+    body: "This is my first note!",
   })
 
-  const wikiArticle = repo.create({
-    title: "Welcome",
-    body: "This is the RealmWiki"
-  })
-
-  const wikiData = repo.create({
-    title: "RealmWiki",
-    articles: [wikiArticle]
-  })
+  const wikiData = Wiki.data(repo)
 
   const note = Bs.code(repo, "Note.elm", {
-        title: "Note",
-        icon: Bs.assetDataUrl("note_icon.png"),
-      })
-  const imageGallery = Bs.code(repo, "SimpleImageGallery.elm", {
-        title: "Simple Image Gallery",
-        icon: Bs.assetDataUrl("image_gallery_icon.png"),
-      })
-  const wiki = Bs.code(repo, "Wiki.elm", {
-    title: "Wiki",
-    config: {
-      article: Bs.code(repo, "Article.elm"),
-      articleIndex: Bs.code(repo, "ArticleIndex.elm", {
-        config: {
-          articleIndexItem: Bs.code(repo, "ArticleIndexItem.elm")
-        }
-      })
-    }
+    title: "Note",
+    icon: Bs.assetDataUrl("note_icon.png"),
   })
+  const imageGallery = Bs.code(repo, "SimpleImageGallery.elm", {
+    title: "Simple Image Gallery",
+    icon: Bs.assetDataUrl("image_gallery_icon.png"),
+  })
+  const wiki = Wiki.code(repo)
   const editableTitle = Bs.code(repo, "EditableTitle.elm")
   const avatar = Bs.code(repo, "SimpleAvatar.elm")
   const chat = Bs.code(repo, "Chat.elm", {
-        title: "Chat",
-        icon: Bs.assetDataUrl("chat_icon.png"),
-        config: {
-          editableTitle,
-          avatar
-        },
-      })
+    title: "Chat",
+    icon: Bs.assetDataUrl("chat_icon.png"),
+    config: {
+      editableTitle,
+      avatar,
+    },
+  })
   return repo.create({
     gizmos: [
       { code: counterCode, data: counterData },
       { code: note, data: noteData },
-      { code: wiki, data: wikiData }
+      { code: wiki, data: wikiData },
     ],
     sources: [note, imageGallery, chat, counterCode, wiki],
-    data: [counterData, noteData]
+    data: [counterData, noteData],
   })
 }
 
@@ -85,7 +68,7 @@ export function code(repo: Repo) {
         config: {
           defaultIcon: Bs.assetDataUrl("default_gizmo_icon.png"),
         },
-      })
+      }),
     },
   })
 }
