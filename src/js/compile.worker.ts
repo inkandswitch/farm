@@ -32,8 +32,9 @@ function work(msg: ToCompiler) {
       const source = msg.source.replace(/^module \w+/, "module Source")
 
       const sourceFile = "./.tmp/Source.elm"
+      const lockOpts = { stale: 5000, retries: 5, realpath: false }
 
-      lock(sourceFile, { stale: 5000, retries: 5 }).then(release => {
+      lock(sourceFile, lockOpts).then(release => {
         fs.writeFile(sourceFile, source, async err => {
           function done() {
             release()
