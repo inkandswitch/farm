@@ -5,6 +5,7 @@ import Html exposing (Html, button, div, form, input, text)
 import Html.Attributes exposing (style, value)
 import Html.Events exposing (onInput, onSubmit)
 import Repo exposing (Ref, Url)
+import Json.Encode as E
 
 
 gizmo : Gizmo.Program State Doc Msg
@@ -49,7 +50,7 @@ update : Msg -> Model State Doc -> ( State, Doc, Cmd Msg )
 update msg { state, doc } =
     case Debug.log "msg" msg of
         Open ->
-            ( state, doc, Gizmo.emit "OpenDocument" state.dataUrl )
+            ( state, doc, Gizmo.emit "OpenDocument" (E.string state.dataUrl) )
 
         Change str ->
             ( { state | dataUrl = str }, doc, Cmd.none )

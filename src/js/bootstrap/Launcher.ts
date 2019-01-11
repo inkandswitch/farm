@@ -30,7 +30,11 @@ export function data(repo: Repo) {
     title: "Wiki",
     config: {
       article: Bs.code(repo, "Article.elm"),
-      articleIndex: Bs.code(repo, "ArticleIndex.elm")
+      articleIndex: Bs.code(repo, "ArticleIndex.elm", {
+        config: {
+          articleIndexItem: Bs.code(repo, "ArticleIndexItem.elm")
+        }
+      })
     }
   })
   const editableTitle = Bs.code(repo, "EditableTitle.elm")

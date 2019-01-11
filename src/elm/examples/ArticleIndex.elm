@@ -37,35 +37,16 @@ type alias State =
 {-| Document state
 -}
 type alias Doc =
-    { index : E.Value --Dict ArticleTitle GizmoUrl
+    { articles : List GizmoUrl
     }
 
 type alias GizmoUrl =
     String
 
-type alias ArticleTitle =
-    String
-
-decodeIndex : E.Value -> Dict ArticleTitle GizmoUrl
-decodeIndex val =
-    case D.decodeValue (D.keyValuePairs D.string) val of
-        Ok index ->
-            Dict.fromList index
-        Err msg ->
-            Dict.empty
-
-encodeIndex : Dict ArticleTitle GizmoUrl -> E.Value
-encodeIndex index =
-    index
-        |> Dict.map (\k v -> E.string v)
-        |> Dict.toList
-        |> E.object
-
-
 init : Flags -> ( State, Doc, Cmd Msg )
 init flags =
     ( {}
-    , { index = E.object [] }
+    , { articles = [] }
     , Cmd.none
     )
 
@@ -74,7 +55,7 @@ init flags =
 -}
 type Msg
     = NoOp
-    | NavigateToArticle ArticleTitle
+    | NavigateToArticle GizmoUrl
     | CreateArticle
 
 
@@ -87,10 +68,10 @@ update msg { state, doc } =
             , Cmd.none
             )
 
-        NavigateToArticle title ->
+        NavigateToArticle url ->
             ( state
             , doc
-            , Gizmo.emit "navigate" (E.string title)
+            , Gizmo.emit "navigate" (E.string url)
             )
 
         CreateArticle ->
@@ -101,9 +82,10 @@ update msg { state, doc } =
 
 
 view : Model State Doc -> Html Msg
-view { doc } =
+view { flags, doc } =
     let
-        index = decodeIndex doc.index
+        viewArticleItem =
+            viewGizmo <| Maybe.withDefault "missing" (Dict.get "articleIndexItem" flags.config)
     in
     div
         [ css
@@ -136,14 +118,14 @@ view { doc } =
             ]
         , div
             []
-            (List.map viewArticle <| Dict.keys index)
+            (List.map (viewArticle viewArticleItem) doc.articles)
         ]
 
 
-viewArticle : ArticleTitle -> Html Msg
-viewArticle title =
+viewArticle : (String -> Html Msg) -> GizmoUrl -> Html Msg
+viewArticle viewArticleItem url =
     div
-        [ Events.onClick (NavigateToArticle title)
+        [ Events.onClick (NavigateToArticle url)
         , css
             [ padding2 (px 5) (px 0)
             , color hotPink
@@ -153,9 +135,14 @@ viewArticle title =
                 ]
             ]
         ]
-        [ text title
+        [ viewArticleItem url
         ]
 
 subscriptions : Model State Doc -> Sub Msg
 subscriptions model =
     Sub.none
+
+
+viewGizmo : String -> String -> Html Msg
+viewGizmo source data =
+    Html.fromUnstyled (Gizmo.render source data)

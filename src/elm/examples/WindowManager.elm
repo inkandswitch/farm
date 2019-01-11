@@ -11,6 +11,7 @@ import Html.Styled as Html exposing (Html, button, div, fromUnstyled, input, tex
 import Html.Styled.Attributes as Attr exposing (css, value)
 import Html.Styled.Events as Events exposing (on, onClick, onInput, onMouseDown, onMouseUp)
 import Json.Decode as Json exposing (Decoder)
+import Json.Encode as E
 import Repo exposing (Ref, Url)
 import Tuple exposing (pair)
 import VsCode
@@ -402,10 +403,18 @@ viewWindow deps n win =
 viewEmptyWindow : Deps -> Int -> Window -> Html Msg
 viewEmptyWindow deps n win =
     div
-        [ Attr.fromUnstyled <| Gizmo.onEmit "OpenDocument" (.value >> SetWindowData n)
+        [ Attr.fromUnstyled <| Gizmo.onEmit "OpenDocument" (.value >> openDocumentValue >> SetWindowData n)
         ]
         [ deps.empty win.code
         ]
+
+openDocumentValue : E.Value -> Url
+openDocumentValue value =
+    case Json.decodeValue Json.string value of
+        Ok url ->
+            url
+        Err msg ->
+            "" --TODO: handle this case
 
 
 viewTitleBar : Deps -> Int -> Window -> Html Msg

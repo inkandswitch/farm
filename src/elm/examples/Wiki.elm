@@ -29,14 +29,17 @@ type alias GizmoUrl =
 type alias ArticleTitle =
     String
 
+type alias TitleIndex =
+    Dict ArticleTitle (List GizmoUrl)
 
 type alias State =
-    { currentArticle : Maybe ArticleTitle
+    { currentArticle : Maybe GizmoUrl
     }
 
 
 type alias Doc =
-    { index : E.Value --Dict ArticleTitle GizmoUrl
+    { articles : List GizmoUrl
+    --, titleIndex : E.Value --Dict ArticleTitle (List GizmoUrl)
     }
 
 
@@ -60,24 +63,24 @@ gizmoProps codeUrl dataUrl =
 init : Flags -> ( State, Doc, Cmd Msg )
 init flags =
     ( { currentArticle = Nothing}
-    , { index = E.object [] }
+    , { articles = [] } --, titleIndex = E.object [] }
     , Cmd.none
     )
 
-decodeIndex : E.Value -> Dict ArticleTitle GizmoUrl
-decodeIndex val =
-    case D.decodeValue (D.keyValuePairs D.string) val of
-        Ok index ->
-            Dict.fromList index
-        Err msg ->
-            Dict.empty
+-- decodeIndex : E.Value -> TitleIndex
+-- decodeIndex val =
+--     case D.decodeValue (D.keyValuePairs D.string) val of
+--         Ok index ->
+--             Dict.fromList index
+--         Err msg ->
+--             Dict.empty
 
-encodeIndex : Dict ArticleTitle GizmoUrl -> E.Value
-encodeIndex index =
-    index
-        |> Dict.map (\k v -> E.string v)
-        |> Dict.toList
-        |> E.object
+-- encodeIndex : TitleIndex -> E.Value
+-- encodeIndex index =
+--     index
+--         |> Dict.map (\k v -> List.map (\e -> E.string e) v)
+--         |> Dict.toList
+--         |> E.object
 
 {-| Message type for modifying State and Doc inside update
 -}
@@ -101,8 +104,6 @@ update msg model =
             model.state
         doc =
             model.doc
-        index =
-            decodeIndex doc.index
         articleCode =
             Maybe.withDefault "" (Dict.get "article" flags.config)
     in
@@ -146,8 +147,8 @@ update msg model =
         GizmoDocCreated ( ref, urls ) ->
             case urls of
                 [gizmoUrl] ->
-                    ( { state | currentArticle = Just defaultArticleTitle }
-                    , { doc | index = encodeIndex (Dict.insert defaultArticleTitle gizmoUrl index) }
+                    ( { state | currentArticle = Just gizmoUrl }
+                    , { doc | articles = gizmoUrl :: doc.articles }
                     , Cmd.none
                     )
                 _ ->
@@ -156,32 +157,26 @@ update msg model =
                     , Cmd.none
                     )
 
-        NavigateToArticle articleTitle ->
-            ( { state | currentArticle = Just articleTitle }
+        NavigateToArticle url ->
+            ( { state | currentArticle = Just url }
             , doc
             , Cmd.none
             )
 
         UpdateArticleTitle old new ->
-            case state.currentArticle of
-                Just currentArticle ->
-                    ( { state | currentArticle = if currentArticle == old then Just new else Just currentArticle }
-                    , { doc | index = encodeIndex (rekey old new index) }
-                    , Cmd.none
-                    )
-                Nothing ->
-                    ( state
-                    , { doc | index = encodeIndex (rekey old new index) }
-                    , Cmd.none
-                    )
+            -- TODO: Update titleIndex.
+            ( state
+            , doc
+            , Cmd.none
+            )
 
-        RemoveArticle title ->
+        RemoveArticle url ->
             let
-                updatedDoc = { doc | index = encodeIndex (Dict.remove title index) }
+                updatedDoc = { doc | articles = List.filter (\v -> v /= url) doc.articles }
             in
             case state.currentArticle of
                 Just currentArticle ->
-                    ( { state | currentArticle = if currentArticle == title then Nothing else Just currentArticle }
+                    ( { state | currentArticle = if currentArticle == url then Nothing else Just currentArticle }
                     , updatedDoc
                     , Cmd.none
                     )
@@ -191,17 +186,6 @@ update msg model =
                     , Cmd.none
                     )
                 
-
-rekey : comparable -> comparable -> Dict comparable v -> Dict comparable v
-rekey old new dict =
-    case (Dict.get old dict) of
-        Just val ->
-            dict
-                |> Dict.insert new val
-                |> Dict.remove old
-        Nothing ->
-            dict
-
 
 view : Model State Doc -> Html Msg
 view { flags, state, doc } =
@@ -226,9 +210,9 @@ view { flags, state, doc } =
             ]
         ]
         [ viewIndex flags.data
-        , case maybeCurrentArticle state.currentArticle (decodeIndex doc.index) of
-            Just article ->
-                viewArticle article
+        , case state.currentArticle of
+            Just articleUrl ->
+                viewArticle articleUrl
             Nothing ->
                 Html.text ""
         ]
@@ -265,15 +249,6 @@ detailString =
 detailField : String -> D.Decoder a -> D.Decoder a
 detailField field decoder =
     detail (D.field field decoder)
-
-
-maybeCurrentArticle : Maybe ArticleTitle -> Dict ArticleTitle GizmoUrl -> Maybe String
-maybeCurrentArticle maybe index =
-    case maybe of
-        Just articleTitle ->
-            Dict.get articleTitle index
-        Nothing ->
-            Nothing
 
 
 viewGizmo : String -> String -> Html Msg
