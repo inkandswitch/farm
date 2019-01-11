@@ -19,6 +19,7 @@
             "elm/url": "1.0.0",
             "elm-community/list-extra": "8.1.0",
             "elm-explorations/linear-algebra": "1.0.3",
+            "elm-explorations/markdown": "1.0.0",
             "elm-explorations/webgl": "1.0.1",
             "mdgriffith/elm-ui": "1.1.0",
             "rtfeldman/elm-css": "16.0.0",
