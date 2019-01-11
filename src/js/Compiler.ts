@@ -105,6 +105,7 @@ export default class Compiler {
 
     this.repo.open(url).subscribe(
       whenChanged(getElmSource, (source, doc) => {
+        console.log("Compiler received updated source file")
         this.worker.send({
           t: "Compile",
           url,
