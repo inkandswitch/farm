@@ -18,6 +18,16 @@ export function data(repo: Repo) {
     body: "This is my first note!"
   })
 
+  const wikiArticle = repo.create({
+    title: "Welcome",
+    body: "This is the RealmWiki"
+  })
+
+  const wikiData = repo.create({
+    title: "RealmWiki",
+    articles: [wikiArticle]
+  })
+
   const note = Bs.code(repo, "Note.elm", {
         title: "Note",
         icon: Bs.assetDataUrl("note_icon.png"),
@@ -50,7 +60,8 @@ export function data(repo: Repo) {
   return repo.create({
     gizmos: [
       { code: counterCode, data: counterData },
-      { code: note, data: noteData }
+      { code: note, data: noteData },
+      { code: wiki, data: wikiData }
     ],
     sources: [note, imageGallery, chat, counterCode, wiki],
     data: [counterData, noteData]
