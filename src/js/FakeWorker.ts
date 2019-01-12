@@ -1,11 +1,18 @@
 import QueuedPort from "./QueuedPort"
 
-export default class QueuedWorker<S, R> extends QueuedPort<S, R> {
+import PseudoWorker from "pseudo-worker"
+import xhr from "xmlhttprequest"
+
+if (typeof XMLHttpRequest === "undefined") {
+  ;(<any>global).XMLHttpRequest = xhr.XMLHttpRequest
+}
+
+export default class FakeWorker<S, R> extends QueuedPort<S, R> {
   worker: Worker
 
   constructor(url: string, name?: string) {
-    const worker = new Worker(url)
-    super(worker, name || "Worker")
+    const worker = new PseudoWorker(url)
+    super(worker, name || "PseudoWorker")
     this.worker = worker
 
     if (process && process.on) {

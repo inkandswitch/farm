@@ -2,7 +2,7 @@ import { RepoFrontend } from "hypermerge/dist/RepoFrontend"
 import * as Link from "./Link"
 import { Handle } from "hypermerge/dist/Handle"
 import QueuedWorker from "./QueuedWorker"
-
+// import FakeWorker from "./FakeWorker"
 
 export default class Repo {
   worker: QueuedWorker<any, any>
@@ -10,7 +10,10 @@ export default class Repo {
 
   constructor(url: string) {
     this.front = new RepoFrontend()
+
+    // Swap to allow utp-native usage:
     this.worker = new QueuedWorker(url)
+    // this.worker = new FakeWorker(url)
 
     this.worker.subscribe(this.front.receive)
     this.front.subscribe(this.worker.send)
