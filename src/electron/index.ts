@@ -34,8 +34,8 @@ contextMenu({})
 
 function createWindow(): BrowserWindow {
   const win = new BrowserWindow({
-    width: 325,
-    height: 400,
+    width: 800,
+    height: 600,
     webPreferences: {
       sandbox: false,
       nodeIntegration: true,
