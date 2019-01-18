@@ -130,6 +130,7 @@ viewContent { doc, state } =
     div
         [ css
             [ flex (num 1)
+            , position relative
             ]
         ]
         [ case state.error of

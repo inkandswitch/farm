@@ -11,9 +11,9 @@ export function code(repo: Repo) {
 }
 
 export function data(repo: Repo) {
-   const dummyBoard = Bs.code(repo, "DummyBoard.elm")
-   const dummyData1 = repo.create({content: "1"})
-   const dummyData2 = repo.create({content: "2"})
+   const dummyBoard = Bs.code(repo, "Board.elm")
+   const dummyData1 = repo.create()
+   const dummyData2 = repo.create()
    return repo.create({
        history: [
            {

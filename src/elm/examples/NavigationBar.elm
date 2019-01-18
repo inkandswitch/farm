@@ -11,6 +11,7 @@ import RealmUrl
 import Json.Encode as E
 import Json.Decode as D
 import Colors
+import Clipboard
 
 inputBackgroundColor =
     "e9edf0"
@@ -63,10 +64,11 @@ type Msg
     | NavigateBack
     | SetUrl String
     | OnKeyPress Int
+    | CopyLink
 
 
 update : Msg -> Model State Doc -> ( State, Doc, Cmd Msg )
-update msg ({ state, doc } as model) =
+update msg ({ flags, state, doc } as model) =
     case msg of
         NavigateToUrl ->
             case RealmUrl.parse state.url of
@@ -106,6 +108,19 @@ update msg ({ state, doc } as model) =
                     , Cmd.none
                     )
 
+        CopyLink ->
+            case RealmUrl.create { code = flags.code, data = flags.data } of
+                Ok url ->
+                    ( state
+                    , doc
+                    , Clipboard.copy url
+                    )
+                Err err ->
+                    ( state
+                    , doc
+                    , IO.log <| "Could not copy current url: " ++ err
+                    )
+
 
 view : Model State Doc -> Html Msg
 view ({ doc, state } as model) =
@@ -119,44 +134,58 @@ view ({ doc, state } as model) =
             , height (px 40)
             ]
         ]
-        [ button
-            [ onClick NavigateBack
-            , css
-                [ flexShrink (num 0)
-                , border zero
-                , cursor pointer
-                , fontSize (Css.em 1.2)
-                , marginRight (px 10)
-                , padding (px 5)
-                , color (hex Colors.hotPink)
-                , fontWeight bold
-                , hover
-                    [ color (hex Colors.darkerHotPink)
-                    ]
-                ]
-            ]
+        [ viewNavButton
+            NavigateBack
             [ text "<"
             ]
-        , input
-            [ value <| state.url
-            , onKeyDown OnKeyPress
-            , onInput SetUrl
-            , css
-                [ flexGrow (num 1)
-                , fontSize (Css.em 0.8)
-                , padding (px 5)
-                , borderRadius (px 5)
-                , backgroundColor (hex inputBackgroundColor)
-                , color (hex "777")
-                , margin2 (px 0) auto
-                , border zero
-                , focus
-                    [ color (hex blueBlackFontColor)
-                    ]
+        , viewNavInput state.url
+        , viewNavButton
+            CopyLink
+            [ text "[]"
+            ]
+        ]
+
+viewNavButton : Msg -> List (Html Msg) -> Html Msg
+viewNavButton msg children = 
+    button
+        [ onClick msg
+        , css
+            [ flexShrink (num 0)
+            , border zero
+            , cursor pointer
+            , fontSize (Css.em 1)
+            , marginRight (px 10)
+            , padding (px 5)
+            , color (hex Colors.hotPink)
+            , fontWeight bold
+            , hover
+                [ color (hex Colors.darkerHotPink)
                 ]
             ]
-            []
         ]
+        children
+
+viewNavInput : String -> Html Msg
+viewNavInput url =
+    input
+        [ value <| url
+        , onKeyDown OnKeyPress
+        , onInput SetUrl
+        , css
+            [ flexGrow (num 1)
+            , fontSize (Css.em 0.8)
+            , padding (px 5)
+            , borderRadius (px 5)
+            , backgroundColor (hex inputBackgroundColor)
+            , color (hex "777")
+            , margin2 (px 0) auto
+            , border zero
+            , focus
+                [ color (hex blueBlackFontColor)
+                ]
+            ]
+        ]
+        []
         
 viewCurrent : Doc -> String
 viewCurrent doc =
