@@ -17,10 +17,6 @@ import History exposing (History)
 inputBackgroundColor =
     "e9edf0"
 
-blueBlackFontColor =
-    "102542"
-
-
 gizmo : Gizmo.Program State Doc Msg
 gizmo =
     Gizmo.element
@@ -168,13 +164,7 @@ viewNavButtons history =
         ]
 
 activeButtonStyle =
-    [ flexShrink (num 0)
-    , border zero
-    , cursor pointer
-    , fontSize (Css.em 1)
-    , marginRight (px 10)
-    , padding (px 5)
-    , fontWeight bold
+    [ cursor pointer
     , color (hex Colors.hotPink)
     , hover
         [ color (hex Colors.darkerHotPink)
@@ -182,13 +172,7 @@ activeButtonStyle =
     ]
 
 inactiveButtonStyle =
-    [ flexShrink (num 0)
-    , border zero
-    , cursor pointer
-    , fontSize (Css.em 1)
-    , marginRight (px 10)
-    , padding (px 5)
-    , fontWeight bold
+    [ cursor pointer
     , color (hex "aaa")
     ]
 
@@ -203,7 +187,6 @@ viewButton isActive msg children =
             (
             [ flexShrink (num 0)
             , border zero
-            , cursor pointer
             , fontSize (Css.em 1)
             , marginRight (px 10)
             , padding (px 5)
@@ -230,7 +213,7 @@ viewInput url =
             , margin2 (px 0) auto
             , border zero
             , focus
-                [ color (hex blueBlackFontColor)
+                [ color (hex Colors.blueBlack)
                 ]
             ]
         ]

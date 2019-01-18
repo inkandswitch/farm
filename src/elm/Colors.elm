@@ -1,4 +1,4 @@
-module Colors exposing (hotPink, darkerHotPink)
+module Colors exposing (hotPink, darkerHotPink, blueBlack)
 
 hotPink : String
 hotPink =
@@ -8,3 +8,8 @@ hotPink =
 darkerHotPink : String
 darkerHotPink =
     "#ff1a8c"
+
+
+blueBlack : String
+blueBlack =
+    "#102542"
