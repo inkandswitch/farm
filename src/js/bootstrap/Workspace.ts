@@ -1,5 +1,6 @@
 import Repo from "../Repo"
 import * as Bs from "."
+import * as RealmUrl from "../RealmUrl"
 
 export function code(repo: Repo) {
   return Bs.code(repo, "Workspace.elm", {
@@ -11,19 +12,16 @@ export function code(repo: Repo) {
 }
 
 export function data(repo: Repo) {
-   const dummyBoard = Bs.code(repo, "Board.elm")
+   const board = Bs.code(repo, "Board.elm")
    const dummyData1 = repo.create()
    const dummyData2 = repo.create()
    return repo.create({
-       history: [
-           {
-               code: dummyBoard,
-               data: dummyData1
-           },
-           {
-               code: dummyBoard,
-               data: dummyData2
-           }
-        ]
+       history: {
+           backward: [
+               RealmUrl.create({ code: board, data: dummyData1 }),
+               RealmUrl.create({ code: board, data: dummyData2 }),
+           ],
+           forward: []
+       }
    })
 }

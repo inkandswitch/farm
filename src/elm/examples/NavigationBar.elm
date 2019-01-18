@@ -12,6 +12,7 @@ import Json.Encode as E
 import Json.Decode as D
 import Colors
 import Clipboard
+import History exposing (History)
 
 inputBackgroundColor =
     "e9edf0"
@@ -43,7 +44,7 @@ type alias State =
 {-| Document state
 -}
 type alias Doc =
-    { history : List Pair
+    { history : History String
     }
 
 
@@ -51,7 +52,7 @@ init : Flags -> ( State, Doc, Cmd Msg )
 init flags =
     ( { url = ""
       }
-    , { history = []
+    , { history = History.empty
       }
     , Cmd.none
     )
@@ -60,8 +61,9 @@ init flags =
 {-| Message type for modifying State and Doc inside update
 -}
 type Msg
-    = NavigateToUrl
+    = NavigateTo
     | NavigateBack
+    | NavigateForward
     | SetUrl String
     | OnKeyPress Int
     | CopyLink
@@ -70,7 +72,7 @@ type Msg
 update : Msg -> Model State Doc -> ( State, Doc, Cmd Msg )
 update msg ({ flags, state, doc } as model) =
     case msg of
-        NavigateToUrl ->
+        NavigateTo ->
             case RealmUrl.parse state.url of
                 Ok _ ->
                     ( { state | url = "" }
@@ -90,6 +92,12 @@ update msg ({ flags, state, doc } as model) =
             , Gizmo.emit "navigateback" (E.null)
             )
 
+        NavigateForward ->
+            ( { state | url = "" }
+            , doc
+            , Gizmo.emit "navigateforward" (E.null)
+            )
+
         SetUrl url ->
             ( { state | url = url }
             , doc
@@ -100,7 +108,7 @@ update msg ({ flags, state, doc } as model) =
         OnKeyPress key ->
             case Debug.log "OnKeyPress" key of
                 13 ->
-                    update NavigateToUrl model
+                    update NavigateTo model
 
                 _ ->
                     ( state
@@ -134,39 +142,80 @@ view ({ doc, state } as model) =
             , height (px 40)
             ]
         ]
-        [ viewNavButton
-            NavigateBack
-            [ text "<"
-            ]
-        , viewNavInput state.url
-        , viewNavButton
+        [ viewNavButtons doc.history
+        , viewInput state.url
+        , viewButton
+            True
             CopyLink
             [ text "[]"
             ]
         ]
 
-viewNavButton : Msg -> List (Html Msg) -> Html Msg
-viewNavButton msg children = 
+viewNavButtons : History String -> Html Msg
+viewNavButtons history =
+    div
+        []
+        [ viewButton
+            (History.hasBack history)
+            NavigateBack
+            [ text "<"
+            ]
+        , viewButton
+            (History.hasForward history)
+            NavigateForward
+            [ text ">"
+            ]
+        ]
+
+activeButtonStyle =
+    [ flexShrink (num 0)
+    , border zero
+    , cursor pointer
+    , fontSize (Css.em 1)
+    , marginRight (px 10)
+    , padding (px 5)
+    , fontWeight bold
+    , color (hex Colors.hotPink)
+    , hover
+        [ color (hex Colors.darkerHotPink)
+        ]
+    ]
+
+inactiveButtonStyle =
+    [ flexShrink (num 0)
+    , border zero
+    , cursor pointer
+    , fontSize (Css.em 1)
+    , marginRight (px 10)
+    , padding (px 5)
+    , fontWeight bold
+    , color (hex "aaa")
+    ]
+
+viewButton : Bool -> Msg -> List (Html Msg) -> Html Msg
+viewButton isActive msg children = 
+    let
+        style = if isActive then activeButtonStyle else inactiveButtonStyle
+    in
     button
         [ onClick msg
         , css
+            (
             [ flexShrink (num 0)
             , border zero
             , cursor pointer
             , fontSize (Css.em 1)
             , marginRight (px 10)
             , padding (px 5)
-            , color (hex Colors.hotPink)
             , fontWeight bold
-            , hover
-                [ color (hex Colors.darkerHotPink)
-                ]
             ]
+            ++ style
+            )
         ]
         children
 
-viewNavInput : String -> Html Msg
-viewNavInput url =
+viewInput : String -> Html Msg
+viewInput url =
     input
         [ value <| url
         , onKeyDown OnKeyPress
@@ -187,19 +236,6 @@ viewNavInput url =
         ]
         []
         
-viewCurrent : Doc -> String
-viewCurrent doc =
-    doc
-        |> currentPair
-        |> Maybe.map RealmUrl.create
-        |> Maybe.withDefault (Result.Ok "")
-        |> Result.withDefault ""
-
-currentPair : Doc -> Maybe Pair
-currentPair =
-    .history >> List.head
-
-
 subscriptions : Model State Doc -> Sub Msg
 subscriptions model =
     Sub.none

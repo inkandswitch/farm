@@ -10,6 +10,7 @@ import Navigation
 import RealmUrl
 import Dict
 import Json.Decode as D
+import History exposing (History)
 
 
 gizmo : Gizmo.Program State Doc Msg
@@ -38,7 +39,7 @@ type alias Pair =
 {-| Document state
 -}
 type alias Doc =
-    { history : List Pair
+    { history : History String
     }
 
 
@@ -46,7 +47,7 @@ init : Flags -> ( State, Doc, Cmd Msg )
 init flags =
     ( { error = Nothing
       }
-    , { history = []
+    , { history = History.empty
       }
     , Cmd.none
     )
@@ -57,16 +58,17 @@ init flags =
 type Msg
     = NavigateTo String
     | NavigateBack
+    | NavigateForward
 
 
 update : Msg -> Model State Doc -> ( State, Doc, Cmd Msg )
 update msg { state, doc } =
     case msg of
         NavigateTo url ->
-            case Debug.log "navigateToUrl" RealmUrl.parse url of
+            case RealmUrl.parse url of
                 Ok pair ->
                     ( state
-                    , { doc | history = pair :: doc.history }
+                    , { doc | history = History.push url doc.history }
                     , IO.log <| "Navigating to " ++ url
                     )
 
@@ -78,8 +80,14 @@ update msg { state, doc } =
 
         NavigateBack ->
             ( state
-            , { doc | history = List.tail doc.history |> Maybe.withDefault [] }
+            , { doc | history = History.back doc.history }
             , IO.log <| "Navigating backwards"
+            )
+
+        NavigateForward ->
+            ( state
+            , { doc | history = History.forward doc.history }
+            , IO.log <| "Navigating forwards"
             )
 
 
@@ -94,6 +102,7 @@ view ({ flags, doc, state } as model) =
     in
     div
         [ onNavigateBack NavigateBack
+        , onNavigateForward NavigateForward
         , onNavigateTo NavigateTo
         , css
             [ displayFlex
@@ -112,18 +121,26 @@ view ({ flags, doc, state } as model) =
         , viewContent model
         ]
 
+
 onNavigateBack : msg -> Html.Attribute msg
 onNavigateBack msg =
     on "navigateback" (D.succeed msg)
+
+
+onNavigateForward : msg -> Html.Attribute msg
+onNavigateForward msg =
+    on "navigateforward" (D.succeed msg)
 
 
 onNavigateTo : (String -> msg) -> Html.Attribute msg
 onNavigateTo tagger =
     on "navigate" (D.map tagger detail)
 
+
 detail : D.Decoder String
 detail =
     D.at ["detail", "value"] D.string
+
 
 viewContent : Model State Doc -> Html Msg
 viewContent { doc, state } =
@@ -138,15 +155,15 @@ viewContent { doc, state } =
                 text <| "'" ++ url ++ "' could not be parsed: " ++ err
 
             Nothing ->
-                case current doc of
-                    Just ({ code, data } as pair) ->
+                case currentPair doc.history of
+                    Ok ({ code, data } as pair) ->
                         let
                             url =
                                 Debug.log "Viewing " <| RealmUrl.create pair
                         in
                         Html.fromUnstyled <| Gizmo.render code data
 
-                    Nothing ->
+                    Err err ->
                         text "You haven't navigated to anything. Click a realm link."
         ]
 
@@ -156,6 +173,8 @@ subscriptions model =
     Navigation.currentUrl NavigateTo
 
 
-current : Doc -> Maybe Pair
-current =
-    .history >> List.head
+currentPair : History String -> Result String Pair
+currentPair =
+    History.current
+    >> Result.fromMaybe "No current url"
+    >> Result.andThen RealmUrl.parse
