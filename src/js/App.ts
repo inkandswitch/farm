@@ -5,6 +5,7 @@ import * as RealmUrl from "./RealmUrl"
 import * as GizmoWindow from "./GizmoWindow"
 import * as Launcher from "./bootstrap/Launcher"
 import * as Identity from "./bootstrap/Identity"
+import * as Workspace from "./bootstrap/Workspace"
 
 require("utp-native")
 
@@ -18,8 +19,8 @@ export default class App {
   compiler: Compiler = new Compiler(this.repo, "./compile.worker.js")
   root: any
 
-  rootDataUrl: string = load("rootDataUrl", () => Launcher.data(this.repo))
-  rootCodeUrl: string = load("rootCodeUrl", () => Launcher.code(this.repo))
+  rootDataUrl: string = load("rootDataUrl", () => Workspace.data(this.repo))
+  rootCodeUrl: string = load("rootCodeUrl", () => Workspace.code(this.repo))
   selfDataUrl: string = load("selfDataUrl", () => Identity.data(this.repo))
 
   constructor() {

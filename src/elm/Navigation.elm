@@ -1,4 +1,4 @@
-port module Navigation exposing (currentUrl)
+port module Navigation exposing (navigateToUrl, currentUrl)
 
 
 port navigateToUrl : String -> Cmd msg

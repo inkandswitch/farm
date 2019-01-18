@@ -1,4 +1,4 @@
-module GizmoTemplate exposing (Doc, Msg, State, gizmo)
+module DummyBoard exposing (Doc, Msg, State, gizmo)
 
 import Gizmo exposing (Flags, Model)
 import Html.Styled as Html exposing (..)
@@ -25,13 +25,14 @@ type alias State =
 {-| Document state
 -}
 type alias Doc =
-    {}
+    { content : String
+    }
 
 
 init : Flags -> ( State, Doc, Cmd Msg )
 init flags =
     ( {}
-    , {}
+    , { content = "" }
     , Cmd.none
     )
 
@@ -55,8 +56,20 @@ update msg { state, doc } =
 view : Model State Doc -> Html Msg
 view { doc } =
     div
-        []
-        [ h1 [] [ text "Hello Gizmo" ] ]
+        [ css
+            [ backgroundColor (hex "aaa")
+            , height (pct 100)
+            , width (pct 100)
+            , displayFlex
+            , alignItems center
+            , justifyContent center
+            ]
+        ]
+        [ h1
+            []
+            [ text doc.content
+            ]
+        ]
 
 
 subscriptions : Model State Doc -> Sub Msg

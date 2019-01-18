@@ -20,6 +20,7 @@ export interface ReceivePorts {
   emitted?: ReceivePort<[string, any]>
   repoOut?: ReceivePort<any>
   output?: ReceivePort<string[]>
+  navigateToUrl?: ReceivePort<string>
 }
 
 export interface SendPorts {
@@ -96,6 +97,7 @@ export default class ElmGizmo {
     this.subscribeTo(ports.emitted, this.onEmitted)
     this.subscribeTo(ports.repoOut, this.onRepoOut)
     this.subscribeTo(ports.output, this.onOutput)
+    this.subscribeTo(ports.navigateToUrl, this.onNavigateToUrl)
   }
 
   withPort<K extends keyof Ports>(name: K, fn: (port: Ports[K]) => void) {
@@ -128,6 +130,11 @@ export default class ElmGizmo {
 
   navigateTo(url: string) {
     this.withPort("navigatedUrls", this.send(url))
+  }
+
+  onNavigateToUrl = (url: string) => {
+    // TODO: ReceivePort->SendPort doesn't work
+    this.navigateTo(url)
   }
 
   onSave = ({ doc, prevDoc }: any) => {
