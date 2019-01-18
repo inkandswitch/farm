@@ -2,6 +2,7 @@ export interface Compile {
   t: "Compile"
   url: string
   source: string
+  config: { [k: string]: string }
   debug?: boolean
 }
 

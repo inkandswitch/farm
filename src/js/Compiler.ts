@@ -110,6 +110,7 @@ export default class Compiler {
           t: "Compile",
           url,
           source,
+          config: doc.config || {},
           debug: doc.debug,
         })
       }),

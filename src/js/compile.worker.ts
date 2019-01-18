@@ -11,6 +11,9 @@ import fs from "fs"
 import elm from "node-elm-compiler"
 import AsyncQueue from "./AsyncQueue"
 import { lock } from "proper-lockfile"
+import { promisify } from "util"
+
+const writeFile = promisify(fs.writeFile)
 
 const port = new QueuedPort<FromCompiler, ToCompiler>(self)
 ;(self as any).port = port
@@ -25,7 +28,7 @@ if (!fs.existsSync(".tmp")) {
   fs.mkdirSync(".tmp")
 }
 
-function work(msg: ToCompiler) {
+async function work(msg: ToCompiler) {
   const { url } = msg
   switch (msg.t) {
     case "Compile":
@@ -34,47 +37,55 @@ function work(msg: ToCompiler) {
       const sourceFile = "./.tmp/Source.elm"
       const lockOpts = { stale: 5000, retries: 5, realpath: false }
 
-      lock(sourceFile, lockOpts).then(release => {
-        fs.writeFile(sourceFile, source, async err => {
-          function done() {
-            release()
-            workQ.take(work)
-          }
+      const release = await lock(sourceFile, lockOpts)
 
-          if (err) {
-            port.send({ t: "CompileError", url, error: err.message })
-            return done()
-          }
+      function done() {
+        release()
+        workQ.take(work)
+      }
 
-          try {
-            const filename = /^main /m.test(source)
-              ? "./.tmp/Source.elm" // Compile directly if `main` function exists
-              : /^gizmo /m.test(source)
-                ? "./src/elm/Harness.elm" // Compile via Harness if `gizmo` function exists
-                : "./src/elm/BotHarness.elm" // Otherwise, compile via BotHarness
+      try {
+        await writeFile(sourceFile, source)
 
-            const out = await elm.compileToString([filename], {
-              output: ".js",
-              report: "json",
-              debug: msg.debug,
-            })
+        // TODO: support other config types
+        const configContents = [
+          "module Config exposing (..)",
+          "",
+          ...Object.keys(msg.config).map(k => `${k} = "${msg.config[k]}"`),
+          "",
+        ].join("\n")
 
-            const output = `
+        await writeFile("./.tmp/Config.elm", configContents)
+
+        const filename = getFilename(source)
+        const out = await elm.compileToString([filename], {
+          output: ".js",
+          report: "json",
+          debug: msg.debug,
+        })
+
+        const output = `
               (new function Wrapper() {
                 ${out}
               }).Elm
             `
 
-            port.send({ t: "Compiled", url, output })
-            console.log(`Elm compile success: ${url}`)
-            return done()
-          } catch (e) {
-            port.send({ t: "CompileError", url, error: e.message })
-            console.log(`Elm compile error: ${url}`)
-            return done()
-          }
-        })
-      })
+        port.send({ t: "Compiled", url, output })
+        console.log(`Elm compile success: ${url}`)
+        return done()
+      } catch (err) {
+        port.send({ t: "CompileError", url, error: err.message })
+        console.log(`Elm compile error: ${url}`)
+        return done()
+      }
       break
   }
+}
+
+function getFilename(source: string): string {
+  return /^main /m.test(source)
+    ? "./.tmp/Source.elm" // Compile directly if `main` function exists
+    : /^gizmo /m.test(source)
+      ? "./src/elm/Harness.elm" // Compile via Harness if `gizmo` function exists
+      : "./src/elm/BotHarness.elm" // Otherwise, compile via BotHarness
 }
