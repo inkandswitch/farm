@@ -6,22 +6,45 @@ export function code(repo: Repo) {
   return Bs.code(repo, "Workspace.elm", {
     title: "Workspace",
     config: {
-        navigationBar: Bs.code(repo, "NavigationBar.elm")
+      navigationBar: Bs.code(repo, "NavigationBar.elm"),
     },
   })
 }
 
 export function data(repo: Repo) {
-   const board = Bs.code(repo, "Board.elm")
-   const dummyData1 = repo.create()
-   const dummyData2 = repo.create()
-   return repo.create({
-       history: {
-           backward: [
-               RealmUrl.create({ code: board, data: dummyData1 }),
-               RealmUrl.create({ code: board, data: dummyData2 }),
-           ],
-           forward: []
-       }
-   })
+  const chat = Bs.code(repo, "Chat.elm")
+  const note = Bs.code(repo, "Note.elm")
+  const todoList = Bs.code(repo, "TodoList.elm")
+
+  const board = Bs.code(repo, "Board.elm", {
+    config: {
+      chat,
+      note,
+      todoList,
+    },
+  })
+
+  const boardData = repo.create({
+    cards: [
+      {
+        code: note,
+        data: repo.create({
+          title: "Welcome to Realmpin",
+          body: "Right-click to add things to the board.",
+        }),
+        x: 50,
+        y: 50,
+        w: 300,
+        h: 400,
+        z: 0,
+      },
+    ],
+  })
+
+  return repo.create({
+    history: {
+      backward: [RealmUrl.create({ code: board, data: boardData })],
+      forward: [],
+    },
+  })
 }

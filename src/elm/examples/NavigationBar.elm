@@ -1,21 +1,23 @@
 module Workspace exposing (Doc, Msg, State, gizmo)
 
+import Clipboard
+import Colors
+import Css exposing (..)
 import Gizmo exposing (Flags, Model)
+import History exposing (History)
 import Html.Styled as Html exposing (..)
 import Html.Styled.Attributes exposing (css, value)
 import Html.Styled.Events exposing (..)
-import Css exposing (..)
 import IO
+import Json.Decode as D
+import Json.Encode as E
 import Navigation
 import RealmUrl
-import Json.Encode as E
-import Json.Decode as D
-import Colors
-import Clipboard
-import History exposing (History)
+
 
 inputBackgroundColor =
     "e9edf0"
+
 
 gizmo : Gizmo.Program State Doc Msg
 gizmo =
@@ -26,15 +28,17 @@ gizmo =
         , subscriptions = subscriptions
         }
 
+
 type alias Pair =
     { code : String
     , data : String
     }
 
+
 {-| Ephemeral state not saved to the doc
 -}
 type alias State =
-    { url: String }
+    { url : String }
 
 
 {-| Document state
@@ -85,13 +89,13 @@ update msg ({ flags, state, doc } as model) =
         NavigateBack ->
             ( { state | url = "" }
             , doc
-            , Gizmo.emit "navigateback" (E.null)
+            , Gizmo.emit "navigateback" E.null
             )
 
         NavigateForward ->
             ( { state | url = "" }
             , doc
-            , Gizmo.emit "navigateforward" (E.null)
+            , Gizmo.emit "navigateforward" E.null
             )
 
         SetUrl url ->
@@ -99,7 +103,6 @@ update msg ({ flags, state, doc } as model) =
             , doc
             , Cmd.none
             )
-
 
         OnKeyPress key ->
             case Debug.log "OnKeyPress" key of
@@ -119,6 +122,7 @@ update msg ({ flags, state, doc } as model) =
                     , doc
                     , Clipboard.copy url
                     )
+
                 Err err ->
                     ( state
                     , doc
@@ -143,9 +147,10 @@ view ({ doc, state } as model) =
         , viewButton
             True
             CopyLink
-            [ text "[]"
+            [ text "📋"
             ]
         ]
+
 
 viewNavButtons : History String -> Html Msg
 viewNavButtons history =
@@ -163,6 +168,7 @@ viewNavButtons history =
             ]
         ]
 
+
 activeButtonStyle =
     [ cursor pointer
     , color (hex Colors.hotPink)
@@ -171,31 +177,38 @@ activeButtonStyle =
         ]
     ]
 
+
 inactiveButtonStyle =
     [ cursor pointer
     , color (hex "aaa")
     ]
 
+
 viewButton : Bool -> Msg -> List (Html Msg) -> Html Msg
-viewButton isActive msg children = 
+viewButton isActive msg children =
     let
-        style = if isActive then activeButtonStyle else inactiveButtonStyle
+        style =
+            if isActive then
+                activeButtonStyle
+
+            else
+                inactiveButtonStyle
     in
     button
         [ onClick msg
         , css
-            (
-            [ flexShrink (num 0)
-            , border zero
-            , fontSize (Css.em 1)
-            , marginRight (px 10)
-            , padding (px 5)
-            , fontWeight bold
-            ]
-            ++ style
+            ([ flexShrink (num 0)
+             , border zero
+             , fontSize (Css.em 1)
+             , marginRight (px 10)
+             , padding (px 5)
+             , fontWeight bold
+             ]
+                ++ style
             )
         ]
         children
+
 
 viewInput : String -> Html Msg
 viewInput url =
@@ -218,7 +231,8 @@ viewInput url =
             ]
         ]
         []
-        
+
+
 subscriptions : Model State Doc -> Sub Msg
 subscriptions model =
     Sub.none

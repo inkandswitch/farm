@@ -3,6 +3,7 @@ module Board exposing (Doc, Msg, State, gizmo)
 import Array exposing (Array)
 import Browser.Events
 import Clipboard
+import Config
 import Css exposing (..)
 import Dict
 import Extra.Array as Array
@@ -33,14 +34,21 @@ type Action
     | Resizing Int Size
 
 
+type Menu
+    = NoMenu
+    | BoardMenu Point
+    | CardMenu Int Point
+
+
 {-| Ephemeral state not saved to the doc
 -}
 type alias State =
     { action : Action
+    , menu : Menu
     }
 
 
-type alias Window =
+type alias Card =
     { code : Url
     , data : Url
     , x : Float
@@ -54,7 +62,7 @@ type alias Window =
 {-| Document state
 -}
 type alias Doc =
-    { cards : Array Window
+    { cards : Array Card
     , maxZ : Int
     }
 
@@ -62,9 +70,10 @@ type alias Doc =
 init : Flags -> ( State, Doc, Cmd Msg )
 init flags =
     ( { action = None
+      , menu = NoMenu
       }
     , { cards = Array.empty
-      , maxZ = 0
+      , maxZ = 1
       }
     , Cmd.none
     )
@@ -81,6 +90,9 @@ type Msg
     | Mirror Int
     | Remove Int
     | Click Int
+    | SetMenu Menu
+    | CreateCard Url
+    | Created ( Ref, List Url )
 
 
 update : Msg -> Model State Doc -> ( State, Doc, Cmd Msg )
@@ -96,23 +108,23 @@ update msg { state, doc } =
             )
 
         Move n ->
-            case doc |> getWindow n of
+            case doc |> getCard n of
                 Nothing ->
                     ( state, doc, Cmd.none )
 
-                Just win ->
-                    ( { state | action = Moving n { x = win.x, y = win.y } }
+                Just card ->
+                    ( { state | action = Moving n { x = card.x, y = card.y } }
                     , doc
                     , Cmd.none
                     )
 
         Resize n ->
-            case doc |> getWindow n of
+            case doc |> getCard n of
                 Nothing ->
                     ( state, doc, Cmd.none )
 
-                Just win ->
-                    ( { state | action = Resizing n { w = win.w, h = win.h } }
+                Just card ->
+                    ( { state | action = Resizing n { w = card.w, h = card.h } }
                     , doc
                     , Cmd.none
                     )
@@ -138,10 +150,10 @@ update msg { state, doc } =
             ( state, doc |> bumpZ n, Cmd.none )
 
         Mirror n ->
-            ( state
+            ( { state | menu = NoMenu }
             , case doc.cards |> Array.get n of
-                Just win ->
-                    doc |> pushWindow (win |> moveBy (Point 10 10))
+                Just card ->
+                    doc |> pushCard (card |> moveBy (Point 10 10))
 
                 Nothing ->
                     doc
@@ -154,9 +166,44 @@ update msg { state, doc } =
             , Cmd.none
             )
 
+        SetMenu m ->
+            ( { state | menu = m }, doc, Cmd.none )
 
-newWindow : Url -> Url -> Window
-newWindow code data =
+        CreateCard code ->
+            ( state, doc, Repo.create code 1 )
+
+        Created ( code, urls ) ->
+            case urls of
+                [ data ] ->
+                    let
+                        card =
+                            newCard code data
+                                |> moveTo (menuPosition state.menu)
+                    in
+                    ( { state | menu = NoMenu }, doc |> pushCard card, Cmd.none )
+
+                _ ->
+                    ( state, doc, Cmd.none )
+
+
+subscriptions : Model State Doc -> Sub Msg
+subscriptions { state, doc } =
+    Sub.batch
+        [ Repo.created Created
+        , case state.action of
+            None ->
+                Sub.none
+
+            _ ->
+                Sub.batch
+                    [ Browser.Events.onMouseMove (deltaDecoder |> Json.map MouseDelta)
+                    , Browser.Events.onMouseUp (Json.succeed Stop)
+                    ]
+        ]
+
+
+newCard : Url -> Url -> Card
+newCard code data =
     { data = data
     , code = code
     , x = 20
@@ -167,20 +214,30 @@ newWindow code data =
     }
 
 
-getWindow : Int -> Doc -> Maybe Window
-getWindow n =
+getCard : Int -> Doc -> Maybe Card
+getCard n =
     .cards >> Array.get n
 
 
-pushWindow : Window -> Doc -> Doc
-pushWindow win doc =
-    { doc | cards = doc.cards |> Array.push win }
+pushCard : Card -> Doc -> Doc
+pushCard card doc =
+    { doc | cards = doc.cards |> Array.push card }
         |> bumpZ (Array.length doc.cards)
 
 
-updateWindow : Int -> (Window -> Window) -> Doc -> Doc
-updateWindow n f doc =
+updateCard : Int -> (Card -> Card) -> Doc -> Doc
+updateCard n f doc =
     { doc | cards = doc.cards |> Array.update n f }
+
+
+menuPosition : Menu -> Point
+menuPosition mnu =
+    case mnu of
+        BoardMenu pt ->
+            pt
+
+        _ ->
+            { x = 0, y = 0 }
 
 
 applyAction : Action -> Doc -> Doc
@@ -191,27 +248,27 @@ applyAction action doc =
 
         Moving n pt ->
             doc
-                |> updateWindow n (moveTo pt)
+                |> updateCard n (moveTo pt)
                 |> bumpZ n
 
         Resizing n size ->
-            doc |> updateWindow n (resizeTo size)
+            doc |> updateCard n (resizeTo size)
 
 
 bumpZ : Int -> Doc -> Doc
 bumpZ n doc =
-    case doc |> getWindow n of
+    case doc |> getCard n of
         Nothing ->
             doc
 
-        Just win ->
-            if win.z == doc.maxZ then
+        Just card ->
+            if card.z == doc.maxZ then
                 doc
 
             else
                 { doc
                     | maxZ = doc.maxZ + 1
-                    , cards = doc.cards |> Array.set n { win | z = doc.maxZ + 1 }
+                    , cards = doc.cards |> Array.set n { card | z = doc.maxZ + 1 }
                 }
 
 
@@ -238,7 +295,7 @@ moveBy { x, y } a =
 
 moveTo : Point -> Positioned a -> Positioned a
 moveTo { x, y } a =
-    { a | x = max 0 x, y = max 0 y }
+    { a | x = x, y = max 0 y }
 
 
 resizeBy : Point -> Sized a -> Sized a
@@ -258,48 +315,57 @@ view { doc, state } =
             [ property "user-select" "none"
             , fontFamilies [ "system-ui" ]
             , fontSize (px 14)
-            , position absolute
-            , top zero
-            , left zero
-            , bottom zero
-            , right zero
+            , fill
             ]
         ]
-        [ div
-            [ css
-                [ fill
-                , backgroundColor (hex "f9f8f3")
-                ]
-            ]
-            []
+        [ viewBackground
+        , viewContextMenu doc state.menu
         , div []
             (doc
                 |> applyAction state.action
                 |> .cards
-                |> Array.indexedMap viewWindow
+                |> Array.indexedMap viewCard
                 |> Array.toList
             )
         ]
 
 
-viewWindow : Int -> Window -> Html Msg
-viewWindow n win =
+viewBackground : Html Msg
+viewBackground =
+    div
+        [ onContextMenu (SetMenu << BoardMenu)
+        , onMouseDown (SetMenu NoMenu)
+        , css
+            [ fill
+            , backgroundColor (hex "f9f8f3")
+            ]
+        ]
+        []
+
+
+viewCard : Int -> Card -> Html Msg
+viewCard n card =
     div
         [ css
             [ property "display" "grid"
             , property "grid-template-rows" "auto 1fr"
             , bordered
             , position absolute
-            , transform <| translate2 (px win.x) (px win.y)
-            , width (px win.w)
-            , height (px win.h)
-            , zIndex (int win.z)
+            , transform <| translate2 (px card.x) (px card.y)
+            , width (px card.w)
+            , height (px card.h)
+            , zIndex (int card.z)
             , overflow hidden
             ]
-        , onMouseDown (Move n)
-        , onMouseUp (Click n)
         ]
-        [ fromUnstyled <| Gizmo.render win.code win.data
+        [ viewTitleBar n card
+        , div
+            [ css
+                [ overflow hidden
+                ]
+            ]
+            [ fromUnstyled <| Gizmo.render card.code card.data
+            ]
         , viewResize n
         ]
 
@@ -312,6 +378,20 @@ openDocumentValue value =
 
         Err msg ->
             ""
+
+
+viewTitleBar : Int -> Card -> Html Msg
+viewTitleBar n card =
+    div
+        [ css
+            [ height (px 20)
+            , cursor move
+            ]
+        , onContextMenu (SetMenu << CardMenu n)
+        , onMouseDown (Move n)
+        , onMouseUp (Click n)
+        ]
+        []
 
 
 viewResize : Int -> Html Msg
@@ -330,11 +410,100 @@ viewResize n =
         []
 
 
+viewContextMenu : Doc -> Menu -> Html Msg
+viewContextMenu doc menuType =
+    case menuType of
+        NoMenu ->
+            null
+
+        BoardMenu pt ->
+            positioned pt
+                [ viewBoardMenu pt ]
+
+        CardMenu n pt ->
+            case getCard n doc of
+                Just card ->
+                    positioned pt
+                        [ viewCardMenu n card ]
+
+                Nothing ->
+                    null
+
+
+viewBoardMenu : Point -> Html Msg
+viewBoardMenu pt =
+    menu
+        [ menuButton "Chat" (CreateCard Config.chat)
+        , menuButton "Note" (CreateCard Config.note)
+        , menuButton "Todo List" (CreateCard Config.todoList)
+        ]
+
+
+viewCardMenu : Int -> Card -> Html Msg
+viewCardMenu n card =
+    menu
+        [ menuButton "Mirror" (Mirror n)
+        , menuButton "Remove" (Remove n)
+        ]
+
+
+menu : List (Html msg) -> Html msg
+menu =
+    div
+        [ css
+            [ border3 (px 1) solid (hex "ddd")
+            , borderBottomWidth (px 0)
+            , borderRadius (px 3)
+            , backgroundColor (hex "#fff")
+            ]
+        ]
+
+
+menuLink : String -> String -> Html msg
+menuLink label url =
+    Html.a
+        [ css
+            [ menuItemStyle
+            , textDecoration none
+            , display block
+            , color inherit
+            ]
+        , Attr.href url
+        ]
+        [ text label ]
+
+
+menuButton : String -> msg -> Html msg
+menuButton label msg =
+    div
+        [ css
+            [ menuItemStyle
+            ]
+        , onClick msg
+        ]
+        [ text label
+        ]
+
+
+menuItemStyle : Style
+menuItemStyle =
+    batch
+        [ borderBottom3 (px 1) solid (hex "ddd")
+        , padding2 (px 5) (px 20)
+        , cursor pointer
+        , hover
+            [ backgroundColor (hex "eee")
+            ]
+        ]
+
+
 positioned : Point -> List (Html msg) -> Html msg
 positioned { x, y } =
     div
         [ css
-            [ position absolute
+            [ position fixed
+            , top zero
+            , left zero
             , zIndex (int 999999999)
             , transform <| translate2 (px x) (px y)
             ]
@@ -379,21 +548,6 @@ onContextMenu mkMsg =
                     }
                 )
         )
-
-
-subscriptions : Model State Doc -> Sub Msg
-subscriptions { state, doc } =
-    Sub.batch
-        [ case state.action of
-            None ->
-                Sub.none
-
-            _ ->
-                Sub.batch
-                    [ Browser.Events.onMouseMove (deltaDecoder |> Json.map MouseDelta)
-                    , Browser.Events.onMouseUp (Json.succeed Stop)
-                    ]
-        ]
 
 
 deltaDecoder : Decoder Point
