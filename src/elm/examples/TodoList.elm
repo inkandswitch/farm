@@ -50,6 +50,7 @@ init =
 type Msg
     = SetDone Int Bool
     | SetTitle Int String
+    | NewTodo
 
 
 update : Msg -> Model State Doc -> ( State, Doc )
@@ -60,6 +61,9 @@ update msg { state, doc } =
 
         SetTitle n title ->
             ( state, doc |> updateTodo n (setTitle title) )
+
+        NewTodo ->
+            ( state, doc |> pushTodo emptyTodo )
 
 
 setDone : Bool -> Todo -> Todo
@@ -72,9 +76,21 @@ setTitle title todo =
     { todo | title = title }
 
 
+emptyTodo : Todo
+emptyTodo =
+    { title = ""
+    , done = False
+    }
+
+
 updateTodo : Int -> (Todo -> Todo) -> Doc -> Doc
 updateTodo n fn doc =
     { doc | todos = doc.todos |> Array.update n fn }
+
+
+pushTodo : Todo -> Doc -> Doc
+pushTodo todo doc =
+    { doc | todos = doc.todos |> Array.push todo }
 
 
 view : Model State Doc -> Html Msg
@@ -82,27 +98,29 @@ view { doc } =
     div
         [ css
             [ property "display" "grid"
-            , alignItems center
-            , property "justify-items" "center"
-            , height (vh 100)
-            , width (vw 100)
+            , property "grid-template-rows" "1fr auto"
+            , height (pct 100)
             ]
         ]
         [ div
             [ css
-                [ boxShadow4 (px 1) (px 2) (px 5) (rgba 0 0 0 0.2)
-                , padding (px 5)
+                [ padding2 (px 10) (px 5)
                 , borderRadius (px 3)
                 ]
             ]
             (doc.todos |> Array.indexedMap viewTodo |> Array.toList)
+        , viewNewButton
         ]
 
 
 viewTodo : Int -> Todo -> Html Msg
 viewTodo n { title, done } =
     div
-        []
+        [ css
+            [ property "display" "grid"
+            , property "grid-template-columns" "auto 1fr"
+            ]
+        ]
         [ input [ Attr.type_ "checkbox", checked done, onCheck (SetDone n) ] []
         , input
             [ onInput (SetTitle n)
@@ -112,6 +130,11 @@ viewTodo n { title, done } =
                 , border (px 0)
                 , fontFamily inherit
                 , fontSize inherit
+                , if done then
+                    textDecoration lineThrough
+
+                  else
+                    textDecoration none
                 , focus
                     [ borderBottom3 (px 1) solid (hex "ddd")
                     ]
@@ -119,3 +142,16 @@ viewTodo n { title, done } =
             ]
             []
         ]
+
+
+viewNewButton : Html Msg
+viewNewButton =
+    div
+        [ onClick NewTodo
+        , css
+            [ cursor pointer
+            , textAlign center
+            , padding (px 10)
+            ]
+        ]
+        [ text "+ New Todo" ]
