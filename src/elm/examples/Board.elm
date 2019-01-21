@@ -153,7 +153,7 @@ update msg { state, doc } =
             ( { state | menu = NoMenu }
             , case doc.cards |> Array.get n of
                 Just card ->
-                    doc |> pushCard (card |> moveBy (Point 10 10))
+                    doc |> pushCard (card |> moveBy (Point 24 24))
 
                 Nothing ->
                     doc
@@ -206,10 +206,10 @@ newCard : Url -> Url -> Card
 newCard code data =
     { data = data
     , code = code
-    , x = 20
-    , y = 20
-    , w = 300
-    , h = 400
+    , x = 24
+    , y = 24
+    , w = 312
+    , h = 408
     , z = 0
     }
 
@@ -248,11 +248,33 @@ applyAction action doc =
 
         Moving n pt ->
             doc
-                |> updateCard n (moveTo pt)
+                |> updateCard n (moveTo (snapPoint pt))
                 |> bumpZ n
 
         Resizing n size ->
-            doc |> updateCard n (resizeTo size)
+            doc |> updateCard n (resizeTo (snapSize size))
+
+
+snap : Float -> Float
+snap fl =
+    let
+        n =
+            Basics.round fl
+
+        offset =
+            modBy 24 n
+    in
+    toFloat (n - offset)
+
+
+snapPoint : Point -> Point
+snapPoint { x, y } =
+    { x = snap x, y = snap y }
+
+
+snapSize : Size -> Size
+snapSize { w, h } =
+    { w = snap w, h = snap h }
 
 
 bumpZ : Int -> Doc -> Doc
