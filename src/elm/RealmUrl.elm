@@ -4,7 +4,7 @@ import Link
 import UriParser exposing (Uri)
 
 
-create : { code : String, data : String } -> Result String String
+create : { a | code : String, data : String } -> Result String String
 create { code, data } =
     Result.map2 fromIds
         (Link.getId code)

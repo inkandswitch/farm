@@ -11,9 +11,10 @@ import File exposing (File)
 import Gizmo exposing (Flags, Model)
 import Html.Styled as Html exposing (Html, button, div, fromUnstyled, input, text, toUnstyled)
 import Html.Styled.Attributes as Attr exposing (css, value)
-import Html.Styled.Events as Events exposing (on, onClick, onInput, onMouseDown, onMouseUp)
+import Html.Styled.Events as Events exposing (on, onClick, onDoubleClick, onInput, onMouseDown, onMouseUp)
 import Json.Decode as Json exposing (Decoder)
 import Json.Encode as E
+import RealmUrl
 import Repo exposing (Ref, Url)
 import Task
 import Tuple exposing (pair)
@@ -97,6 +98,7 @@ type Msg
     | DroppedImages (List File)
     | CreateImages (List String)
     | Created ( Ref, List Url )
+    | NavigateToCard Int
 
 
 update : Msg -> Model State Doc -> ( State, Doc, Cmd Msg )
@@ -205,6 +207,17 @@ update msg { state, doc } =
                 |> List.map (\src -> [ ( "src", E.string src ) ])
                 |> List.map (Repo.createWithProps Config.image 1)
                 |> Cmd.batch
+            )
+
+        NavigateToCard n ->
+            ( state
+            , doc
+            , doc
+                |> getCard n
+                |> Result.fromMaybe "Could not find card"
+                |> Result.andThen RealmUrl.create
+                |> Result.map (E.string >> Gizmo.emit "navigate")
+                |> Result.withDefault Cmd.none
             )
 
 
@@ -435,6 +448,7 @@ viewTitleBar n card =
             [ height (px 20)
             , cursor move
             ]
+        , onDoubleClick (NavigateToCard n)
         , onContextMenu (SetMenu << CardMenu n)
         , onMouseDown (Move n)
         , onMouseUp (Click n)
