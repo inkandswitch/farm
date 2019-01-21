@@ -7,6 +7,7 @@ import Config
 import Css exposing (..)
 import Dict
 import Extra.Array as Array
+import File exposing (File)
 import Gizmo exposing (Flags, Model)
 import Html.Styled as Html exposing (Html, button, div, fromUnstyled, input, text, toUnstyled)
 import Html.Styled.Attributes as Attr exposing (css, value)
@@ -14,6 +15,7 @@ import Html.Styled.Events as Events exposing (on, onClick, onInput, onMouseDown,
 import Json.Decode as Json exposing (Decoder)
 import Json.Encode as E
 import Repo exposing (Ref, Url)
+import Task
 import Tuple exposing (pair)
 import VsCode
 
@@ -92,6 +94,8 @@ type Msg
     | Click Int
     | SetMenu Menu
     | CreateCard Url
+    | DroppedImages (List File)
+    | CreateImages (List String)
     | Created ( Ref, List Url )
 
 
@@ -184,6 +188,24 @@ update msg { state, doc } =
 
                 _ ->
                     ( state, doc, Cmd.none )
+
+        DroppedImages files ->
+            ( state
+            , doc
+            , files
+                |> List.map File.toUrl
+                |> Task.sequence
+                |> Task.perform CreateImages
+            )
+
+        CreateImages srcs ->
+            ( state
+            , doc
+            , srcs
+                |> List.map (\src -> [ ( "src", E.string src ) ])
+                |> List.map (Repo.createWithProps Config.image 1)
+                |> Cmd.batch
+            )
 
 
 subscriptions : Model State Doc -> Sub Msg
@@ -339,6 +361,9 @@ view { doc, state } =
             , fontSize (px 14)
             , fill
             ]
+        , onDragOver NoOp
+        , onDrop DroppedImages
+        , onPaste DroppedImages
         ]
         [ viewBackground
         , viewContextMenu doc state.menu
@@ -357,6 +382,7 @@ viewBackground =
     div
         [ onContextMenu (SetMenu << BoardMenu)
         , onMouseDown (SetMenu NoMenu)
+        , Attr.tabindex 0
         , css
             [ fill
             , backgroundColor (hex "f9f8f3")
@@ -557,19 +583,49 @@ fill =
         ]
 
 
+onPreventStop : String -> Decoder msg -> Html.Attribute msg
+onPreventStop name =
+    Events.custom name
+        << Json.map
+            (\msg ->
+                { message = msg
+                , stopPropagation = True
+                , preventDefault = True
+                }
+            )
+
+
 onContextMenu : (Point -> msg) -> Html.Attribute msg
 onContextMenu mkMsg =
-    Events.custom "contextmenu"
-        (xyDecoder
-            |> Json.map mkMsg
-            |> Json.map
-                (\msg ->
-                    { message = msg
-                    , stopPropagation = True
-                    , preventDefault = True
-                    }
-                )
-        )
+    onPreventStop "contextmenu"
+        (xyDecoder |> Json.map mkMsg)
+
+
+onDragOver : msg -> Html.Attribute msg
+onDragOver =
+    onPreventStop "dragover" << Json.succeed
+
+
+onDrop : (List File -> msg) -> Html.Attribute msg
+onDrop mkMsg =
+    onPreventStop "drop"
+        (dataTransferDecoder |> Json.map mkMsg)
+
+
+onPaste : (List File -> msg) -> Html.Attribute msg
+onPaste mkMsg =
+    onPreventStop "paste"
+        (clipboardDecoder |> Json.map mkMsg)
+
+
+clipboardDecoder : Decoder (List File)
+clipboardDecoder =
+    Json.at [ "clipboardData", "files" ] (Json.list File.decoder)
+
+
+dataTransferDecoder : Decoder (List File)
+dataTransferDecoder =
+    Json.at [ "dataTransfer", "files" ] (Json.list File.decoder)
 
 
 deltaDecoder : Decoder Point
