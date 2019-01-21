@@ -8,7 +8,7 @@
   "license": "BSD",
   "private": true,
   "scripts": {
-    "start": "yarn build && electron .",
+    "start": "yarn && yarn build && electron .",
     "build": "cross-env TS_NODE_CACHE_DIRECTORY=.ts-cache webpack",
     "app": "yarn build && yarn start-app",
     "types": "./bin/types.sh",
