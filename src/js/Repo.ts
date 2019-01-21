@@ -1,5 +1,4 @@
 import { RepoFrontend } from "hypermerge/dist/RepoFrontend"
-import * as Link from "./Link"
 import { Handle } from "hypermerge/dist/Handle"
 import QueuedWorker from "./QueuedWorker"
 // import FakeWorker from "./FakeWorker"
@@ -20,20 +19,20 @@ export default class Repo {
   }
 
   create = (props: object = { fixme__: "orion" }): string => {
-    const id = this.front.create()
+    const url = this.front.create()
 
     this.front
-      .open(id)
+      .open(url)
       .change((state: any) => {
         Object.assign(state, props)
       })
       .close()
 
-    return Link.fromId(id)
+    return url
   }
 
   open = <T>(url: string): Handle<T> => {
-    return this.front.open(Link.toId(url))
+    return this.front.open(url)
   }
 
   once = <T>(url: string, fn: Function): this => {
@@ -47,7 +46,7 @@ export default class Repo {
 
   change = (url: string, fn: Function): this => {
     this.front
-      .open(Link.toId(url))
+      .open(url)
       .change(fn)
       .close()
     return this
@@ -66,8 +65,7 @@ export default class Repo {
   }
 
   fork = (url: string): string => {
-    const forkedId = this.front.fork(Link.toId(url))
-    return Link.fromId(forkedId)
+    return this.front.fork(url)
   }
 
   terminate() {
