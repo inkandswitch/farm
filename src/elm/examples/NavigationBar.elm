@@ -67,6 +67,7 @@ type Msg
     | SetUrl String
     | OnKeyPress Int
     | CopyLink
+    | CreateBoard
 
 
 update : Msg -> Model State Doc -> ( State, Doc, Cmd Msg )
@@ -129,6 +130,12 @@ update msg ({ flags, state, doc } as model) =
                     , IO.log <| "Nothing to copy"
                     )
 
+        CreateBoard ->
+            ( state
+            , doc
+            , Gizmo.emit "createboard" E.null
+            )
+
 
 view : Model State Doc -> Html Msg
 view ({ doc, state } as model) =
@@ -144,18 +151,17 @@ view ({ doc, state } as model) =
         ]
         [ viewNavButtons doc.history
         , viewInput (viewUrl state.url (History.current doc.history))
-        , viewButton
-            True
-            CopyLink
-            [ text "📋"
-            ]
+        , viewSecondaryButtons
         ]
 
 
 viewNavButtons : History String -> Html Msg
 viewNavButtons history =
     div
-        []
+        [ css
+            [ marginRight (px 10)
+            ]
+        ]
         [ viewButton
             (History.hasBack history)
             NavigateBack
@@ -200,7 +206,6 @@ viewButton isActive msg children =
             ([ flexShrink (num 0)
              , border zero
              , fontSize (Css.em 1)
-             , marginRight (px 10)
              , padding (px 5)
              , fontWeight bold
              ]
@@ -245,6 +250,26 @@ viewUrl stateUrl navUrl =
 
         ( _, _ ) ->
             ""
+
+
+viewSecondaryButtons : Html Msg
+viewSecondaryButtons =
+    div
+        [ css
+            [ marginLeft (px 10)
+            ]
+        ]
+        [ viewButton
+            True
+            CopyLink
+            [ text "📋"
+            ]
+        , viewButton
+            True
+            CreateBoard
+            [ text "➕"
+            ]
+        ]
 
 
 subscriptions : Model State Doc -> Sub Msg
