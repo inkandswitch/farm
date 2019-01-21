@@ -225,6 +225,7 @@ viewInput url =
             , color (hex "777")
             , margin2 (px 0) auto
             , border zero
+            , textAlign center
             , focus
                 [ color (hex Colors.blueBlack)
                 ]
@@ -232,15 +233,19 @@ viewInput url =
         ]
         []
 
+
 viewUrl : Maybe String -> Maybe String -> String
 viewUrl stateUrl navUrl =
-    case (stateUrl, navUrl) of
-        (Nothing, Just url) ->
+    case ( stateUrl, navUrl ) of
+        ( Nothing, Just url ) ->
             url
-        (Just url, _) ->
+
+        ( Just url, _ ) ->
             url
-        (_, _ ) ->
+
+        ( _, _ ) ->
             ""
+
 
 subscriptions : Model State Doc -> Sub Msg
 subscriptions model =

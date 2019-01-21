@@ -447,6 +447,8 @@ viewTitleBar n card =
         [ css
             [ height (px 20)
             , cursor move
+            , position relative
+            , zIndex (int 999999999)
             ]
         , onDoubleClick (NavigateToCard n)
         , onContextMenu (SetMenu << CardMenu n)
@@ -496,6 +498,7 @@ viewBoardMenu : Point -> Html Msg
 viewBoardMenu pt =
     menu
         [ menuButton "Chat" (CreateCard Config.chat)
+        , menuButton "Board" (CreateCard Config.board)
         , menuButton "Note" (CreateCard Config.note)
         , menuButton "Todo List" (CreateCard Config.todoList)
         ]

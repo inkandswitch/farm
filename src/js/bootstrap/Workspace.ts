@@ -37,6 +37,10 @@ export function data(repo: Repo) {
     },
   })
 
+  repo.change(board, (doc: any) => {
+    doc.config.board = board
+  })
+
   const boardData = repo.create({
     cards: [
       {
