@@ -468,6 +468,7 @@ viewResize n =
             , width (px 10)
             , height (px 10)
             , cursor seResize
+            , zIndex (int 999999999)
             ]
         , onMouseDown (Resize n)
         ]
