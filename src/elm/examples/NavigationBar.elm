@@ -116,17 +116,17 @@ update msg ({ flags, state, doc } as model) =
                     )
 
         CopyLink ->
-            case RealmUrl.create { code = flags.code, data = flags.data } of
-                Ok url ->
+            case History.current doc.history of
+                Just url ->
                     ( state
                     , doc
                     , Clipboard.copy url
                     )
 
-                Err err ->
+                Nothing ->
                     ( state
                     , doc
-                    , IO.log <| "Could not copy current url: " ++ err
+                    , IO.log <| "Nothing to copy"
                     )
 
 
