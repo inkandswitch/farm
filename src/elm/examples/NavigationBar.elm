@@ -38,7 +38,7 @@ type alias Pair =
 {-| Ephemeral state not saved to the doc
 -}
 type alias State =
-    { url : String }
+    { url : Maybe String }
 
 
 {-| Document state
@@ -50,7 +50,7 @@ type alias Doc =
 
 init : Flags -> ( State, Doc, Cmd Msg )
 init flags =
-    ( { url = ""
+    ( { url = Nothing
       }
     , { history = History.empty
       }
@@ -73,33 +73,33 @@ update : Msg -> Model State Doc -> ( State, Doc, Cmd Msg )
 update msg ({ flags, state, doc } as model) =
     case msg of
         NavigateTo ->
-            case RealmUrl.parse state.url of
-                Ok _ ->
-                    ( { state | url = "" }
+            case stateUrlPair state.url of
+                Ok url ->
+                    ( { state | url = Nothing }
                     , doc
-                    , Gizmo.emit "navigate" (E.string state.url)
+                    , Gizmo.emit "navigate" (E.string url)
                     )
 
                 Err err ->
-                    ( { state | url = "" }
+                    ( state
                     , doc
-                    , IO.log <| "Could not navigate to " ++ state.url ++ ". " ++ err
+                    , IO.log <| "Could not navigate to " ++ err
                     )
 
         NavigateBack ->
-            ( { state | url = "" }
+            ( { state | url = Nothing }
             , doc
             , Gizmo.emit "navigateback" E.null
             )
 
         NavigateForward ->
-            ( { state | url = "" }
+            ( { state | url = Nothing }
             , doc
             , Gizmo.emit "navigateforward" E.null
             )
 
         SetUrl url ->
-            ( { state | url = url }
+            ( { state | url = Just url }
             , doc
             , Cmd.none
             )
@@ -143,7 +143,7 @@ view ({ doc, state } as model) =
             ]
         ]
         [ viewNavButtons doc.history
-        , viewInput state.url
+        , viewInput (viewUrl state.url (History.current doc.history))
         , viewButton
             True
             CopyLink
@@ -232,6 +232,15 @@ viewInput url =
         ]
         []
 
+viewUrl : Maybe String -> Maybe String -> String
+viewUrl stateUrl navUrl =
+    case (stateUrl, navUrl) of
+        (Nothing, Just url) ->
+            url
+        (Just url, _) ->
+            url
+        (_, _ ) ->
+            ""
 
 subscriptions : Model State Doc -> Sub Msg
 subscriptions model =
@@ -241,3 +250,8 @@ subscriptions model =
 onKeyDown : (Int -> msg) -> Attribute msg
 onKeyDown tagger =
     on "keydown" (D.map tagger keyCode)
+
+
+stateUrlPair : Maybe String -> Result String String
+stateUrlPair =
+    Result.fromMaybe "No current url" >> Result.andThen RealmUrl.parse >> Result.andThen RealmUrl.create

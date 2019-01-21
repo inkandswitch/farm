@@ -133,10 +133,8 @@ textAvatar name =
     div
         [ onClick PickImage
         , css
-            [ maxWidth (px 36)
-            , maxHeight (px 36)
-            , width (pct 100)
-            , height (pct 100)
+            [ width (px 36)
+            , height (px 36)
             , borderRadius (pct 50)
             , border3 (px 1) solid hotPink
             , color hotPink
