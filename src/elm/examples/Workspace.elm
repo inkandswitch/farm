@@ -227,7 +227,7 @@ viewEmptyContent =
                     , marginBottom (px 15)
                     ]
                 ]
-                [ text "Welcome to Realm!"
+                [ text "Welcome to RealmPin!"
                 ]
             , p
                 [ css
