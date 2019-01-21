@@ -12,9 +12,19 @@ export function code(repo: Repo) {
 }
 
 export function data(repo: Repo) {
-  const chat = Bs.code(repo, "Chat.elm")
   const note = Bs.code(repo, "Note.elm")
   const todoList = Bs.code(repo, "TodoList.elm")
+
+  const editableTitle = Bs.code(repo, "EditableTitle.elm")
+  const avatar = Bs.code(repo, "SimpleAvatar.elm")
+  const chat = Bs.code(repo, "Chat.elm", {
+    title: "Chat",
+    icon: Bs.assetDataUrl("chat_icon.png"),
+    config: {
+      editableTitle,
+      avatar,
+    },
+  })
 
   const board = Bs.code(repo, "Board.elm", {
     config: {

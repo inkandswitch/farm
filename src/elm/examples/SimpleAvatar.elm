@@ -117,10 +117,8 @@ imageAvatar : String -> Html Msg
 imageAvatar imageSrc =
     div
         [ css
-            [ maxWidth (px 36)
-            , maxHeight (px 36)
-            , width (pct 100)
-            , height (pct 100)
+            [ width (px 36)
+            , height (px 36)
             , backgroundImage (url imageSrc)
             , backgroundPosition center
             , backgroundRepeat noRepeat
