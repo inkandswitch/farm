@@ -5,10 +5,13 @@ import Html.Styled as Html exposing (..)
 import Html.Styled.Attributes exposing (css)
 import Html.Styled.Events exposing (..)
 import Css exposing (..)
+import Config
 import IO
+import Colors
 import Navigation
 import RealmUrl
 import Dict
+import Repo
 import Json.Decode as D
 import History exposing (History)
 
@@ -59,10 +62,12 @@ type Msg
     = NavigateTo String
     | NavigateBack
     | NavigateForward
+    | CreateBoard
+    | BoardCreated ( Repo.Ref, List String )
 
 
 update : Msg -> Model State Doc -> ( State, Doc, Cmd Msg )
-update msg { state, doc } =
+update msg ({ state, doc } as model) =
     case msg of
         NavigateTo url ->
             case RealmUrl.parse url of
@@ -90,6 +95,29 @@ update msg { state, doc } =
             , IO.log <| "Navigating forwards"
             )
 
+        CreateBoard ->
+            ( state
+            , doc
+            , Repo.create "WorkspaceCreateBoardDataDoc" 2
+            )
+
+        BoardCreated ( ref, urls ) ->
+            case List.head urls of
+                Just url ->
+                    case RealmUrl.create { code = Config.board, data = url } of
+                        Ok realmUrl ->
+                            update (NavigateTo realmUrl) model
+                        _ ->
+                            ( state
+                            , doc
+                            , IO.log <| "Failed to create a new board"
+                            )
+                _ ->
+                    ( state
+                    , doc
+                    , IO.log <| "Failed to create a new board"
+                    )
+
 
 view : Model State Doc -> Html Msg
 view ({ flags, doc, state } as model) =
@@ -104,6 +132,7 @@ view ({ flags, doc, state } as model) =
         [ onNavigateBack NavigateBack
         , onNavigateForward NavigateForward
         , onNavigateTo NavigateTo
+        , onCreateBoard CreateBoard
         , css
             [ displayFlex
             , flexDirection column
@@ -137,6 +166,11 @@ onNavigateTo tagger =
     on "navigate" (D.map tagger detail)
 
 
+onCreateBoard : msg -> Html.Attribute msg
+onCreateBoard msg =
+    on "createboard" (D.succeed msg)
+
+
 detail : D.Decoder String
 detail =
     D.at ["detail", "value"] D.string
@@ -148,6 +182,7 @@ viewContent { doc, state } =
         [ css
             [ flex (num 1)
             , position relative
+            , overflow auto
             ]
         ]
         [ case state.error of
@@ -164,13 +199,67 @@ viewContent { doc, state } =
                         Html.fromUnstyled <| Gizmo.render code data
 
                     Err err ->
-                        text "You haven't navigated to anything. Click a realm link."
+                        viewEmptyContent
         ]
+
+viewEmptyContent : Html Msg
+viewEmptyContent =
+    div
+        [ css
+            [ fontFamilies ["system-ui"]
+            , lineHeight (num 1.2)
+            , displayFlex
+            , flexDirection column
+            , alignItems center
+            , color (hex "444")
+            ]
+        ]
+        [ div
+            [ css
+                [ maxWidth (px 450)
+                , padding (px 20)
+                ]
+            ]
+            [ h1
+                [ css
+                    [ fontWeight bold
+                    , fontSize (Css.em 1.3)
+                    , marginBottom (px 15)
+                    ]
+                ]
+                [ text "Welcome to Realm!"
+                ]
+            , p
+                [ css
+                    [ margin2 (px 10) (px 0)
+                    ]
+                ]
+                [ text "Enter a realm url into the navigation bar and press enter to begin. Alternatively, you can "
+                , span
+                    [ onClick CreateBoard
+                    , css
+                        [ color (hex Colors.hotPink)
+                        , cursor pointer
+                        , hover
+                            [ color (hex Colors.darkerHotPink)
+                            ]
+                        ]
+                    ]
+                    [ text "click here"
+                    ]
+                , text " to create a brand new board of your own!"
+                ]
+            ]
+        ]
+
 
 
 subscriptions : Model State Doc -> Sub Msg
 subscriptions model =
-    Navigation.currentUrl NavigateTo
+    Sub.batch
+        [ Navigation.currentUrl NavigateTo
+        , Repo.created BoardCreated
+        ]
 
 
 currentPair : History String -> Result String Pair

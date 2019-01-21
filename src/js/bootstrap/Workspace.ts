@@ -1,17 +1,8 @@
 import Repo from "../Repo"
 import * as Bs from "."
-import * as RealmUrl from "../RealmUrl"
+
 
 export function code(repo: Repo) {
-  return Bs.code(repo, "Workspace.elm", {
-    title: "Workspace",
-    config: {
-      navigationBar: Bs.code(repo, "NavigationBar.elm"),
-    },
-  })
-}
-
-export function data(repo: Repo) {
   const note = Bs.code(repo, "Note.elm")
   const todoList = Bs.code(repo, "TodoList.elm")
 
@@ -41,26 +32,19 @@ export function data(repo: Repo) {
     doc.config.board = board
   })
 
-  const boardData = repo.create({
-    cards: [
-      {
-        code: note,
-        data: repo.create({
-          title: "Welcome to Realmpin",
-          body: "Right-click to add things to the board.",
-        }),
-        x: 48,
-        y: 48,
-        w: 312,
-        h: 408,
-        z: 0,
-      },
-    ],
+  return Bs.code(repo, "Workspace.elm", {
+    title: "Workspace",
+    config: {
+      navigationBar: Bs.code(repo, "NavigationBar.elm"),
+      board: board
+    },
   })
+}
 
+export function data(repo: Repo) {
   return repo.create({
     history: {
-      backward: [RealmUrl.create({ code: board, data: boardData })],
+      backward: [],
       forward: [],
     },
   })
