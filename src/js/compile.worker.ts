@@ -5,6 +5,8 @@ if ((self as any).module) {
   ;(self as any).module.paths.push(resolve("./node_modules"))
 }
 
+const PERSIST = "PERSIST" in process.env
+
 import QueuedPort from "./QueuedPort"
 import { ToCompiler, FromCompiler } from "./Msg"
 import fs from "fs"
@@ -34,7 +36,6 @@ async function work(msg: ToCompiler) {
   switch (msg.t) {
     case "Compile":
       const { sourceHash } = msg
-      const [, module = "Unknown"] = msg.source.match(/^module (\w+)/) || []
       const source = msg.source.replace(/^module \w+/, "module Source")
 
       const sourceFile = "./.tmp/Source.elm"
@@ -67,8 +68,9 @@ async function work(msg: ToCompiler) {
           debug: msg.debug,
         })
 
-        if (msg.persist) {
-          await writeFile(`./src/elm/examples/${module}.elm`, msg.source)
+        if (PERSIST && msg.persist) {
+          const [, name = "Unknown"] = msg.source.match(/^module (\w+)/) || []
+          await writeFile(`./src/elm/examples/${name}.elm`, msg.source)
         }
 
         const output = `
