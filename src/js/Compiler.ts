@@ -69,6 +69,7 @@ export default class Compiler {
           sourceHash,
           config: doc.config || {},
           debug: doc.debug,
+          persist: doc.persist,
         })
       }),
     )

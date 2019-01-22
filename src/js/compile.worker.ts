@@ -34,6 +34,7 @@ async function work(msg: ToCompiler) {
   switch (msg.t) {
     case "Compile":
       const { sourceHash } = msg
+      const [, module = "Unknown"] = msg.source.match(/^module (\w+)/) || []
       const source = msg.source.replace(/^module \w+/, "module Source")
 
       const sourceFile = "./.tmp/Source.elm"
@@ -65,6 +66,10 @@ async function work(msg: ToCompiler) {
           report: "json",
           debug: msg.debug,
         })
+
+        if (msg.persist) {
+          await writeFile(`./src/elm/examples/${module}.elm`, msg.source)
+        }
 
         const output = `
               (new function Wrapper() {

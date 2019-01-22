@@ -5,6 +5,7 @@ export interface Compile {
   sourceHash: string
   config: { [k: string]: string }
   debug?: boolean
+  persist?: boolean
 }
 
 export interface Compiled {
