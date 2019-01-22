@@ -30,6 +30,7 @@ gizmo =
 -}
 type alias State =
     { error : Maybe ( String, String )
+    , isShowingHistory: Bool
     }
 
 
@@ -49,6 +50,7 @@ type alias Doc =
 init : Flags -> ( State, Doc, Cmd Msg )
 init flags =
     ( { error = Nothing
+      , isShowingHistory = False
       }
     , { history = History.empty
       }
@@ -64,6 +66,8 @@ type Msg
     | NavigateForward
     | CreateBoard
     | BoardCreated ( Repo.Ref, List String )
+    | ShowHistory
+    | HideHistory
 
 
 update : Msg -> Model State Doc -> ( State, Doc, Cmd Msg )
@@ -118,6 +122,19 @@ update msg ({ state, doc } as model) =
                     , IO.log <| "Failed to create a new board"
                     )
 
+        ShowHistory ->
+            ( { state | isShowingHistory = True }
+            , doc
+            , Cmd.none
+            )
+
+        HideHistory ->
+            ( { state | isShowingHistory = False }
+            , doc
+            , Cmd.none
+            )
+
+
 
 view : Model State Doc -> Html Msg
 view ({ flags, doc, state } as model) =
@@ -133,6 +150,8 @@ view ({ flags, doc, state } as model) =
         , onNavigateForward NavigateForward
         , onNavigateTo NavigateTo
         , onCreateBoard CreateBoard
+        , onShowHistory ShowHistory
+        , onHideHistory HideHistory
         , css
             [ displayFlex
             , flexDirection column
@@ -148,6 +167,7 @@ view ({ flags, doc, state } as model) =
             [ viewNavigationBar flags.data
             ]
         , viewContent model
+        , if state.isShowingHistory then viewHistory flags.data else Html.text ""
         ]
 
 
@@ -159,6 +179,16 @@ onNavigateBack msg =
 onNavigateForward : msg -> Html.Attribute msg
 onNavigateForward msg =
     on "navigateforward" (D.succeed msg)
+
+
+onShowHistory : msg -> Html.Attribute msg
+onShowHistory msg =
+    on "showhistory" (D.succeed msg)
+
+
+onHideHistory : msg -> Html.Attribute msg
+onHideHistory msg =
+    on "hidehistory" (D.succeed msg)
 
 
 onNavigateTo : (String -> msg) -> Html.Attribute msg
@@ -252,6 +282,24 @@ viewEmptyContent =
             ]
         ]
 
+
+historyWidth : Float
+historyWidth =
+    400
+
+viewHistory : String -> Html Msg
+viewHistory url =
+    div
+        [ css
+            [ position absolute
+            , top (px 50)
+            , left (pct 50)
+            , width (px historyWidth)
+            , marginLeft (px -(historyWidth / 2))
+            ]
+        ]
+        [ Html.fromUnstyled <| Gizmo.render Config.historyViewer url
+        ]
 
 
 subscriptions : Model State Doc -> Sub Msg

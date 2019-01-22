@@ -1,4 +1,4 @@
-module History exposing (History, empty, current, hasBack, hasForward, push, back, forward)
+module History exposing (History, empty, current, hasSeen, hasBack, hasForward, push, back, forward)
 
 import List exposing (length, isEmpty)
 
@@ -7,13 +7,20 @@ import List exposing (length, isEmpty)
 type alias History a =
     { backward : List a
     , forward : List a
+    , seen : List a
     }
+
+
+uniqueAdd : a -> List a -> List a
+uniqueAdd val list =
+    if List.member val list then list else (val :: list)
 
 
 empty : History a
 empty =
     { backward = []
     , forward = []
+    , seen = []
     }
 
 
@@ -32,11 +39,17 @@ hasForward =
     .forward >> ((not) << isEmpty)
 
 
+hasSeen : History a -> Bool
+hasSeen =
+    .seen >> ((not) << isEmpty)
+
+
 push : a -> History a -> History a
 push val history =
     { history
         | backward = val :: history.backward
         , forward = []
+        , seen = (uniqueAdd val history.seen)
     }
 
 

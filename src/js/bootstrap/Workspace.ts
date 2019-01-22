@@ -36,6 +36,7 @@ export function code(repo: Repo) {
     title: "Workspace",
     config: {
       navigationBar: Bs.code(repo, "NavigationBar.elm"),
+      historyViewer: Bs.code(repo, "HistoryViewer.elm"),
       board: board
     },
   })
@@ -46,6 +47,7 @@ export function data(repo: Repo) {
     history: {
       backward: [],
       forward: [],
+      seen: []
     },
   })
 }

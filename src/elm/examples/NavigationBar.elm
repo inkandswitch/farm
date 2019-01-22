@@ -38,7 +38,9 @@ type alias Pair =
 {-| Ephemeral state not saved to the doc
 -}
 type alias State =
-    { url : Maybe String }
+    { url : Maybe String
+    , showHistory: Bool
+    }
 
 
 {-| Document state
@@ -51,6 +53,7 @@ type alias Doc =
 init : Flags -> ( State, Doc, Cmd Msg )
 init flags =
     ( { url = Nothing
+      , showHistory = False
       }
     , { history = History.empty
       }
@@ -68,6 +71,8 @@ type Msg
     | OnKeyPress Int
     | CopyLink
     | CreateBoard
+    | ShowHistoryViewer
+    | HideHistoryViewer
 
 
 update : Msg -> Model State Doc -> ( State, Doc, Cmd Msg )
@@ -136,6 +141,18 @@ update msg ({ flags, state, doc } as model) =
             , Gizmo.emit "createboard" E.null
             )
 
+        ShowHistoryViewer ->
+            ( state
+            , doc
+            , Gizmo.emit "showhistory" E.null
+            )
+
+        HideHistoryViewer ->
+            ( state
+            , doc
+            , Gizmo.emit "hidehistory" E.null
+            )
+
 
 view : Model State Doc -> Html Msg
 view ({ doc, state } as model) =
@@ -201,7 +218,7 @@ viewButton isActive msg children =
                 inactiveButtonStyle
     in
     button
-        [ onClick msg
+        [ stopPropagationOn "click" (D.succeed ( msg, isActive ))
         , css
             ([ flexShrink (num 0)
              , border zero
@@ -221,6 +238,8 @@ viewInput url =
         [ value <| url
         , onKeyDown OnKeyPress
         , onInput SetUrl
+        , onFocus ShowHistoryViewer
+        , onBlur HideHistoryViewer
         , css
             [ flexGrow (num 1)
             , fontSize (Css.em 0.8)
