@@ -3,6 +3,7 @@ export interface Compile {
   url: string
   source: string
   sourceHash: string
+  outputHash: string | null
   config: { [k: string]: string }
   debug?: boolean
   persist?: boolean

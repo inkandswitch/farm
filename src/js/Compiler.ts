@@ -6,6 +6,8 @@ import { sha1 } from "./Digest"
 
 type CompileWorker = QueuedWorker<Msg.ToCompiler, Msg.FromCompiler>
 
+const encoder = new TextEncoder()
+
 export default class Compiler {
   worker: CompileWorker
   repo: Repo
@@ -24,12 +26,18 @@ export default class Compiler {
             delete state.error
             delete state.hypermergeFsDiagnostics
 
+            if (state.outputHash === msg.outputHash) break
+
             state.sourceHash = msg.sourceHash
             state.outputHash = msg.outputHash
 
-            if (getJsSource(state) !== msg.output) {
-              state["Source.js"] = msg.output
-            }
+            const outputUrl = repo.writeFile(
+              encoder.encode(msg.output),
+              "text/plain",
+            )
+
+            state.outputUrl = outputUrl
+
             break
 
           case "CompileError":
@@ -67,6 +75,7 @@ export default class Compiler {
           url,
           source,
           sourceHash,
+          outputHash: doc.outputHash,
           config: doc.config || {},
           debug: doc.debug,
           persist: doc.persist,
@@ -97,9 +106,6 @@ function rootError(filename: string, ...messages: string[]) {
 
 const getElmSource = (doc: any): string | undefined =>
   doc["Source.elm"] || doc["source.elm"]
-
-const getJsSource = (doc: any): string | undefined =>
-  doc["Source.js"] || doc["source.js"]
 
 function produceDiagnosticsFromMessage(error: string) {
   // first line is bogus:

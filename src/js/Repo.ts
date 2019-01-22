@@ -3,12 +3,22 @@ import { Handle } from "hypermerge/dist/Handle"
 import QueuedWorker from "./QueuedWorker"
 // import FakeWorker from "./FakeWorker"
 
+const decoder = new TextDecoder()
+
+export interface HyperFile {
+  data: Uint8Array
+  mimeType: string
+  text: string
+}
+
 export default class Repo {
   worker: QueuedWorker<any, any>
   front: RepoFrontend
+  fileCache: Map<string, HyperFile>
 
   constructor(url: string) {
     this.front = new RepoFrontend()
+    this.fileCache = new Map()
 
     // Swap to allow utp-native usage:
     this.worker = new QueuedWorker(url)
@@ -18,17 +28,25 @@ export default class Repo {
     this.front.subscribe(this.worker.send)
   }
 
-  create = (props: object = { fixme__: "orion" }): string => {
-    const url = this.front.create()
-
-    this.front
-      .open(url)
-      .change((state: any) => {
-        Object.assign(state, props)
+  async readFile(url: string): Promise<HyperFile> {
+    return (
+      this.fileCache.get(url) ||
+      new Promise(res => {
+        this.front.readFile(url, (data, mimeType) => {
+          const file: HyperFile = { data, mimeType, text: decoder.decode(data) }
+          this.fileCache.set(url, file)
+          res(file)
+        })
       })
-      .close()
+    )
+  }
 
-    return url
+  writeFile(data: Uint8Array, mimeType: string): string {
+    return this.front.writeFile(data, mimeType)
+  }
+
+  create = (props: object = {}): string => {
+    return this.front.create(props)
   }
 
   open = <T>(url: string): Handle<T> => {

@@ -3,6 +3,7 @@ import { Handle } from "hypermerge/dist/Handle"
 import { whenChanged } from "./Subscription"
 import Compiler from "./Compiler"
 import ElmGizmo from "./ElmGizmo"
+import * as Code from "./Code"
 
 export default class Bot {
   static set repo(repo: Repo) {
@@ -21,6 +22,7 @@ export default class Bot {
   source?: Handle<any>
   codeUrl: string
   dataUrl: string
+  repo = ElmGizmo.repo
 
   constructor(codeUrl: string, dataUrl: string) {
     this.codeUrl = codeUrl
@@ -28,13 +30,17 @@ export default class Bot {
   }
 
   start() {
-    this.source = ElmGizmo.repo.open(this.codeUrl)
+    this.source = this.repo.open(this.codeUrl)
     ElmGizmo.compiler.add(this.codeUrl)
 
     this.source.subscribe(
-      whenChanged(getJsSource, (source, doc) => {
-        this.remount(toElm(eval(source)), doc)
-      }),
+      whenChanged(
+        doc => doc.outputHash,
+        async (outputHash, doc) => {
+          const source = await Code.source(this.repo, doc)
+          this.remount(toElm(eval(source)), doc)
+        },
+      ),
     )
   }
 
@@ -51,7 +57,7 @@ export default class Bot {
   }
 
   mount(elm: any, codeDoc: any) {
-    ElmGizmo.repo.once(this.dataUrl, (doc: any) => {
+    this.repo.once(this.dataUrl, (doc: any) => {
       this.gizmo = new ElmGizmo(null, elm, {
         code: this.codeUrl,
         data: this.dataUrl,
@@ -72,9 +78,6 @@ export default class Bot {
     }
   }
 }
-
-const getJsSource = (doc: any): string | undefined =>
-  doc["Source.js"] || doc["source.js"]
 
 function toElm(code: string) {
   return Object.values(eval(code))[0]

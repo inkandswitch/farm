@@ -3,6 +3,7 @@ import { Handle } from "hypermerge/dist/Handle"
 import { whenChanged } from "./Subscription"
 import Compiler from "./Compiler"
 import ElmGizmo from "./ElmGizmo"
+import * as Code from "./Code"
 
 export function setRepo(repo: Repo) {
   ElmGizmo.repo = repo
@@ -24,6 +25,7 @@ export function constructorForWindow(window: Window) {
 
     gizmo?: ElmGizmo
     source?: Handle<any>
+    repo = ElmGizmo.repo
 
     constructor() {
       super()
@@ -50,13 +52,17 @@ export function constructorForWindow(window: Window) {
       const { codeUrl } = this
       if (!codeUrl) return
 
-      this.source = ElmGizmo.repo.open(codeUrl)
+      this.source = this.repo.open(codeUrl)
       ElmGizmo.compiler.add(codeUrl)
 
       this.source.subscribe(
-        whenChanged(getJsSource, (source, doc) => {
-          this.mount(this.toElm(source, doc.outputHash), doc)
-        }),
+        whenChanged(
+          doc => doc.outputHash,
+          async (outputHash, doc) => {
+            const source = await Code.source(this.repo, doc)
+            this.mount(this.toElm(source, outputHash), doc)
+          },
+        ),
       )
     }
 
@@ -90,7 +96,7 @@ export function constructorForWindow(window: Window) {
       // this.shadowRoot.appendChild(node)
       this.appendChild(node)
 
-      ElmGizmo.repo.once(dataUrl, (doc: any) => {
+      this.repo.once(dataUrl, (doc: any) => {
         this.gizmo = new ElmGizmo(node, elm, {
           code: codeUrl,
           data: dataUrl,
@@ -136,6 +142,3 @@ export function constructorForWindow(window: Window) {
   }
   return GizmoElement
 }
-
-const getJsSource = (doc: any): string | undefined =>
-  doc["Source.js"] || doc["source.js"]
