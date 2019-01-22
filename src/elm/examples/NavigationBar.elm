@@ -1,4 +1,4 @@
-module Workspace exposing (Doc, Msg, State, gizmo)
+module NavigationBar exposing (Doc, Msg, State, gizmo)
 
 import Clipboard
 import Colors
