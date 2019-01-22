@@ -12,6 +12,7 @@ import elm from "node-elm-compiler"
 import AsyncQueue from "./AsyncQueue"
 import { lock } from "proper-lockfile"
 import { promisify } from "util"
+import { sha1 } from "./Digest"
 
 const writeFile = promisify(fs.writeFile)
 
@@ -32,6 +33,7 @@ async function work(msg: ToCompiler) {
   const { url } = msg
   switch (msg.t) {
     case "Compile":
+      const { sourceHash } = msg
       const source = msg.source.replace(/^module \w+/, "module Source")
 
       const sourceFile = "./.tmp/Source.elm"
@@ -70,11 +72,13 @@ async function work(msg: ToCompiler) {
               }).Elm
             `
 
-        port.send({ t: "Compiled", url, output })
+        const outputHash = await sha1(output)
+
+        port.send({ t: "Compiled", url, output, sourceHash, outputHash })
         console.log(`Elm compile success: ${url}`)
         return done()
       } catch (err) {
-        port.send({ t: "CompileError", url, error: err.message })
+        port.send({ t: "CompileError", url, sourceHash, error: err.message })
         console.log(`Elm compile error: ${url}`)
         return done()
       }

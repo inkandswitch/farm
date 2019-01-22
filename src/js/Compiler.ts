@@ -2,6 +2,7 @@ import QueuedWorker from "./QueuedWorker"
 import * as Msg from "./Msg"
 import Repo from "./Repo"
 import { whenChanged } from "./Subscription"
+import { sha1 } from "./Digest"
 
 type CompileWorker = QueuedWorker<Msg.ToCompiler, Msg.FromCompiler>
 
@@ -23,6 +24,9 @@ export default class Compiler {
             delete state.error
             delete state.hypermergeFsDiagnostics
 
+            state.sourceHash = msg.sourceHash
+            state.outputHash = msg.outputHash
+
             if (getJsSource(state) !== msg.output) {
               state["Source.js"] = msg.output
             }
@@ -30,8 +34,9 @@ export default class Compiler {
 
           case "CompileError":
             state.error = msg.error
+            state.sourceHash = msg.sourceHash
 
-            state.hypermergeFsDiagnostics = this.produceDiagnosticsFromMessage(
+            state.hypermergeFsDiagnostics = produceDiagnosticsFromMessage(
               msg.error,
             )
             break
@@ -42,74 +47,26 @@ export default class Compiler {
     })
   }
 
-  produceDiagnosticsFromMessage(error: string) {
-    // first line is bogus:
-    const jsonString = error.substring(error.indexOf("\n") + 1)
-    let json
-    try {
-      json = JSON.parse(jsonString)
-    } catch (e) {
-      const snippedError = jsonString.slice(0, 500)
-      console.groupCollapsed("Compiler error is not valid JSON")
-      console.error(e)
-      console.log("Attempting to parse this string:")
-      console.log(snippedError)
-      console.groupEnd()
-
-      let message = "The compiler threw an error:\n\n" + snippedError
-
-      if (snippedError.includes("elm ENOENT")) {
-        message =
-          "It looks like your elm npm package broke.\n" +
-          "Try running `yarn add elm && yarn remove elm` " +
-          "in the realm project root.\n\n" +
-          message
-      }
-
-      return rootError("Source.elm", message)
-    }
-
-    const messageReformat = (message: any[]) =>
-      message
-        .map(
-          (message: any) =>
-            typeof message === "string" ? message : "" + message.string + "", // VSCode still needs to add formatting
-        )
-        .join("")
-
-    if (json.type === "error") {
-      return rootError("Source.elm", messageReformat(json.message))
-    }
-
-    const nestedProblems = json.errors.map((error: any) =>
-      error.problems.map((problem: any) => {
-        return {
-          severity: "error",
-          message: messageReformat(problem.message),
-          startLine: problem.region.start.line - 1,
-          startColumn: problem.region.start.column - 1,
-          endLine: problem.region.end.line - 1,
-          endColumn: problem.region.end.column - 1,
-        }
-      }),
-    )
-
-    console.log(nestedProblems)
-    return { "Source.elm": [].concat(...nestedProblems) }
-  }
-
   add(url: string): this {
     if (this.docUrls.has(url)) return this
 
     this.docUrls.add(url)
 
     this.repo.open(url).subscribe(
-      whenChanged(getElmSource, (source, doc) => {
+      whenChanged(getElmSource, async (source, doc) => {
+        const sourceHash = await sha1(source)
+        if (sourceHash === doc.sourceHash) {
+          console.log("Source is unchanged, skipping compile")
+          return
+        }
+
         console.log("Compiler received updated source file")
+
         this.worker.send({
           t: "Compile",
           url,
           source,
+          sourceHash,
           config: doc.config || {},
           debug: doc.debug,
         })
@@ -142,3 +99,59 @@ const getElmSource = (doc: any): string | undefined =>
 
 const getJsSource = (doc: any): string | undefined =>
   doc["Source.js"] || doc["source.js"]
+
+function produceDiagnosticsFromMessage(error: string) {
+  // first line is bogus:
+  const jsonString = error.substring(error.indexOf("\n") + 1)
+  let json
+  try {
+    json = JSON.parse(jsonString)
+  } catch (e) {
+    const snippedError = jsonString.slice(0, 500)
+    console.groupCollapsed("Compiler error is not valid JSON")
+    console.error(e)
+    console.log("Attempting to parse this string:")
+    console.log(snippedError)
+    console.groupEnd()
+
+    let message = "The compiler threw an error:\n\n" + snippedError
+
+    if (snippedError.includes("elm ENOENT")) {
+      message =
+        "It looks like your elm npm package broke.\n" +
+        "Try running `yarn add elm && yarn remove elm` " +
+        "in the realm project root.\n\n" +
+        message
+    }
+
+    return rootError("Source.elm", message)
+  }
+
+  const messageReformat = (message: any[]) =>
+    message
+      .map(
+        (message: any) =>
+          typeof message === "string" ? message : "" + message.string + "", // VSCode still needs to add formatting
+      )
+      .join("")
+
+  if (json.type === "error") {
+    return rootError("Source.elm", messageReformat(json.message))
+  }
+
+  const nestedProblems = json.errors.map((error: any) =>
+    error.problems.map((problem: any) => {
+      return {
+        severity: "error",
+        message: messageReformat(problem.message),
+        startLine: problem.region.start.line - 1,
+        startColumn: problem.region.start.column - 1,
+        endLine: problem.region.end.line - 1,
+        endColumn: problem.region.end.column - 1,
+      }
+    }),
+  )
+
+  console.log(nestedProblems)
+  return { "Source.elm": [].concat(...nestedProblems) }
+}

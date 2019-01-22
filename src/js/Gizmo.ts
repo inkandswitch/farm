@@ -55,7 +55,7 @@ export function constructorForWindow(window: Window) {
 
       this.source.subscribe(
         whenChanged(getJsSource, (source, doc) => {
-          this.mount(this.toElm(source), doc)
+          this.mount(this.toElm(source, doc.outputHash), doc)
         }),
       )
     }
@@ -112,20 +112,26 @@ export function constructorForWindow(window: Window) {
       }
     }
 
-    toElm(code: string) {
+    toElm(code: string, outputHash: string) {
       // TODO: explore using vm.runInNewContext
       // Get a reference to this element's `window` (which may be different than
       // the global `window` if the gizmo was launched into its own window) to
       // ensure Elm javascript type checks are correct.
       // e.g. When evaluated in window A: `arrayFromWindowB instanceof Array == false`
       const ourWindow = (this as any).ownerDocument.defaultView
+      if (!ourWindow.elmCache) ourWindow.elmCache = new Map()
 
+      if (outputHash && ourWindow.elmCache.has(outputHash)) {
+        return ourWindow.elmCache.get(outputHash)
+      }
       // Elm logs warnings when being evaled, so temporarily noop `console.warn`
       const { warn } = ourWindow.console
       ourWindow.console.warn = () => {}
       const app = ourWindow.eval(code)
       ourWindow.console.warn = warn
-      return Object.values(app)[0]
+      const result = Object.values(app)[0]
+      ourWindow.elmCache.set(outputHash, result)
+      return result
     }
   }
   return GizmoElement
