@@ -1,36 +1,53 @@
 # Realm
 
-Runtime-editable elm inside electron.
+Realm is an experiment in distributed peer-to-peer computing. Realm is an extensible, programmable environment with real-time and offline collaboration with other users and no mandatory infrastructure. You can program Realm using the Elm programming language, and changes you make to the code will be shared in real-time with users anywhere in the world. 
 
-## Setup
+Realm also includes a demonstration application inspired by tools like Google Keep, Milanote, or Trello.
 
-Clone this repo, and then install dependencies:
+It partners particularly well with our [vscode plugin](https://github.com/inkandswitch/vscode-hypermerge/).
+
+## Caveat Emptor
+
+Warning! Realm is experimental software. It makes no guarantees about performance, security, or stability. Realm will probably consume all the memory on your computer, leak your data to your worst enemy, and then delete it.
+
+That said, if you encounter Realm bugs or defects, please let us know. We're interested in hearing from people who try the software.
+
+## Trying Realm
+
+Clone this repo, then start the application.
 
 ```bash
 yarn
 yarn start
 ```
 
-To make edits, we need the [Hypermerge vscode extension](https://github.com/inkandswitch/vscode-hypermerge). Install the extension by clicking [this shortcut](vscode://inkandswitch.hypermerge/), or searching for
-"hypermerge" in the extension marketplace.
+You should see a "welcome" board with a navigation URL. This is the Realm demonstration application. Everything you see is self-hosted in Realm and can be edited by you, from the navigation bar at the top to the typeface used on the welcome card.
 
-Then, we need a patched version of the Elm vscode extension. Download the [latest Release](https://github.com/inkandswitch/vscode-elm/releases/latest). Install by selecting
+## Using RealmPin
+
+RealmPin is a tool for collecting and sharing ideas. You can use it to plan a trip or a project, create a mood board, or to improvise an ad-hoc user interface for an application you're working on.
+
+ * You can right-click to create new notes on your board or resize and drag notes around by clicking on the bar at the top.
+ * You can make the current card full-screen by double clicking on the top 20px of the card navigate back (or forward) to the previous view with the arrow buttons left of the title bar. 
+ * Delete a card by right-clicking on the top 20px and clicking "Remove".
+ * Share a link to your current view (and it's code!) by copying the URL out of the title bar and pasting it to another user. Be careful -- anyone with the link to a Realm document can not only view it now but all future versions as well and their modifications to the code or data will be merged with your own.   
+
+## Working on Realm Applications
+
+Realm applications are built out of Gizmos. A Gizmo is the combination of some data with a small Elm program to render it as a Web Component. Changes to the Elm code for a Gizmo are compiled automatically into Javascript by the Realm runtime, and changes to the data document will trigger a re-rendering of the content as well.
+
+All documents in Realm, both data and code, are Hypermerge documents. A Hypermerge document is identified by its URL, and anyone with the URL is able to make changes to it and should expect them to be synchronized everwhere in the world. All hypermerge documents are constructed out of their full history.
+
+The best supported way of working on a Realm application is through the Hypermerge VSCode extension. To import your data and code into the VSCode extension, paste it into the "Open Document" dialogue for the extension. Further details on this process are describe in the README for that project.
+
+A realm:// URL has two parts -- the first half tells Realm which code to run, and the second half describes the data document to render with that code. You can pair any code with any document and Realm will do its best to make it work.
+
+When editing Realm code in VSCode changes made to a Source.elm key will be synchronized to Realm which will attempt to compile them with the Elm compiler. If the compile is successful, the result will be written to Source.js. If the compile fails, the errors will be written to a hypermergeFsDiagnostics key which VSCode will render as code error highlighting within the relevant buffer.
+
+Good luck! If you have questions, don't hesitate to ask here in the Github Issues or on the automerge slack.
+
+### Code highlighting & formatting for Elm code in Hypermerge
+The upstream Elm extension assumes files are written to disk, which Hypermerge documents are not. As a result, when working on Hypermerge documents you'll want to use our patched version of the Elm vscode extension. Download the [latest Release](https://github.com/inkandswitch/vscode-elm/releases/latest). Install by selecting
 "Extensions: Install from VSX..." from the Command Palette, and selecting the downloaded
 .vsx file.
 
-## Idea history
-
-- Connecting different modules
-  - `import Foo` with a mapping of `source docId -> Module`?
-    - Maybe a custom package manager?
-  - Custom syntax `import Foo from "abc123"`?
-  - No importing; use Json.Value messages with a `postMessage` router?
-    - Simplest implementation. More annoying as a user.
-- compile elm on client
-  - compile elm/compiler to js (prior art exists for elm 0.18)?
-  - run in electron and ship elm/compiler?
-- automerge in elm
-  - rewrite automerge/frontend in pure elm?
-    - send requests and receive patches through ports
-  - fork elm compiler and use Kernel code with existing automerge?
-    - compiler not compile Kernel code from outside github.com/elm
