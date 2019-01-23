@@ -77,27 +77,13 @@ view : Model State Doc -> Html Msg
 view { doc } =
     div
         [ css
-            [ padding2 (px 25) (px 30)
+            [ padding (px 5)
             , displayFlex
             , flexDirection column
             , height (pct 100)
             ]
         ]
-        [ input
-            [ css
-                [ border zero
-                , borderBottom3 (px 1) solid (hex "#aaa")
-                , marginBottom (px 15)
-                , paddingBottom (px 10)
-                , fontSize (Css.em 1.5)
-                , color textColor
-                ]
-            , onInput SetTitle
-            , value doc.title
-            , placeholder "Title"
-            ]
-            []
-        , textarea
+        [ textarea
             [ css
                 [ flexGrow (num 1)
                 , border zero
