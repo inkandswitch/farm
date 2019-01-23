@@ -2,7 +2,7 @@ module Workspace exposing (Doc, Msg, State, gizmo)
 
 import Gizmo exposing (Flags, Model)
 import Html.Styled as Html exposing (..)
-import Html.Styled.Attributes exposing (css)
+import Html.Styled.Attributes exposing (css, value, autofocus)
 import Html.Styled.Events exposing (..)
 import Css exposing (..)
 import Config
@@ -14,6 +14,14 @@ import Dict
 import Repo
 import Json.Decode as D
 import History exposing (History)
+import Clipboard
+
+
+superboxBackgroundColor =
+    "e9edf0"
+
+editTitleIcon =
+    "📝"
 
 
 gizmo : Gizmo.Program State Doc Msg
@@ -25,12 +33,18 @@ gizmo =
         , subscriptions = subscriptions
         }
 
+type Mode
+    = DefaultMode
+    | EditMode
+    | SearchMode
+
 
 {-| Ephemeral state not saved to the doc
 -}
 type alias State =
     { error : Maybe ( String, String )
-    , isShowingHistory: Bool
+    , mode : Mode
+    , searchTerm : Maybe String
     }
 
 
@@ -50,7 +64,8 @@ type alias Doc =
 init : Flags -> ( State, Doc, Cmd Msg )
 init flags =
     ( { error = Nothing
-      , isShowingHistory = False
+      , mode = DefaultMode
+      , searchTerm = Nothing
       }
     , { history = History.empty
       }
@@ -61,40 +76,51 @@ init flags =
 {-| Message type for modifying State and Doc inside update
 -}
 type Msg
-    = NavigateTo String
+    = NoOp
+    | NavigateTo String
     | NavigateBack
     | NavigateForward
     | CreateBoard
     | BoardCreated ( Repo.Ref, List String )
-    | ShowHistory
-    | HideHistory
+    | SetDefaultMode
+    | SetEditMode
+    | SetSearchMode
+    | SetSearchTerm String
+    | Search
+    | CopyLink
 
 
 update : Msg -> Model State Doc -> ( State, Doc, Cmd Msg )
 update msg ({ state, doc } as model) =
     case msg of
+        NoOp ->
+            ( state
+            , doc
+            , Cmd.none
+            )
+
         NavigateTo url ->
             case RealmUrl.parse url of
                 Ok pair ->
-                    ( state
+                    ( { state | mode = DefaultMode, searchTerm = Nothing, error = Nothing }
                     , { doc | history = History.push url doc.history }
                     , IO.log <| "Navigating to " ++ url
                     )
 
                 Err err ->
-                    ( { state | error = Just ( url, err ) }
+                    ( { state | error = Just ( url, err ), mode = DefaultMode }
                     , doc
                     , IO.log <| "Could not navigate to " ++ url ++ ". " ++ err
                     )
 
         NavigateBack ->
-            ( state
+            ( { state | mode = DefaultMode, searchTerm = Nothing, error = Nothing }
             , { doc | history = History.back doc.history }
             , IO.log <| "Navigating backwards"
             )
 
         NavigateForward ->
-            ( state
+            ( { state | mode = DefaultMode, searchTerm = Nothing, error = Nothing }
             , { doc | history = History.forward doc.history }
             , IO.log <| "Navigating forwards"
             )
@@ -122,17 +148,53 @@ update msg ({ state, doc } as model) =
                     , IO.log <| "Failed to create a new board"
                     )
 
-        ShowHistory ->
-            ( { state | isShowingHistory = True }
+        SetDefaultMode ->
+            ( { state | mode = DefaultMode, searchTerm = Nothing }
             , doc
             , Cmd.none
             )
 
-        HideHistory ->
-            ( { state | isShowingHistory = False }
+        SetEditMode ->
+            ( { state | mode = EditMode, searchTerm = Nothing }
             , doc
             , Cmd.none
             )
+
+        SetSearchMode ->
+            ( { state | mode = SearchMode }
+            , doc
+            , Cmd.none
+            )
+
+        SetSearchTerm term ->
+            ( { state | searchTerm = Just term }
+            , doc
+            , Cmd.none
+            )
+
+        Search ->
+            case state.searchTerm of
+                Just term ->
+                    update (NavigateTo term) model
+                Nothing ->
+                    ( state
+                    , doc
+                    , Cmd.none
+                    )
+
+        CopyLink ->
+            case History.current doc.history of
+                Just url ->
+                    ( state
+                    , doc
+                    , Clipboard.copy url
+                    )
+
+                Nothing ->
+                    ( state
+                    , doc
+                    , IO.log <| "Nothing to copy"
+                    )
 
 
 
@@ -141,22 +203,21 @@ view ({ flags, doc, state } as model) =
     let
         navigationBar =
             Maybe.withDefault "" <| Dict.get "navigationBar" flags.config
-
-        viewNavigationBar =
-            Gizmo.render navigationBar >> Html.fromUnstyled
     in
     div
-        [ onNavigateBack NavigateBack
-        , onNavigateForward NavigateForward
-        , onNavigateTo NavigateTo
-        , onCreateBoard CreateBoard
-        , onShowHistory ShowHistory
-        , onHideHistory HideHistory
+        [ onClick SetDefaultMode
+        , on "navigateback" (D.succeed NavigateBack)
+        , on "navigateforward" (D.succeed NavigateForward)
+        , on "navigate" (D.map NavigateTo detail)
+        , on "defaultmode" (D.succeed SetDefaultMode)
+        , on "editmode" (D.succeed SetEditMode)
+        , on "searchmode" (D.succeed SetSearchMode)
         , css
             [ displayFlex
             , flexDirection column
             , height (vh 100)
             , width (vw 100)
+            , position relative
             ]
         ]
         [ div
@@ -164,46 +225,188 @@ view ({ flags, doc, state } as model) =
                 [ flexShrink (num 0)
                 ]
             ]
-            [ viewNavigationBar flags.data
+            [ viewNavigationBar model
             ]
         , viewContent model
-        , if state.isShowingHistory then viewHistory flags.data else Html.text ""
+        , if state.mode == SearchMode then viewHistory flags.data else Html.text ""
         ]
-
-
-onNavigateBack : msg -> Html.Attribute msg
-onNavigateBack msg =
-    on "navigateback" (D.succeed msg)
-
-
-onNavigateForward : msg -> Html.Attribute msg
-onNavigateForward msg =
-    on "navigateforward" (D.succeed msg)
-
-
-onShowHistory : msg -> Html.Attribute msg
-onShowHistory msg =
-    on "showhistory" (D.succeed msg)
-
-
-onHideHistory : msg -> Html.Attribute msg
-onHideHistory msg =
-    on "hidehistory" (D.succeed msg)
-
-
-onNavigateTo : (String -> msg) -> Html.Attribute msg
-onNavigateTo tagger =
-    on "navigate" (D.map tagger detail)
-
-
-onCreateBoard : msg -> Html.Attribute msg
-onCreateBoard msg =
-    on "createboard" (D.succeed msg)
 
 
 detail : D.Decoder String
 detail =
     D.at ["detail", "value"] D.string
+
+
+viewNavigationBar : Model State Doc -> Html Msg
+viewNavigationBar ({ doc, state } as model) =
+    div
+        [ css
+            [ displayFlex
+            , padding (px 10)
+            , alignItems center
+            , boxShadow5 zero (px 2) (px 8) zero (rgba 0 0 0 0.12)
+            , borderBottom3 (px 1) solid (hex "ddd")
+            , height (px 40)
+            ]
+        ]
+        [ viewNavButtons doc.history
+        , viewSuperbox model
+        , viewSecondaryButtons
+        ]
+
+
+viewNavButtons : History String -> Html Msg
+viewNavButtons history =
+    div
+        [ css
+            [ marginRight (px 10)
+            ]
+        ]
+        [ viewButton
+            (History.hasBack history)
+            NavigateBack
+            [ text "<"
+            ]
+        , viewButton
+            (History.hasForward history)
+            NavigateForward
+            [ text ">"
+            ]
+        ]
+
+
+viewSecondaryButtons : Html Msg
+viewSecondaryButtons =
+    div
+        [ css
+            [ marginLeft (px 10)
+            ]
+        ]
+        [ viewButton
+            True
+            CopyLink
+            [ text "📋"
+            ]
+        , viewButton
+            True
+            CreateBoard
+            [ text "➕"
+            ]
+        ]
+
+
+activeButtonStyle =
+    [ cursor pointer
+    , color (hex Colors.hotPink)
+    , hover
+        [ color (hex Colors.darkerHotPink)
+        ]
+    ]
+
+
+inactiveButtonStyle =
+    [ cursor pointer
+    , color (hex "aaa")
+    ]
+
+
+viewButton : Bool -> Msg -> List (Html Msg) -> Html Msg
+viewButton isActive msg children =
+    let
+        style =
+            if isActive then
+                activeButtonStyle
+
+            else
+                inactiveButtonStyle
+    in
+    button
+        [ stopPropagationOn "click" (D.succeed ( msg, isActive ))
+        , css
+            ([ flexShrink (num 0)
+             , border zero
+             , fontSize (Css.em 1)
+             , padding (px 5)
+             , fontWeight bold
+             ]
+                ++ style
+            )
+        ]
+        children
+
+
+viewSuperbox : Model State Doc -> Html Msg
+viewSuperbox { doc, state } =
+    div
+        [ onStopPropagationClick NoOp
+        , css
+            [ flexGrow (num 1)
+            , fontFamilies ["system-ui"]
+            , fontSize (Css.em 0.8)
+            , padding (px 5)
+            , borderRadius (px 5)
+            , backgroundColor (hex superboxBackgroundColor)
+            , color (hex "777")
+            , margin2 (px 0) auto
+            , border zero
+            , textAlign center
+            , maxWidth (px 400)
+            , position relative
+            , focus
+                [ color (hex Colors.blueBlack)
+                ]
+            , hover
+                [ color (hex Colors.blueBlack)
+                ]
+            ]
+        ]
+        [ case state.mode of
+            DefaultMode ->
+                case currentDataUrl doc.history of
+                    Just dataUrl ->
+                        Html.fromUnstyled <| Gizmo.render Config.superboxDefault dataUrl
+                    Nothing ->
+                        div [ onClick SetSearchMode ] [ text " Empty Title"]
+            
+            EditMode ->
+                case currentDataUrl doc.history of
+                    Just dataUrl ->
+                        Html.fromUnstyled <| Gizmo.render Config.superboxEdit dataUrl
+                    Nothing ->
+                        text ""
+
+            SearchMode ->
+                input
+                    [ css
+                        [ width (pct 100)
+                        , margin zero
+                        , border zero
+                        , padding zero
+                        , cursor pointer
+                        , backgroundColor transparent
+                        , textAlign center
+                        , fontSize (Css.em 1)
+                        , color (hex Colors.blueBlack)
+                        ]
+                    , autofocus True
+                    , value <| Maybe.withDefault "History" state.searchTerm
+                    , onInput SetSearchTerm
+                    , onEnter Search
+                    ]
+                    []
+        ]
+
+onEnter : Msg -> Attribute Msg
+onEnter msg =
+    on "keypress" (D.andThen (enter msg) keyCode)
+
+enter : msg -> Int -> D.Decoder msg
+enter msg keycode =
+
+    if keycode == 13 then
+        D.succeed msg
+    else
+        D.fail "Not the enter key"
 
 
 viewContent : Model State Doc -> Html Msg
@@ -213,6 +416,7 @@ viewContent { doc, state } =
             [ flex (num 1)
             , position relative
             , overflow auto
+            , property "isolation" "isolate"
             ]
         ]
         [ case state.error of
@@ -221,14 +425,14 @@ viewContent { doc, state } =
 
             Nothing ->
                 case currentPair doc.history of
-                    Ok ({ code, data } as pair) ->
+                    Just ({ code, data } as pair) ->
                         let
                             url =
                                 Debug.log "Viewing " <| RealmUrl.create pair
                         in
                         Html.fromUnstyled <| Gizmo.render code data
 
-                    Err err ->
+                    Nothing ->
                         viewEmptyContent
         ]
 
@@ -282,7 +486,6 @@ viewEmptyContent =
             ]
         ]
 
-
 historyWidth : Float
 historyWidth =
     400
@@ -310,8 +513,19 @@ subscriptions model =
         ]
 
 
-currentPair : History String -> Result String Pair
+currentPair : History String -> Maybe Pair
 currentPair =
     History.current
     >> Result.fromMaybe "No current url"
     >> Result.andThen RealmUrl.parse
+    >> Result.toMaybe
+
+
+currentDataUrl : History String -> Maybe String
+currentDataUrl =
+    currentPair >> Maybe.map .data
+
+
+onStopPropagationClick : Msg -> Html.Attribute Msg
+onStopPropagationClick msg =
+    stopPropagationOn "click" (D.succeed (msg, True))

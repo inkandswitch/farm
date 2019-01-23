@@ -4,7 +4,7 @@
   "description": "Runtime-editable elm.",
   "main": "dist/electron.js",
   "repository": "https://github.com/inkandswitch/realm",
-  "author": "Jeff Peterson <jeff@yak.sh>, Peter van Hardenberg <pvh@pvh.ca>, Matt Tognetti <mtognetti@gmail.com>",
+  "author": "Jeff Peterson <jeff@yak.sh>, Peter van Hardenberg <pvh@pvh.ca>, Matt Tognetti <mjtognetti@gmail.com>",
   "license": "BSD",
   "private": true,
   "scripts": {

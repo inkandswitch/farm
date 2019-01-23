@@ -32,12 +32,17 @@ export function code(repo: Repo) {
     doc.config.board = board
   })
 
+  const superboxDefault = Bs.code(repo, "SuperboxDefault.elm")
+  const superboxEdit = Bs.code(repo, "SuperboxEdit.elm")
+
   return Bs.code(repo, "Workspace.elm", {
     title: "Workspace",
     config: {
       navigationBar: Bs.code(repo, "NavigationBar.elm"),
       historyViewer: Bs.code(repo, "HistoryViewer.elm"),
-      board: board
+      board: board,
+      superboxDefault: superboxDefault,
+      superboxEdit: superboxEdit
     },
   })
 }

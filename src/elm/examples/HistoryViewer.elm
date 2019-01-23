@@ -60,7 +60,7 @@ update msg ({ flags, state, doc } as model) =
         NavigateTo url ->
             ( state
             , doc
-            , Gizmo.emit "navigate" (E.string url)
+            , Debug.log "navigate" Gizmo.emit "navigate" (E.string url)
             )
 
 
@@ -88,7 +88,7 @@ view ({ doc, state } as model) =
 viewHistoryItem : String -> Html Msg
 viewHistoryItem url =
     div
-        [ onClick (NavigateTo url)
+        [ onStopPropagationClick (NavigateTo url)
         ,css
             [ padding (px 15)
             , fontSize (Css.em 0.8)
@@ -108,6 +108,9 @@ viewHistoryItem url =
         ]
         [ text <| viewItemText url ]
 
+onStopPropagationClick : Msg -> Html.Attribute Msg
+onStopPropagationClick msg =
+    stopPropagationOn "click" (D.succeed (msg, True))
 
 subscriptions : Model State Doc -> Sub Msg
 subscriptions model =
