@@ -370,7 +370,6 @@ view { doc, state } =
     div
         [ css
             [ property "user-select" "none"
-            , fontFamilies [ "system-ui" ]
             , fontSize (px 14)
             , fill
             ]

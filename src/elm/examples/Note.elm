@@ -91,7 +91,7 @@ view { doc } =
                 , fontSize (Css.em 1)
                 , color textColor
                 , resize none
-
+                , fontFamily inherit
                 ]
             , onInput SetBody
             , value doc.body

@@ -2,7 +2,7 @@ module Workspace exposing (Doc, Msg, State, gizmo)
 
 import Gizmo exposing (Flags, Model)
 import Html.Styled as Html exposing (..)
-import Html.Styled.Attributes exposing (css, value, autofocus)
+import Html.Styled.Attributes exposing (css, value, autofocus, placeholder)
 import Html.Styled.Events exposing (..)
 import Css exposing (..)
 import Config
@@ -341,7 +341,6 @@ viewSuperbox { doc, state } =
         [ onStopPropagationClick NoOp
         , css
             [ flexGrow (num 1)
-            , fontFamilies ["system-ui"]
             , fontSize (Css.em 0.8)
             , padding (px 5)
             , borderRadius (px 5)
@@ -367,7 +366,7 @@ viewSuperbox { doc, state } =
                         Html.fromUnstyled <| Gizmo.render Config.superboxDefault dataUrl
                     Nothing ->
                         div [ onClick SetSearchMode ] [ text " Empty Title"]
-            
+
             EditMode ->
                 case currentDataUrl doc.history of
                     Just dataUrl ->
@@ -389,7 +388,8 @@ viewSuperbox { doc, state } =
                         , color (hex Colors.blueBlack)
                         ]
                     , autofocus True
-                    , value <| Maybe.withDefault "History" state.searchTerm
+                    , placeholder "History"
+                    , value <| Maybe.withDefault "" state.searchTerm
                     , onInput SetSearchTerm
                     , onEnter Search
                     ]
@@ -440,8 +440,7 @@ viewEmptyContent : Html Msg
 viewEmptyContent =
     div
         [ css
-            [ fontFamilies ["system-ui"]
-            , lineHeight (num 1.2)
+            [ lineHeight (num 1.2)
             , displayFlex
             , flexDirection column
             , alignItems center

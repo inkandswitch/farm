@@ -38,6 +38,8 @@ export default class App {
 
     const style = document.createElement("style")
     style.innerHTML = `
+      @import url('https://fonts.googleapis.com/css?family=IBM+Plex+Sans:300,300i,400,400i,700,700i')
+
       * {
         box-sizing: border-box;
       }
@@ -68,6 +70,7 @@ export default class App {
         line-height: 1;
         color: black;
         background: white;
+        font-family: 'IBM Plex Sans', Helvetica, Arial, system-ui, sans-serif;
       }
       ol, ul {
         list-style: none;
