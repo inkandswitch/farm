@@ -104,6 +104,8 @@ view { doc } =
                 , width (pct 100)
                 , fontSize (Css.em 1)
                 , color textColor
+                , resize none
+
                 ]
             , onInput SetBody
             , value doc.body

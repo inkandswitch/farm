@@ -214,7 +214,7 @@ update msg { state, doc } =
             , doc
             , doc
                 |> getCard n
-                |> Result.fromMaybe "Could not find card"
+                |> Result.fromMaybe "Could not find this card"
                 |> Result.andThen RealmUrl.create
                 |> Result.map (E.string >> Gizmo.emit "navigate")
                 |> Result.withDefault Cmd.none
@@ -283,11 +283,11 @@ applyAction action doc =
 
         Moving n pt ->
             doc
-                |> updateCard n (moveTo (snapPoint pt))
+                |> updateCard n (moveTo pt)
                 |> bumpZ n
 
         Resizing n size ->
-            doc |> updateCard n (resizeTo (snapSize size))
+            doc |> updateCard n (resizeTo size)
 
 
 snap : Float -> Float
@@ -520,7 +520,8 @@ menu =
             [ border3 (px 1) solid (hex "ddd")
             , borderBottomWidth (px 0)
             , borderRadius (px 3)
-            , backgroundColor (hex "#fff")
+            , backgroundColor (rgba 255 255 255 0.8)
+            , property "backdrop-filter" "blur(2px)"
             ]
         ]
 
