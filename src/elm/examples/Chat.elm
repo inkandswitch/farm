@@ -90,17 +90,25 @@ update msg { flags, state, doc } =
             ( { state | zone = zone }, doc, Cmd.none )
 
         OnTime time ->
-            ( { state | input = "" }
-            , { doc
-                | messages =
-                    { author = flags.self
-                    , message = state.input
-                    , time = Time.posixToMillis time
+            case state.input of
+                "" ->
+                    ( state
+                    , doc
+                    , Cmd.none
+                    )
+
+                _ ->
+                    ( { state | input = "" }
+                    , { doc
+                        | messages =
+                            { author = flags.self
+                            , message = state.input
+                            , time = Time.posixToMillis time
+                            }
+                                :: doc.messages
                     }
-                        :: doc.messages
-              }
-            , Cmd.none
-            )
+                    , Cmd.none
+                    )
 
         KeyDown key ->
             if key == 13 then
@@ -131,10 +139,7 @@ view { flags, state, doc } =
             , width (pct 100)
             ]
         ]
-        [ titleBar
-            [ fromUnstyled <| Gizmo.render titleGizmo flags.data
-            ]
-        , div
+        [ div
             [ css
                 [ flexGrow (int 1)
                 , padding (px 20)
@@ -181,10 +186,9 @@ inputBar state =
     div
         [ css
             [ displayFlex
-            , margin (px 10)
             , border3 (px 2) solid (hex "#ccc")
+            , margin (px 10)
             , borderRadius (px 3)
-            , padding (px 10)
             , flexShrink (int 0)
             ]
         ]
@@ -195,6 +199,7 @@ inputBar state =
             , css
                 [ flexGrow (int 1)
                 , border zero
+                , padding2 (px 0) (px 5)
                 , fontSize (Css.em 1)
                 ]
             ]
@@ -203,12 +208,16 @@ inputBar state =
             [ onClick Submit
             , css
                 [ border zero
-                , margin (px -10)
                 , padding (px 10)
                 , fontSize (Css.em 0.9)
                 , fontWeight (int 600)
                 , borderLeft3 (px 2) solid (hex "#ccc")
                 , color (hex "#777")
+                , cursor pointer
+                , hover
+                    [ backgroundColor (hex "ccc")
+                    , color (hex "fff")
+                    ]
                 ]
             ]
             [ text "Send"
@@ -226,7 +235,9 @@ viewGroup state ( avatarGizmo, titleGizmo ) ( authorMessage, messages ) =
             , flexShrink (int 0)
             ]
         ]
-        [ fromUnstyled <| Gizmo.render avatarGizmo authorMessage.author
+        [ div [ css [flexShrink zero ] ]
+            [ fromUnstyled <| Gizmo.render avatarGizmo authorMessage.author
+            ]
         , div
             [ css
                 [ displayFlex
