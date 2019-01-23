@@ -6,6 +6,7 @@ import * as GizmoWindow from "./GizmoWindow"
 import * as Launcher from "./bootstrap/Launcher"
 import * as Identity from "./bootstrap/Identity"
 import * as Workspace from "./bootstrap/Workspace"
+import * as Bs from "./bootstrap"
 
 require("utp-native")
 
@@ -113,6 +114,10 @@ export default class App {
 
     const realmUrl = RealmUrl.create({ code, data })
     console.log("\n\nrealm url:", realmUrl, "\n\n")
+  }
+
+  bootstrapCode(file: string, options: Bs.Opts) {
+    return Bs.code(this.repo, file, options)
   }
 }
 

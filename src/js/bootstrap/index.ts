@@ -2,7 +2,7 @@ import { readFileSync } from "fs"
 import path from "path"
 import Repo from "../Repo"
 
-interface Opts {
+export interface Opts {
   [k: string]: any
 }
 
