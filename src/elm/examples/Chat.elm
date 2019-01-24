@@ -40,8 +40,7 @@ type alias Message =
 {-| Document state
 -}
 type alias Doc =
-    { counter : Int
-    , messages : List Message
+    { messages : List Message
     , title : String
     }
 
@@ -51,8 +50,7 @@ init flags =
     ( { input = ""
       , zone = Time.utc
       }
-    , { counter = 0
-      , messages = []
+    , { messages = []
       , title = "Untitled Chat"
       }
     , Time.here |> Task.perform SetZone
