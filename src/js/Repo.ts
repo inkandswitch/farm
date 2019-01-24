@@ -31,7 +31,7 @@ export default class Repo {
   async readFile(url: string): Promise<HyperFile> {
     return (
       this.fileCache.get(url) ||
-      new Promise(res => {
+      new Promise<HyperFile>(res => {
         this.front.readFile(url, (data, mimeType) => {
           const file: HyperFile = { data, mimeType, text: decoder.decode(data) }
           this.fileCache.set(url, file)
