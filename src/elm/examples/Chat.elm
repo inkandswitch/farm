@@ -134,7 +134,6 @@ view { flags, state, doc } =
         [ css
             [ displayFlex
             , flexDirection column
-            , fontFamilies [ "system-ui" ]
             , height (pct 100)
             , width (pct 100)
             ]
