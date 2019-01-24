@@ -14,6 +14,7 @@ import Json.Encode as E
 import Navigation
 import RealmUrl
 import Link
+import Config
 
 
 gizmo : Gizmo.Program State Doc Msg
@@ -106,7 +107,17 @@ viewHistoryItem url =
                 ]
             ]
         ]
-        [ text <| viewItemText url ]
+        [ case RealmUrl.parse url of
+            Ok { code, data } ->
+                viewProperty "title" data
+            Err err ->
+                Html.text err
+        ]
+
+viewProperty : String -> String -> Html Msg
+viewProperty prop url =
+    Html.fromUnstyled <|
+        Gizmo.renderWith [Gizmo.attr "data-prop" prop] Config.property url
 
 onStopPropagationClick : Msg -> Html.Attribute Msg
 onStopPropagationClick msg =
@@ -115,12 +126,3 @@ onStopPropagationClick msg =
 subscriptions : Model State Doc -> Sub Msg
 subscriptions model =
     Sub.none
-
-
-viewItemText : String -> String
-viewItemText url =
-    url
-        |> RealmUrl.parse
-        |> Result.map .data
-        |> Result.andThen Link.getId
-        |> Result.withDefault url

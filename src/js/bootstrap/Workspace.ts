@@ -34,12 +34,17 @@ export function code(repo: Repo) {
 
   const superboxDefault = Bs.code(repo, "SuperboxDefault.elm")
   const superboxEdit = Bs.code(repo, "SuperboxEdit.elm")
+  const property = Bs.code(repo, "Property.elm")
 
   return Bs.code(repo, "Workspace.elm", {
     title: "Workspace",
     config: {
       navigationBar: Bs.code(repo, "NavigationBar.elm"),
-      historyViewer: Bs.code(repo, "HistoryViewer.elm"),
+      historyViewer: Bs.code(repo, "HistoryViewer.elm", {
+        config: {
+          property: property
+        }
+      }),
       board: board,
       superboxDefault: superboxDefault,
       superboxEdit: superboxEdit
