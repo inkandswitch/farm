@@ -43,14 +43,6 @@ type Menu
     | CardMenu Int Point
 
 
-{-| Ephemeral state not saved to the doc
--}
-type alias State =
-    { action : Action
-    , menu : Menu
-    }
-
-
 type alias Card =
     { code : Url
     , data : Url
@@ -59,6 +51,17 @@ type alias Card =
     , w : Float
     , h : Float
     , z : Int
+    }
+
+
+
+{-| Ephemeral state not saved to the doc
+-}
+type alias State =
+    { action : Action
+    , menu : Menu
+    , scroll : Point
+    , scrolling : Bool
     }
 
 
@@ -74,6 +77,8 @@ init : Flags -> ( State, Doc, Cmd Msg )
 init flags =
     ( { action = None
       , menu = NoMenu
+      , scroll = {x = 0, y = 0}
+      , scrolling = False
       }
     , { cards = Array.empty
       , maxZ = 1
@@ -99,6 +104,8 @@ type Msg
     | CreateImages (List String)
     | Created ( Ref, List Url )
     | NavigateToCard Int
+    | Scroll Point
+    | ScrollEnd
 
 
 update : Msg -> Model State Doc -> ( State, Doc, Cmd Msg )
@@ -220,6 +227,18 @@ update msg { state, doc } =
                 |> Result.withDefault Cmd.none
             )
 
+        Scroll delta ->
+            ( {state
+                | scrolling = True
+                , scroll = state.scroll |> moveBy delta
+                },
+                doc,
+                Cmd.none
+                )
+
+        ScrollEnd ->
+            ({state | scrolling = False}, doc, Cmd.none)
+
 
 subscriptions : Model State Doc -> Sub Msg
 subscriptions { state, doc } =
@@ -231,7 +250,7 @@ subscriptions { state, doc } =
 
             _ ->
                 Sub.batch
-                    [ Browser.Events.onMouseMove (deltaDecoder |> Json.map MouseDelta)
+                    [ Browser.Events.onMouseMove (movementDecoder |> Json.map MouseDelta)
                     , Browser.Events.onMouseUp (Json.succeed Stop)
                     ]
         ]
@@ -372,14 +391,21 @@ view { doc, state } =
             [ property "user-select" "none"
             , fontSize (px 14)
             , fill
+            -- , overflow hidden
             ]
+        -- , onMouseWheel Scroll
         , onDragOver NoOp
         , onDrop DroppedImages
         , onPaste DroppedImages
         ]
         [ viewBackground
         , viewContextMenu doc state.menu
-        , div []
+        , div
+            [ css
+                [ -- TODO: turns out this is hard:
+                    -- transform (translate2 (px <| negate state.scroll.x) (px <| negate state.scroll.y))
+                ]
+            ]
             (doc
                 |> applyAction state.action
                 |> .cards
@@ -613,6 +639,12 @@ onPreventStop name =
             )
 
 
+onMouseWheel : (Point -> msg) -> Html.Attribute msg
+onMouseWheel mkMsg =
+    onPreventStop "wheel"
+        (deltaDecoder |> Json.map mkMsg)
+
+
 onContextMenu : (Point -> msg) -> Html.Attribute msg
 onContextMenu mkMsg =
     onPreventStop "contextmenu"
@@ -646,11 +678,17 @@ dataTransferDecoder =
     Json.at [ "dataTransfer", "files" ] (Json.list File.decoder)
 
 
-deltaDecoder : Decoder Point
-deltaDecoder =
+movementDecoder : Decoder Point
+movementDecoder =
     Json.map2 Point
         (Json.field "movementX" Json.float)
         (Json.field "movementY" Json.float)
+
+deltaDecoder : Decoder Point
+deltaDecoder =
+    Json.map2 Point
+        (Json.field "deltaX" Json.float)
+        (Json.field "deltaY" Json.float)
 
 
 xyDecoder : Decoder Point
