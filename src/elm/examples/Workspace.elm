@@ -1,24 +1,26 @@
 module Workspace exposing (Doc, Msg, State, gizmo)
 
-import Gizmo exposing (Flags, Model)
-import Html.Styled as Html exposing (..)
-import Html.Styled.Attributes exposing (css, value, autofocus, placeholder)
-import Html.Styled.Events exposing (..)
-import Css exposing (..)
-import Config
-import IO
-import Colors
-import Navigation
-import RealmUrl
-import Dict
-import Repo
-import Json.Decode as D
-import History exposing (History)
 import Clipboard
+import Colors
+import Config
+import Css exposing (..)
+import Dict
+import FarmUrl
+import Gizmo exposing (Flags, Model)
+import History exposing (History)
+import Html.Styled as Html exposing (..)
+import Html.Styled.Attributes exposing (autofocus, css, placeholder, value)
+import Html.Styled.Events exposing (..)
+import IO
+import Json.Decode as D
+import Keyboard exposing (Combo(..))
+import Navigation
+import Repo
 
 
 superboxBackgroundColor =
     "e9edf0"
+
 
 editTitleIcon =
     "📝"
@@ -32,6 +34,7 @@ gizmo =
         , view = Html.toUnstyled << view
         , subscriptions = subscriptions
         }
+
 
 type Mode
     = DefaultMode
@@ -100,7 +103,7 @@ update msg ({ state, doc } as model) =
             )
 
         NavigateTo url ->
-            case RealmUrl.parse url of
+            case FarmUrl.parse url of
                 Ok pair ->
                     ( { state | mode = DefaultMode, searchTerm = Nothing, error = Nothing }
                     , { doc | history = History.push url doc.history }
@@ -134,14 +137,16 @@ update msg ({ state, doc } as model) =
         BoardCreated ( ref, urls ) ->
             case List.head urls of
                 Just url ->
-                    case RealmUrl.create { code = Config.board, data = url } of
-                        Ok realmUrl ->
-                            update (NavigateTo realmUrl) model
+                    case FarmUrl.create { code = Config.board, data = url } of
+                        Ok farmUrl ->
+                            update (NavigateTo farmUrl) model
+
                         _ ->
                             ( state
                             , doc
                             , IO.log <| "Failed to create a new board"
                             )
+
                 _ ->
                     ( state
                     , doc
@@ -176,6 +181,7 @@ update msg ({ state, doc } as model) =
             case state.searchTerm of
                 Just term ->
                     update (NavigateTo term) model
+
                 Nothing ->
                     ( state
                     , doc
@@ -195,7 +201,6 @@ update msg ({ state, doc } as model) =
                     , doc
                     , IO.log <| "Nothing to copy"
                     )
-
 
 
 view : Model State Doc -> Html Msg
@@ -228,13 +233,17 @@ view ({ flags, doc, state } as model) =
             [ viewNavigationBar model
             ]
         , viewContent model
-        , if state.mode == SearchMode then viewHistory flags.data else Html.text ""
+        , if state.mode == SearchMode then
+            viewHistory flags.data
+
+          else
+            Html.text ""
         ]
 
 
 detail : D.Decoder String
 detail =
-    D.at ["detail", "value"] D.string
+    D.at [ "detail", "value" ] D.string
 
 
 viewNavigationBar : Model State Doc -> Html Msg
@@ -364,13 +373,15 @@ viewSuperbox { doc, state } =
                 case currentDataUrl doc.history of
                     Just dataUrl ->
                         Html.fromUnstyled <| Gizmo.render Config.superboxDefault dataUrl
+
                     Nothing ->
-                        div [ onClick SetSearchMode ] [ text " Empty Title"]
+                        div [ onClick SetSearchMode ] [ text " Empty Title" ]
 
             EditMode ->
                 case currentDataUrl doc.history of
                     Just dataUrl ->
                         Html.fromUnstyled <| Gizmo.render Config.superboxEdit dataUrl
+
                     Nothing ->
                         text ""
 
@@ -391,22 +402,10 @@ viewSuperbox { doc, state } =
                     , placeholder "History"
                     , value <| Maybe.withDefault "" state.searchTerm
                     , onInput SetSearchTerm
-                    , onEnter Search
+                    , Keyboard.onPress Enter Search
                     ]
                     []
         ]
-
-onEnter : Msg -> Attribute Msg
-onEnter msg =
-    on "keypress" (D.andThen (enter msg) keyCode)
-
-enter : msg -> Int -> D.Decoder msg
-enter msg keycode =
-
-    if keycode == 13 then
-        D.succeed msg
-    else
-        D.fail "Not the enter key"
 
 
 viewContent : Model State Doc -> Html Msg
@@ -428,13 +427,14 @@ viewContent { doc, state } =
                     Just ({ code, data } as pair) ->
                         let
                             url =
-                                Debug.log "Viewing " <| RealmUrl.create pair
+                                Debug.log "Viewing " <| FarmUrl.create pair
                         in
                         Html.fromUnstyled <| Gizmo.render code data
 
                     Nothing ->
                         viewEmptyContent
         ]
+
 
 viewEmptyContent : Html Msg
 viewEmptyContent =
@@ -460,14 +460,14 @@ viewEmptyContent =
                     , marginBottom (px 15)
                     ]
                 ]
-                [ text "Welcome to RealmPin!"
+                [ text "Welcome to FarmPin!"
                 ]
             , p
                 [ css
                     [ margin2 (px 10) (px 0)
                     ]
                 ]
-                [ text "Enter a realm url into the navigation bar and press enter to begin. Alternatively, you can "
+                [ text "Enter a farm url into the navigation bar and press enter to begin. Alternatively, you can "
                 , span
                     [ onClick CreateBoard
                     , css
@@ -485,9 +485,11 @@ viewEmptyContent =
             ]
         ]
 
+
 historyWidth : Float
 historyWidth =
     400
+
 
 viewHistory : String -> Html Msg
 viewHistory url =
@@ -505,19 +507,32 @@ viewHistory url =
 
 
 subscriptions : Model State Doc -> Sub Msg
-subscriptions model =
+subscriptions { state } =
     Sub.batch
         [ Navigation.currentUrl NavigateTo
         , Repo.created BoardCreated
+        , Keyboard.shortcuts
+            [ ( Cmd T
+              , if state.mode /= SearchMode then
+                    SetSearchMode
+
+                else
+                    SetDefaultMode
+              )
+            , ( Cmd Left, NavigateBack )
+            , ( Cmd Right, NavigateForward )
+            , ( Cmd B, CreateBoard )
+            , ( Esc, SetDefaultMode )
+            ]
         ]
 
 
 currentPair : History String -> Maybe Pair
 currentPair =
     History.current
-    >> Result.fromMaybe "No current url"
-    >> Result.andThen RealmUrl.parse
-    >> Result.toMaybe
+        >> Result.fromMaybe "No current url"
+        >> Result.andThen FarmUrl.parse
+        >> Result.toMaybe
 
 
 currentDataUrl : History String -> Maybe String
@@ -527,4 +542,4 @@ currentDataUrl =
 
 onStopPropagationClick : Msg -> Html.Attribute Msg
 onStopPropagationClick msg =
-    stopPropagationOn "click" (D.succeed (msg, True))
+    stopPropagationOn "click" (D.succeed ( msg, True ))

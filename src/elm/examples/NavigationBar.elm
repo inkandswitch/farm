@@ -3,6 +3,7 @@ module NavigationBar exposing (Doc, Msg, State, gizmo)
 import Clipboard
 import Colors
 import Css exposing (..)
+import FarmUrl
 import Gizmo exposing (Flags, Model)
 import History exposing (History)
 import Html.Styled as Html exposing (..)
@@ -12,7 +13,6 @@ import IO
 import Json.Decode as D
 import Json.Encode as E
 import Navigation
-import RealmUrl
 
 
 inputBackgroundColor =
@@ -39,7 +39,7 @@ type alias Pair =
 -}
 type alias State =
     { url : Maybe String
-    , showHistory: Bool
+    , showHistory : Bool
     }
 
 
@@ -303,4 +303,4 @@ onKeyDown tagger =
 
 stateUrlPair : Maybe String -> Result String String
 stateUrlPair =
-    Result.fromMaybe "No current url" >> Result.andThen RealmUrl.parse >> Result.andThen RealmUrl.create
+    Result.fromMaybe "No current url" >> Result.andThen FarmUrl.parse >> Result.andThen FarmUrl.create

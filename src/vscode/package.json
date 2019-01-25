@@ -1,9 +1,9 @@
 {
-  "name": "realm",
+  "name": "farm",
   "version": "0.0.1",
-  "displayName": "Realm",
+  "displayName": "Farm",
   "publisher": "inkandswitch",
-  "description": "An extension into Realm.",
+  "description": "An extension into Farm.",
   "scripts": {
     "local": "ln -s `realpath .` ~/.vscode/extensions/"
   },
@@ -14,7 +14,7 @@
     "vscode": "^1.29.1"
   },
   "main": "dist/index.js",
-  "repository": "https://github.com/inkandswitch/realm.git",
+  "repository": "https://github.com/inkandswitch/farm.git",
   "license": "MIT",
   "private": false,
   "devDependencies": {

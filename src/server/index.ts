@@ -12,7 +12,7 @@ app.use(
     publicPath: "/",
     logLevel: "warn",
     writeToDisk(filename: string): boolean {
-      return /(realm|\.worker)\.js$/.test(filename)
+      return /(farm|\.worker)\.js$/.test(filename)
     },
   }),
 )

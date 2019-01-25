@@ -1,10 +1,10 @@
 module Navigator exposing (Doc, Msg, State, gizmo)
 
+import FarmUrl
 import Gizmo exposing (Flags, Model)
 import Html exposing (Html, text)
 import IO
 import Navigation
-import RealmUrl
 
 
 gizmo : Gizmo.Program State Doc Msg
@@ -57,7 +57,7 @@ update : Msg -> Model State Doc -> ( State, Doc, Cmd Msg )
 update msg { state, doc } =
     case msg of
         NavigateTo url ->
-            case RealmUrl.parse url of
+            case FarmUrl.parse url of
                 Ok pair ->
                     ( state
                     , { doc | history = pair :: doc.history }
@@ -82,12 +82,12 @@ view { doc, state } =
                 Just ({ code, data } as pair) ->
                     let
                         url =
-                            Debug.log "Viewing " <| RealmUrl.create pair
+                            Debug.log "Viewing " <| FarmUrl.create pair
                     in
                     Gizmo.render code data
 
                 Nothing ->
-                    text "You haven't navigated to anything. Click a realm link."
+                    text "You haven't navigated to anything. Click a farm link."
 
 
 subscriptions : Model State Doc -> Sub Msg

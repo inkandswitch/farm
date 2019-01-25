@@ -7,6 +7,7 @@ import Config
 import Css exposing (..)
 import Dict
 import Extra.Array as Array
+import FarmUrl
 import File exposing (File)
 import Gizmo exposing (Flags, Model)
 import Html.Styled as Html exposing (Html, button, div, fromUnstyled, input, text, toUnstyled)
@@ -14,7 +15,6 @@ import Html.Styled.Attributes as Attr exposing (css, value)
 import Html.Styled.Events as Events exposing (on, onClick, onDoubleClick, onInput, onMouseDown, onMouseUp)
 import Json.Decode as Json exposing (Decoder)
 import Json.Encode as E
-import RealmUrl
 import Repo exposing (Ref, Url)
 import Task
 import Tuple exposing (pair)
@@ -54,7 +54,6 @@ type alias Card =
     }
 
 
-
 {-| Ephemeral state not saved to the doc
 -}
 type alias State =
@@ -77,7 +76,7 @@ init : Flags -> ( State, Doc, Cmd Msg )
 init flags =
     ( { action = None
       , menu = NoMenu
-      , scroll = {x = 0, y = 0}
+      , scroll = { x = 0, y = 0 }
       , scrolling = False
       }
     , { cards = Array.empty
@@ -222,22 +221,22 @@ update msg { state, doc } =
             , doc
                 |> getCard n
                 |> Result.fromMaybe "Could not find this card"
-                |> Result.andThen RealmUrl.create
+                |> Result.andThen FarmUrl.create
                 |> Result.map (E.string >> Gizmo.emit "navigate")
                 |> Result.withDefault Cmd.none
             )
 
         Scroll delta ->
-            ( {state
+            ( { state
                 | scrolling = True
                 , scroll = state.scroll |> moveBy delta
-                },
-                doc,
-                Cmd.none
-                )
+              }
+            , doc
+            , Cmd.none
+            )
 
         ScrollEnd ->
-            ({state | scrolling = False}, doc, Cmd.none)
+            ( { state | scrolling = False }, doc, Cmd.none )
 
 
 subscriptions : Model State Doc -> Sub Msg
@@ -391,8 +390,10 @@ view { doc, state } =
             [ property "user-select" "none"
             , fontSize (px 14)
             , fill
+
             -- , overflow hidden
             ]
+
         -- , onMouseWheel Scroll
         , onDragOver NoOp
         , onDrop DroppedImages
@@ -402,8 +403,8 @@ view { doc, state } =
         , viewContextMenu doc state.menu
         , div
             [ css
-                [ -- TODO: turns out this is hard:
-                    -- transform (translate2 (px <| negate state.scroll.x) (px <| negate state.scroll.y))
+                [-- TODO: turns out this is hard:
+                 -- transform (translate2 (px <| negate state.scroll.x) (px <| negate state.scroll.y))
                 ]
             ]
             (doc
@@ -683,6 +684,7 @@ movementDecoder =
     Json.map2 Point
         (Json.field "movementX" Json.float)
         (Json.field "movementY" Json.float)
+
 
 deltaDecoder : Decoder Point
 deltaDecoder =

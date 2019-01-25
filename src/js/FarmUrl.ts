@@ -6,5 +6,5 @@ export interface Pair {
 export function create({ code, data }: Pair) {
   const codeId = new URL(code).pathname.slice(1)
   const dataId = new URL(data).pathname.slice(1)
-  return `realm://${codeId}/${dataId}`
+  return `farm://${codeId}/${dataId}`
 }

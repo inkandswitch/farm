@@ -127,7 +127,7 @@ function produceDiagnosticsFromMessage(error: string) {
       message =
         "It looks like your elm npm package broke.\n" +
         "Try running `yarn add elm && yarn remove elm` " +
-        "in the realm project root.\n\n" +
+        "in the farm project root.\n\n" +
         message
     }
 

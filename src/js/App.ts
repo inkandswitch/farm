@@ -1,9 +1,8 @@
 import Repo from "./Repo"
 import Compiler from "./Compiler"
 import * as Gizmo from "./Gizmo"
-import * as RealmUrl from "./RealmUrl"
+import * as FarmUrl from "./FarmUrl"
 import * as GizmoWindow from "./GizmoWindow"
-import * as Launcher from "./bootstrap/Launcher"
 import * as Identity from "./bootstrap/Identity"
 import * as Workspace from "./bootstrap/Workspace"
 import * as Bs from "./bootstrap"
@@ -30,9 +29,9 @@ export default class App {
     Gizmo.setCompiler(this.compiler)
     Gizmo.setSelfDataUrl(this.selfDataUrl)
 
-    customElements.define("realm-ui", Gizmo.constructorForWindow(window))
+    customElements.define("farm-ui", Gizmo.constructorForWindow(window))
     customElements.define(
-      "realm-window",
+      "farm-window",
       GizmoWindow.constructorForWindow(window),
     )
 
@@ -92,13 +91,13 @@ export default class App {
         quotes: "" "";
       }
 
-      realm-ui {
+      farm-ui {
         display: contents;
       }
     `
     document.body.appendChild(style)
 
-    this.root = document.createElement("realm-ui")
+    this.root = document.createElement("farm-ui")
     this.root.setAttribute("code", this.rootCodeUrl)
     this.root.setAttribute("data", this.rootDataUrl)
     document.body.appendChild(this.root)
@@ -115,8 +114,8 @@ export default class App {
     console.log("\n\ncode url:", code, "\n\n")
     console.log("\n\ndata url:", data, "\n\n")
 
-    const realmUrl = RealmUrl.create({ code, data })
-    console.log("\n\nrealm url:", realmUrl, "\n\n")
+    const farmUrl = FarmUrl.create({ code, data })
+    console.log("\n\nfarm url:", farmUrl, "\n\n")
   }
 
   bootstrapCode(file: string, options: Bs.Opts) {

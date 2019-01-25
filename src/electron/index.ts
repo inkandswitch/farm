@@ -14,18 +14,18 @@ import path from "path"
 
 app.on("ready", createWindow)
 
-app.setAsDefaultProtocolClient("realm")
+app.setAsDefaultProtocolClient("farm")
 
 // If we are running a non-packaged version of the app
 if (process.defaultApp) {
   // If we have the path to our app we set the protocol client to launch electron.exe with the path to our app
   if (process.argv.length >= 2) {
-    app.setAsDefaultProtocolClient("realm", process.execPath, [
+    app.setAsDefaultProtocolClient("farm", process.execPath, [
       path.resolve(process.argv[1]),
     ])
   }
 } else {
-  app.setAsDefaultProtocolClient("realm")
+  app.setAsDefaultProtocolClient("farm")
 }
 
 app.on("open-url", (_event, url) => {
@@ -93,9 +93,9 @@ function createWindow(): BrowserWindow {
       role: "help",
       submenu: [
         {
-          label: "Realm on Github",
+          label: "Farm on Github",
           click() {
-            shell.openExternal("https://github.com/inkandswitch/realm")
+            shell.openExternal("https://github.com/inkandswitch/farm")
           },
         },
       ],

@@ -21,7 +21,7 @@ const shared: webpack.Configuration = {
       {
         test: /\.ts$/,
         loader: "ts-loader",
-        exclude: [/realm\/node_modules/],
+        exclude: [/farm\/node_modules/],
       },
 
       {
@@ -63,8 +63,8 @@ export default [
   }),
 
   config({
-    name: "realm",
-    entry: ["./src/js/cli/realm"],
+    name: "farm",
+    entry: ["./src/js/cli/farm"],
     target: "node",
     plugins: [new HardSourcePlugin()],
   }),
@@ -73,10 +73,7 @@ export default [
     name: "renderer",
     entry: ["./src/js"],
     target: "electron-renderer",
-    plugins: [
-      new HtmlWebpackPlugin({ title: "Realm" }),
-      new HardSourcePlugin(),
-    ],
+    plugins: [new HtmlWebpackPlugin({ title: "Farm" }), new HardSourcePlugin()],
   }),
 
   config({

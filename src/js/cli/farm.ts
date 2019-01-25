@@ -6,7 +6,7 @@ import Repo from "../Repo"
 import Compiler from "../Compiler"
 import Bot from "../Bot"
 import * as Bs from "../bootstrap"
-import * as RealmUrl from "../RealmUrl"
+import * as FarmUrl from "../FarmUrl"
 
 program.version("0.1.0")
 
@@ -21,7 +21,7 @@ program
 
 program
   .command("bot <codeUrl> <dataUrl>")
-  .description("run a realm bot")
+  .description("run a farm bot")
   .action((codeUrl, dataUrl) => {
     const compiler = new Compiler(repo, "dist/compile.worker.js")
 
@@ -42,14 +42,14 @@ program
     console.log("\n\ncode url:", code, "\n\n")
     console.log("\n\ndata url:", data, "\n\n")
 
-    const realmUrl = RealmUrl.create({ code, data })
-    console.log("\n\nrealm url:", realmUrl, "\n\n")
+    const farmUrl = FarmUrl.create({ code, data })
+    console.log("\n\nfarm url:", farmUrl, "\n\n")
     setTimeout(() => {}, 99999999) // HACK: without a worker, node exits
   })
 
 program
   .command("create <elmFile>")
-  .description("Create a realm gizmo from an elm file")
+  .description("Create a farm gizmo from an elm file")
   .action(filename => {
     const url = Bs.code(repo, filename)
     console.log("\n\ngizmo code url:", url, "\n\n")

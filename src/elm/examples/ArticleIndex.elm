@@ -1,13 +1,13 @@
 module ArticleIndex exposing (Doc, Msg, State, gizmo)
 
+import Css exposing (..)
+import Dict exposing (Dict)
 import Gizmo exposing (Flags, Model)
 import Html.Styled as Html exposing (..)
-import Html.Styled.Events as Events
-import Dict exposing (Dict)
-import Json.Encode as E
-import Json.Decode as D
-import Css exposing (..)
 import Html.Styled.Attributes exposing (css, placeholder, value)
+import Html.Styled.Events as Events
+import Json.Decode as D
+import Json.Encode as E
 
 
 hotPink =
@@ -40,8 +40,10 @@ type alias Doc =
     { articles : List GizmoUrl
     }
 
+
 type alias GizmoUrl =
     String
+
 
 init : Flags -> ( State, Doc, Cmd Msg )
 init flags =
@@ -98,7 +100,7 @@ view { flags, doc } =
                 [ fontSize (Css.em 1.3)
                 ]
             ]
-            [ text "RealmWiki"
+            [ text "FarmWiki"
             ]
         , button
             [ Events.onClick CreateArticle
@@ -137,6 +139,7 @@ viewArticle viewArticleItem url =
         ]
         [ viewArticleItem url
         ]
+
 
 subscriptions : Model State Doc -> Sub Msg
 subscriptions model =

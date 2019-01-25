@@ -18,11 +18,11 @@ export function code(repo: Repo) {
 export function data(repo: Repo) {
   const wikiArticle = repo.create({
     title: "Welcome",
-    body: "This is the RealmWiki",
+    body: "This is the FarmWiki",
   })
 
   return repo.create({
-    title: "RealmWiki",
+    title: "FarmWiki",
     articles: [wikiArticle],
   })
 }

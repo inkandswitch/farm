@@ -2,7 +2,9 @@ module HistoryViewer exposing (Doc, Msg, State, gizmo)
 
 import Clipboard
 import Colors
+import Config
 import Css exposing (..)
+import FarmUrl
 import Gizmo exposing (Flags, Model)
 import History exposing (History)
 import Html.Styled as Html exposing (..)
@@ -11,10 +13,8 @@ import Html.Styled.Events exposing (..)
 import IO
 import Json.Decode as D
 import Json.Encode as E
-import Navigation
-import RealmUrl
 import Link
-import Config
+import Navigation
 
 
 gizmo : Gizmo.Program State Doc Msg
@@ -77,7 +77,7 @@ view ({ doc, state } as model) =
             , backgroundColor (hex "#fff")
             , overflowX hidden
             , overflowY auto
-            , fontFamilies ["system-ui"]
+            , fontFamilies [ "system-ui" ]
             ]
         ]
         [ div
@@ -90,7 +90,7 @@ viewHistoryItem : String -> Html Msg
 viewHistoryItem url =
     div
         [ onStopPropagationClick (NavigateTo url)
-        ,css
+        , css
             [ padding (px 15)
             , fontSize (Css.em 0.8)
             , textOverflow ellipsis
@@ -107,21 +107,25 @@ viewHistoryItem url =
                 ]
             ]
         ]
-        [ case RealmUrl.parse url of
+        [ case FarmUrl.parse url of
             Ok { code, data } ->
                 viewProperty "title" data
+
             Err err ->
                 Html.text err
         ]
 
+
 viewProperty : String -> String -> Html Msg
 viewProperty prop url =
     Html.fromUnstyled <|
-        Gizmo.renderWith [Gizmo.attr "data-prop" prop] Config.property url
+        Gizmo.renderWith [ Gizmo.attr "data-prop" prop ] Config.property url
+
 
 onStopPropagationClick : Msg -> Html.Attribute Msg
 onStopPropagationClick msg =
-    stopPropagationOn "click" (D.succeed (msg, True))
+    stopPropagationOn "click" (D.succeed ( msg, True ))
+
 
 subscriptions : Model State Doc -> Sub Msg
 subscriptions model =

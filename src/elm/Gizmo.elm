@@ -143,7 +143,7 @@ render =
 
 renderWith : List (Html.Attribute msg) -> Url -> Url -> Html msg
 renderWith attrs code data =
-    Html.node "realm-ui"
+    Html.node "farm-ui"
         (attr "code" code
             :: attr "data" data
             :: attrs
@@ -153,10 +153,10 @@ renderWith attrs code data =
 
 renderWindow : Url -> Url -> msg -> Html msg
 renderWindow code data closeMsg =
-    Html.node "realm-window"
+    Html.node "farm-window"
         [ attr "code" code
         , attr "data" data
-        , Events.on "windowclose"  (Json.succeed closeMsg)
+        , Events.on "windowclose" (Json.succeed closeMsg)
         ]
         []
 

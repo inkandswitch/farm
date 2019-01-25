@@ -96,8 +96,8 @@ viewStep : Model State Doc -> List (Html Msg)
 viewStep { doc } =
     case doc.step of
         1 ->
-            [ title "Welcome to Realm"
-            , p [] [ text "This tutorial will guide you through the creation of your first Realm gizmo." ]
+            [ title "Welcome to the Farm"
+            , p [] [ text "This tutorial will guide you through the creation of your first Farm gizmo." ]
             , controls [ next ]
             ]
 

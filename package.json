@@ -1,9 +1,9 @@
 {
-  "name": "realm",
+  "name": "farm",
   "version": "1.0.1",
   "description": "Runtime-editable elm.",
   "main": "dist/electron.js",
-  "repository": "https://github.com/inkandswitch/realm",
+  "repository": "https://github.com/inkandswitch/farm",
   "author": "Jeff Peterson <jeff@yak.sh>, Peter van Hardenberg <pvh@pvh.ca>, Matt Tognetti <mjtognetti@gmail.com>",
   "license": "BSD",
   "private": true,
@@ -12,8 +12,8 @@
     "build": "cross-env TS_NODE_CACHE_DIRECTORY=.ts-cache webpack",
     "app": "yarn build && yarn start-app",
     "types": "./bin/types.sh",
-    "realm": "yarn build && cross-env REPO_ROOT=./.data/bots node ./dist/realm.js",
-    "bot": "yarn realm bot"
+    "farm": "yarn build && cross-env REPO_ROOT=./.data/bots node ./dist/farm.js",
+    "bot": "yarn farm bot"
   },
   "devDependencies": {
     "@types/bs58": "^3.0.30",

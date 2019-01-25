@@ -4,6 +4,7 @@ import Browser.Navigation as BrowserNav
 import Clipboard
 import Css exposing (..)
 import Dict
+import FarmUrl
 import Gizmo exposing (Flags, Model)
 import Html.Styled as Html exposing (..)
 import Html.Styled.Attributes exposing (css, href, placeholder, src, value)
@@ -11,7 +12,6 @@ import Html.Styled.Events exposing (..)
 import Json.Decode as D
 import Json.Encode as E
 import Navigation
-import RealmUrl
 import Repo exposing (Props, Ref, Url, create, createWithProps)
 import Set
 import Task
@@ -147,12 +147,13 @@ update msg model =
             )
 
         LaunchGizmo gizmoConfig ->
-            case RealmUrl.create gizmoConfig of
-                Ok realmUrl  ->
+            case FarmUrl.create gizmoConfig of
+                Ok farmUrl ->
                     ( state
-                    , { doc | activeGizmos = Set.toList (Set.insert realmUrl activeGizmos) }
+                    , { doc | activeGizmos = Set.toList (Set.insert farmUrl activeGizmos) }
                     , Cmd.none
                     )
+
                 _ ->
                     ( state
                     , doc
@@ -210,12 +211,13 @@ update msg model =
                         gizmoConfig =
                             { code = gizmoType, data = url }
                     in
-                    case RealmUrl.create gizmoConfig of
-                        Ok realmUrl ->
+                    case FarmUrl.create gizmoConfig of
+                        Ok farmUrl ->
                             ( { state | gizmoTypeToCreate = Nothing, showingGizmoTypes = False }
-                            , { doc | gizmos = gizmoConfig :: doc.gizmos, data = url :: doc.data, activeGizmos = Set.toList (Set.insert realmUrl activeGizmos) }
+                            , { doc | gizmos = gizmoConfig :: doc.gizmos, data = url :: doc.data, activeGizmos = Set.toList (Set.insert farmUrl activeGizmos) }
                             , Cmd.none
                             )
+
                         _ ->
                             ( { state | showingGizmoTypes = False, gizmoTypeToCreate = Nothing }
                             , doc
@@ -235,7 +237,7 @@ update msg model =
             )
 
         CopyShareLink gizmoConfig ->
-            case RealmUrl.create gizmoConfig of
+            case FarmUrl.create gizmoConfig of
                 Ok url ->
                     ( state
                     , doc
@@ -269,7 +271,7 @@ update msg model =
                     )
 
         Navigate url ->
-            case RealmUrl.parse url of
+            case FarmUrl.parse url of
                 Ok gizmoConfig ->
                     ( state
                     , { doc | gizmos = gizmoConfig :: doc.gizmos, activeGizmos = Set.toList (Set.insert url activeGizmos) }
@@ -302,7 +304,7 @@ update msg model =
                     ( state, doc, Cmd.none )
 
                 Just url ->
-                    case RealmUrl.parse url of
+                    case FarmUrl.parse url of
                         Err urlErr ->
                             ( state, doc, Cmd.none )
 
@@ -633,7 +635,7 @@ viewAddGizmoInput inputValue =
         ]
         [ input
             [ value inputValue
-            , placeholder "Gizmo url (e.g. realm:/...)"
+            , placeholder "Gizmo url (e.g. farm:/...)"
             , onInput SetAddGizmoInputUrl
             , onKeyDown OnAddGizmoInputKeyDown
             , css
@@ -663,10 +665,11 @@ viewAddGizmoInput inputValue =
 
 
 viewGizmoWindow : String -> Html Msg
-viewGizmoWindow realmUrl =
-    case RealmUrl.parse realmUrl of
+viewGizmoWindow farmUrl =
+    case FarmUrl.parse farmUrl of
         Ok gizmoConfig ->
-            Html.fromUnstyled <| (Gizmo.renderWindow gizmoConfig.code gizmoConfig.data (CloseGizmo realmUrl))
+            Html.fromUnstyled <| Gizmo.renderWindow gizmoConfig.code gizmoConfig.data (CloseGizmo farmUrl)
+
         _ ->
             Html.text ""
 

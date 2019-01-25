@@ -3,12 +3,12 @@ module CounterTutorial exposing (Doc, Msg, State, gizmo)
 import Array exposing (Array)
 import Css exposing (..)
 import Doc
+import FarmUrl
 import Gizmo exposing (Flags, Model)
 import Html.Styled as Html exposing (Html, a, br, button, div, h1, h2, p, pre, text)
 import Html.Styled.Attributes as Attr exposing (css, disabled, href)
 import Html.Styled.Events exposing (onClick)
 import Json.Decode as D
-import RealmUrl
 import Repo
 import VsCode
 
@@ -176,8 +176,8 @@ steps : Array (Model State Doc -> List (Html Msg))
 steps =
     Array.fromList
         [ \_ ->
-            [ title "Welcome to Realm"
-            , p [] [ text "This tutorial will guide you through the creation of your first Realm gizmo." ]
+            [ title "Welcome to the Farm"
+            , p [] [ text "This tutorial will guide you through the creation of your first Farm gizmo." ]
             , p [] [ text "A gizmo is a pairing of a program with data that lives on your computer and can be reused and shared with anyone." ]
             , controls [ next ]
             ]
@@ -242,9 +242,9 @@ steps =
                 ]
             , codeBlock
                 [ a
-                    [ href (VsCode.link <| doc.codeUrl ++ "/Source.elm" )
+                    [ href (VsCode.link <| doc.codeUrl ++ "/Source.elm")
                     ]
-                    [ text (VsCode.link doc.codeUrl ++ "/Source.elm" )
+                    [ text (VsCode.link doc.codeUrl ++ "/Source.elm")
                     ]
                 ]
             , p []
@@ -261,7 +261,7 @@ steps =
                 , code "case msg of"
                 , text ". Change that line to "
                 , code "case Debug.log \"msg\" msg of"
-                , text ". Open the Developer Tools console here in Realm, "
+                , text ". Open the Developer Tools console here in Farm, "
                 , text "then click the button a few times. You'll see the Inc "
                 , text "message arriving to the update function each time you click."
                 ]
@@ -332,7 +332,7 @@ steps =
                 ]
             , p []
                 [ text "From here, you can build anything. Take a look at how "
-                , text "the other gizmos are built. You can inspect anything in Realm "
+                , text "the other gizmos are built. You can inspect anything in Farm "
                 , text "since all the code lives on your computer! We've "
                 , text "tried to keep your starting gizmos simple and easy to learn from."
                 ]
@@ -342,9 +342,9 @@ steps =
             [ title "Sharing is Caring"
             , p []
                 [ text "Your counter gizmo deserves to see the world! "
-                , text "You can share this handy Realm url to link your friends and "
+                , text "You can share this handy Farm url to link your friends and "
                 , text "family pets directly to your gizmo."
-                , case RealmUrl.create { data = doc.dataUrl, code = doc.codeUrl } of
+                , case FarmUrl.create { data = doc.dataUrl, code = doc.codeUrl } of
                     Ok url ->
                         codeBlock
                             [ a [ href url ] [ text url ]
