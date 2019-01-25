@@ -34,7 +34,8 @@ init iFlags =
         ( state, doc, cmd ) =
             gizmo.init flags
     in
-    ( { doc = doc
+    ( { isMounted = True
+      , doc = doc
       , state = state
       , flags = flags
       }
@@ -52,6 +53,9 @@ type alias Msg =
 update : Msg -> Model -> ( Model, Cmd Msg )
 update msg model =
     case msg of
+        NoOp ->
+            ( model, Cmd.none )
+
         Custom sMsg ->
             let
                 ( state, doc, cmd ) =
@@ -67,12 +71,22 @@ update msg model =
         LoadDoc doc ->
             ( { model | doc = doc }, Cmd.none )
 
+        Unmount ->
+            ( { model | isMounted = False }, Cmd.none )
+
 
 subscriptions : Model -> Sub Msg
 subscriptions model =
     Sub.batch
-        [ loadDoc LoadDoc
-        , gizmo.subscriptions model |> Sub.map Custom
+        [ Gizmo.decodedMsgs (Debug.log "Invalid msg" >> always NoOp)
+        , if model.isMounted then
+            Sub.batch
+                [ loadDoc LoadDoc
+                , gizmo.subscriptions model |> Sub.map Custom
+                ]
+
+          else
+            Sub.none
         ]
 
 

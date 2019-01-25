@@ -9,6 +9,7 @@ port module Gizmo exposing
     , attr
     , command
     , decodeFlags
+    , decodedMsgs
     , element
     , emit
     , onEmit
@@ -33,7 +34,24 @@ import Task
 port command : ( String, String ) -> Cmd msg
 
 
+port msgs : (Json.Value -> msg) -> Sub msg
+
+
 port emitted : ( String, E.Value ) -> Cmd msg
+
+
+decodedMsgs : (String -> Msg doc msg) -> Sub (Msg doc msg)
+decodedMsgs errMsg =
+    msgs (Json.decodeValue msgDecoder)
+        |> Sub.map
+            (\res ->
+                case res of
+                    Ok v ->
+                        v
+
+                    Err x ->
+                        errMsg (Json.errorToString x)
+            )
 
 
 emit : String -> E.Value -> Cmd msg
@@ -93,14 +111,17 @@ type alias Flags =
 
 
 type alias Model state doc =
-    { doc : doc
+    { isMounted : Bool
+    , doc : doc
     , state : state
     , flags : Flags
     }
 
 
 type Msg doc msg
-    = Custom msg
+    = NoOp
+    | Custom msg
+    | Unmount
     | LoadDoc doc
 
 
@@ -191,6 +212,20 @@ attrsDecoder =
             [ Json.string
             , Json.succeed ""
             ]
+
+
+msgDecoder : Json.Decoder (Msg doc msg)
+msgDecoder =
+    Json.field "t" Json.string
+        |> Json.andThen
+            (\t ->
+                case t of
+                    "Unmount" ->
+                        Json.succeed Unmount
+
+                    _ ->
+                        Json.fail "Not a valid incoming Msg."
+            )
 
 
 send : msg -> Cmd msg

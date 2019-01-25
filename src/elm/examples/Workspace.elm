@@ -175,7 +175,7 @@ update msg ({ state, doc } as model) =
             )
 
         ToggleSearchMode ->
-            case state.mode of
+            case Debug.log "toggle" state.mode of
                 SearchMode ->
                     update SetDefaultMode model
                 _ ->
@@ -514,10 +514,13 @@ subscriptions { state } =
         , Repo.created BoardCreated
         , Keyboard.shortcuts
             [ (Cmd O, ToggleSearchMode)
-            , (Cmd Left, NavigateBack)
-            , (Cmd Right, NavigateForward)
-            , (Cmd N, CreateBoard)
+            , (Cmd T, ToggleSearchMode)
+            , (Cmd B, CreateBoard)
             , (Esc, SetDefaultMode)
+            ]
+        , Keyboard.softShortcuts
+            [ ( Cmd Left, NavigateBack )
+            , ( Cmd Right, NavigateForward )
             ]
         ]
 

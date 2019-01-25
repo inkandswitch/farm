@@ -24,6 +24,7 @@ export interface ReceivePorts {
 }
 
 export interface SendPorts {
+  msgs?: SendPort<Msg>
   loadDoc: SendPort<any>
   created?: SendPort<[string, string[]]>
   rawDocs?: SendPort<[string, any]>
@@ -31,6 +32,12 @@ export interface SendPorts {
 }
 
 export type Ports = ReceivePorts & SendPorts
+
+export interface Unmount {
+  t: "Unmount"
+}
+
+export type Msg = Unmount
 
 export interface ElmApp {
   ports?: Ports
@@ -120,6 +127,10 @@ export default class ElmGizmo {
     this.withPort("loadDoc", this.send(doc))
   }
 
+  sendMsg(msg: Msg) {
+    this.withPort("msgs", this.send(msg))
+  }
+
   sendCreated(ref: string, urls: string[]) {
     this.withPort("created", this.send([ref, urls]))
   }
@@ -160,7 +171,7 @@ export default class ElmGizmo {
   onRepoOut = (msg: any) => {
     switch (msg.t) {
       case "Create": {
-        const props = msg.p || undefined 
+        const props = msg.p || undefined
         const urls = times(msg.n, () => this.repo.create(props))
         console.log("sending urls", urls)
         this.sendCreated(msg.ref, urls)
@@ -218,6 +229,8 @@ export default class ElmGizmo {
   }
 
   close() {
+    this.sendMsg({ t: "Unmount" })
+
     this.handle.close()
 
     this.disposables.forEach(d => d())

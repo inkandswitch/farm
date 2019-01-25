@@ -110,12 +110,12 @@ export function constructorForWindow(window: Window) {
     }
 
     unmount() {
-      this.innerHTML = ""
-
       if (this.gizmo) {
         this.gizmo.close()
         delete this.gizmo
       }
+
+      this.innerHTML = ""
     }
 
     toElm(code: string, outputHash: string) {
