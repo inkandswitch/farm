@@ -37,6 +37,13 @@ export default class App {
       GizmoWindow.constructorForWindow(window),
     )
 
+    // Deprecated
+    customElements.define("realm-ui", Gizmo.constructorForWindow(window))
+    customElements.define(
+      "realm-window",
+      GizmoWindow.constructorForWindow(window),
+    )
+
     const style = document.createElement("style")
     style.innerHTML = css()
     document.body.appendChild(style)
