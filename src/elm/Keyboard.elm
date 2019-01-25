@@ -1,13 +1,23 @@
-module Keyboard exposing (Combo(..), shortcuts, shortcut, onPress, onDown, onUp)
+module Keyboard exposing (Combo(..), shortcut, shortcuts, softShortcut, softShortcuts, onPress, onDown, onUp)
 
 import Browser.Events as BrowserEvents exposing (onKeyDown)
 import Json.Decode as D exposing (Decoder)
-import List exposing (map)
+import List exposing (map, member)
 import Html.Styled as Html
 import Html.Styled.Events as HtmlEvents
--- TODO: Can we easily support Html and Styled.Html?
 
--- Note: All KeyboardEvent.key values are passed through `String.toLower`
+{-
+    Provides helpers for global keyboard shortcuts (e.g. Cmd T) and
+    event handlers for specific keys (e.g. Keyboard.onPress Enter).
+
+    Supports two types of shortcuts:
+    - shortcuts will always fire when the appropriate key combinations are down.
+    - "soft shortcuts" will only fire if the `target` property of the KeyboardEvent
+        is not an input or textarea.
+
+    NOTE: All KeyboardEvent.key values are passed through String.toLower
+    TODO: Can we easily support both Html and Html.Styled?
+-}
 
 type Combo
     = Alone
@@ -94,11 +104,26 @@ onUp combo msg =
     HtmlEvents.on "keyup" (D.map (\_ -> msg) <| comboDecoder combo)
 
 
+shortcut : Combo -> msg -> Sub msg
+shortcut combo msg =
+    BrowserEvents.onKeyDown <| shortcutDecoder combo msg
+
+
 shortcuts : List (Combo, msg) -> Sub msg
 shortcuts combos =
     BrowserEvents.onKeyDown
-        <| D.oneOf
-        <| map (uncurry shortcutDecoder) combos
+        <| (D.oneOf <| map (uncurry shortcutDecoder) combos)
+
+
+softShortcut : Combo -> msg -> Sub msg
+softShortcut combo msg =
+    BrowserEvents.onKeyDown <| softShortcutDecoder combo msg
+
+
+softShortcuts : List (Combo, msg) -> Sub msg
+softShortcuts combos =
+    BrowserEvents.onKeyDown
+        <| (D.oneOf <| map (uncurry softShortcutDecoder) combos)
 
 
 uncurry : (a -> b -> c) -> (a,  b) -> c
@@ -106,10 +131,27 @@ uncurry fn (a, b) =
     fn a b
 
 
-shortcut : Combo -> msg -> Sub msg
-shortcut combo msg =
-    BrowserEvents.onKeyDown <| shortcutDecoder combo msg
+softShortcutDecoder : Combo -> msg -> Decoder msg
+softShortcutDecoder combo msg =
+    let
+        shortcutIfNotInput = ifNotInput <| shortcutDecoder combo msg
+    in
+    D.andThen shortcutIfNotInput
+        <| D.at ["target", "localName"] D.string
+    
 
+inputElements : List String
+inputElements =
+    [ "input"
+    , "textarea"
+    ]
+
+ifNotInput : Decoder msg -> String -> Decoder msg
+ifNotInput decoder tagName =
+    case member tagName inputElements of
+        True -> Debug.log "is input" D.fail "Soft shortcuts don't active with input or textarea elements"
+        False -> decoder
+    
 
 shortcutDecoder : Combo -> msg -> Decoder msg
 shortcutDecoder combo msg =
@@ -127,16 +169,22 @@ comboDecoder combo =
             D.succeed ()
 
         Ctrl remainder ->
-            comboModifierDecoder "ctrlCombo" (comboDecoder remainder)
+            comboModifierDecoder "ctrlKey" (comboDecoder remainder)
 
         Alt remainder ->
-            comboModifierDecoder "altCombo" (comboDecoder remainder)
+            comboModifierDecoder "altKey" (comboDecoder remainder)
+
+        Option remainder ->
+            comboModifierDecoder "altKey" (comboDecoder remainder)
 
         Cmd remainder ->
-            comboModifierDecoder "metaCombo" (comboDecoder remainder)
+            comboModifierDecoder "metaKey" (comboDecoder remainder)
+
+        Meta remainder ->
+            comboModifierDecoder "metaKey" (comboDecoder remainder)
 
         Shift remainder ->
-            comboModifierDecoder "shiftCombo" (comboDecoder remainder)
+            comboModifierDecoder "shiftKey" (comboDecoder remainder)
 
         Key key ->
             keyDecoder <| String.toLower <| keyForComboCombo combo
