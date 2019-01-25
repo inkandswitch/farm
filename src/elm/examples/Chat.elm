@@ -104,7 +104,7 @@ update msg { flags, state, doc } =
                             , time = Time.posixToMillis time
                             }
                                 :: doc.messages
-                    }
+                      }
                     , Cmd.none
                     )
 
@@ -123,10 +123,10 @@ view : Model State Doc -> Html Msg
 view { flags, state, doc } =
     let
         avatarGizmo =
-            Maybe.withDefault "" (Dict.get "avatar" flags.config)
+            "hypermerge:/@ink/avatar"
 
         titleGizmo =
-            Maybe.withDefault "" (Dict.get "editableTitle" flags.config)
+            "hypermerge:/@ink/editableTitle"
     in
     div
         [ css
@@ -232,7 +232,7 @@ viewGroup state ( avatarGizmo, titleGizmo ) ( authorMessage, messages ) =
             , flexShrink (int 0)
             ]
         ]
-        [ div [ css [flexShrink zero ] ]
+        [ div [ css [ flexShrink zero ] ]
             [ fromUnstyled <| Gizmo.render avatarGizmo authorMessage.author
             ]
         , div

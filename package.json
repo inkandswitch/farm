@@ -1,5 +1,5 @@
 {
-  "name": "farm",
+  "name": "farm2",
   "version": "1.0.1",
   "description": "Runtime-editable elm.",
   "main": "dist/electron.js",
@@ -24,6 +24,7 @@
     "@types/hard-source-webpack-plugin": "^1.0.0",
     "@types/html-webpack-plugin": "^3.2.0",
     "@types/lodash": "^4.14.118",
+    "@types/mime-types": "^2.1.0",
     "@types/node": "^10.12.0",
     "@types/proper-lockfile": "^3.0.0",
     "@types/webpack": "^4.4.17",
@@ -59,6 +60,7 @@
     "hypercore": "^6.21.0",
     "hypermerge": "github:automerge/hypermerge#fork",
     "lodash": "^4.17.11",
+    "mime-types": "^2.1.21",
     "node-elm-compiler": "^5.0.1",
     "odiff": "github:inkandswitch/odiff",
     "proper-lockfile": "^3.2.0",

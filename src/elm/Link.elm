@@ -12,8 +12,13 @@ getId : String -> Result String String
 getId str =
     parse str
         |> Result.andThen checkScheme
-        |> Result.andThen extractId
-        |> Result.andThen checkId
+        |> Result.map extractPath
+
+
+extractPath : Uri -> String
+extractPath =
+    .path
+        >> String.join "/"
 
 
 extractId : Uri -> Result String String

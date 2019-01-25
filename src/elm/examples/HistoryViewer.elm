@@ -1,23 +1,24 @@
 module HistoryViewer exposing (Doc, Msg, State, gizmo)
 
+import Browser.Dom as Dom
 import Clipboard
 import Colors
+import Config
 import Css exposing (..)
 import Gizmo exposing (Flags, Model)
 import History exposing (History)
 import Html.Styled as Html exposing (..)
-import Html.Styled.Attributes exposing (css, value, placeholder, id)
+import Html.Styled.Attributes exposing (css, id, placeholder, value)
 import Html.Styled.Events exposing (..)
 import IO
 import Json.Decode as D
 import Json.Encode as E
+import Keyboard exposing (Combo(..))
+import Link
 import Navigation
 import RealmUrl
-import Link
-import Config
-import Keyboard exposing (Combo(..))
-import Browser.Dom as Dom
 import Task
+
 
 focusColor =
     "#f0f0f0"
@@ -37,7 +38,8 @@ gizmo =
 -}
 type alias State =
     { focus : Int
-    , inputVal : Maybe String }
+    , inputVal : Maybe String
+    }
 
 
 {-| Document state
@@ -89,15 +91,18 @@ update msg ({ flags, state, doc } as model) =
                     case state.inputVal of
                         Just url ->
                             update (NavigateTo url) model
+
                         Nothing ->
                             ( state
                             , doc
                             , Cmd.none
                             )
+
                 _ ->
                     case atPosition (state.focus - 1) doc.history.seen of
                         Just url ->
                             update (NavigateTo url) model
+
                         Nothing ->
                             ( state
                             , doc
@@ -106,17 +111,21 @@ update msg ({ flags, state, doc } as model) =
 
         SetFocus focus ->
             let
-                clampedFocus = clamp 0 (List.length doc.history.seen) focus
+                clampedFocus =
+                    clamp 0 (List.length doc.history.seen) focus
             in
             ( { state | focus = clampedFocus }
             , doc
-            , case (clampedFocus, state.focus) of
-                (0, 0) ->
+            , case ( clampedFocus, state.focus ) of
+                ( 0, 0 ) ->
                     Cmd.none
-                (_, 0) ->
+
+                ( _, 0 ) ->
                     Task.attempt (\_ -> NoOp) (Dom.blur "url-input")
-                (0, _) ->
+
+                ( 0, _ ) ->
                     Task.attempt (\_ -> NoOp) (Dom.focus "url-input")
+
                 _ ->
                     Cmd.none
             )
@@ -126,6 +135,7 @@ update msg ({ flags, state, doc } as model) =
             , doc
             , Cmd.none
             )
+
 
 clamp : Int -> Int -> Int -> Int
 clamp minimum maximum =
@@ -137,6 +147,7 @@ atPosition pos list =
     list
         |> List.drop pos
         |> List.head
+
 
 view : Model State Doc -> Html Msg
 view ({ doc, state } as model) =
@@ -150,27 +161,37 @@ view ({ doc, state } as model) =
             , backgroundColor (hex "#fff")
             , overflowX hidden
             , overflowY auto
-            , fontFamilies ["system-ui"]
+            , fontFamilies [ "system-ui" ]
             ]
         ]
         [ div
             []
-            ((viewInput (state.focus == 0) state.inputVal) :: (List.indexedMap (viewHistoryItem state.focus) doc.history.seen))
+            (viewInput (state.focus == 0) state.inputVal :: List.indexedMap (viewHistoryItem state.focus) doc.history.seen)
         ]
+
 
 focusedStyle =
     [ backgroundColor (hex "e5e5e5")
     ]
 
+
 unfocusedStyle =
     [ backgroundColor (hex "fff")
     ]
 
+
 viewInput : Bool -> Maybe String -> Html Msg
 viewInput isFocused val =
     let
-        url = Maybe.withDefault "" val
-        style = if isFocused then focusedStyle else unfocusedStyle
+        url =
+            Maybe.withDefault "" val
+
+        style =
+            if isFocused then
+                focusedStyle
+
+            else
+                unfocusedStyle
     in
     input
         [ css
@@ -190,10 +211,16 @@ viewInput isFocused val =
         ]
         []
 
+
 viewHistoryItem : Int -> Int -> String -> Html Msg
 viewHistoryItem focused index url =
     let
-        style = if focused - 1 == index then focusedStyle else unfocusedStyle
+        style =
+            if focused - 1 == index then
+                focusedStyle
+
+            else
+                unfocusedStyle
     in
     div
         [ onStopPropagationClick (NavigateTo url)
@@ -213,24 +240,31 @@ viewHistoryItem focused index url =
         [ case RealmUrl.parse url of
             Ok { code, data } ->
                 viewProperty "title" data
+
             Err err ->
                 Html.text err
         ]
 
+
 viewProperty : String -> String -> Html Msg
 viewProperty prop url =
     Html.fromUnstyled <|
-        Gizmo.renderWith [Gizmo.attr "data-prop" prop] Config.property url
+        Gizmo.renderWith [ Gizmo.attr "data-prop" prop ] "hypermerge:/@ink/property" url
+
 
 onStopPropagationClick : Msg -> Html.Attribute Msg
 onStopPropagationClick msg =
-    stopPropagationOn "click" (D.succeed (msg, True))
+    stopPropagationOn "click" (D.succeed ( msg, True ))
+
 
 subscriptions : Model State Doc -> Sub Msg
 subscriptions { state } =
     Sub.none
-    -- Keyboard.shortcuts
-    --     [ ( Enter,  NavigateToFocused )
-    --     , ( Down, SetFocus <| state.focus + 1 )
-    --     , ( Up, SetFocus <| state.focus - 1 )
-    --     ]
+
+
+
+-- Keyboard.shortcuts
+--     [ ( Enter,  NavigateToFocused )
+--     , ( Down, SetFocus <| state.focus + 1 )
+--     , ( Up, SetFocus <| state.focus - 1 )
+--     ]

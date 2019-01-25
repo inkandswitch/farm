@@ -1,5 +1,6 @@
 module FarmUrl exposing (create, fromIds, parse, parseIds)
 
+import Extra.List as List
 import Link
 import UriParser exposing (Uri)
 
@@ -32,9 +33,17 @@ parseIds url =
 extractIds : Uri -> Result String { codeId : String, dataId : String }
 extractIds uri =
     Maybe.map2 idPair
-        uri.authority
-        (List.head uri.path)
+        (extractCode uri)
+        (List.last uri.path)
         |> Result.fromMaybe "An id is missing"
+
+
+extractCode : Uri -> Maybe String
+extractCode uri =
+    uri.authority
+        |> Maybe.map
+            (List.consTo (List.init uri.path |> Maybe.withDefault []))
+        |> Maybe.map (String.join "/")
 
 
 idPair : String -> String -> { codeId : String, dataId : String }
