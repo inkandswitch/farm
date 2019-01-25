@@ -2,7 +2,7 @@ module LiveEdit exposing (Doc, Msg, State, gizmo)
 
 import Gizmo exposing (Flags, Model)
 import Html.Styled as Html exposing (..)
-import Html.Styled.Attributes exposing (css, value)
+import Html.Styled.Attributes exposing (css, value, id)
 import Html.Styled.Events exposing (onInput)
 import Css exposing (..)
 import Json.Encode as E
@@ -91,10 +91,12 @@ view { flags, doc } =
         Just prop ->
             let
                 val = Value.toString <| getProp prop doc
+                idVal = Maybe.withDefault flags.data <| Dict.get "data-id" flags.all
             in
                 input
                     [ value val
                     , onInput SetValue
+                    , id idVal
                     , css
                         [ all inherit
                         , display initial
@@ -103,7 +105,6 @@ view { flags, doc } =
                     []
         Nothing ->
             Html.text <| "Must define a " ++ attr ++ " attribute."
-
 
 getProp : String -> Doc -> Value
 getProp prop doc =

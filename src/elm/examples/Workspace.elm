@@ -1,26 +1,30 @@
 module Workspace exposing (Doc, Msg, State, gizmo)
 
-import Clipboard
-import Colors
-import Config
-import Css exposing (..)
-import Dict
-import FarmUrl
 import Gizmo exposing (Flags, Model)
-import History exposing (History)
 import Html.Styled as Html exposing (..)
-import Html.Styled.Attributes exposing (autofocus, css, placeholder, value)
+import Html.Styled.Attributes exposing (css, value, autofocus, placeholder)
 import Html.Styled.Events exposing (..)
+import Css exposing (..)
+import Config
 import IO
-import Json.Decode as D
-import Keyboard exposing (Combo(..))
+import Colors
 import Navigation
+import FarmUrl
+import Dict
 import Repo
+import Json.Decode as D
+import History exposing (History)
+import Clipboard
+import Keyboard exposing (Combo(..))
+import Browser.Dom as Dom
+import Task
 
 
-superboxBackgroundColor =
-    "e9edf0"
+inputBackgroundColor =
+    "#e9e9e9"
 
+darkerInputBackgroundColor =
+    "#e5e5e5"
 
 editTitleIcon =
     "📝"
@@ -34,7 +38,6 @@ gizmo =
         , view = Html.toUnstyled << view
         , subscriptions = subscriptions
         }
-
 
 type Mode
     = DefaultMode
@@ -88,9 +91,12 @@ type Msg
     | SetDefaultMode
     | SetEditMode
     | SetSearchMode
+    | ToggleSearchMode
     | SetSearchTerm String
     | Search
     | CopyLink
+    | Focus String
+    | Blur String
 
 
 update : Msg -> Model State Doc -> ( State, Doc, Cmd Msg )
@@ -138,15 +144,13 @@ update msg ({ state, doc } as model) =
             case List.head urls of
                 Just url ->
                     case FarmUrl.create { code = Config.board, data = url } of
-                        Ok farmUrl ->
-                            update (NavigateTo farmUrl) model
-
+                        Ok realmUrl ->
+                            update (NavigateTo realmUrl) model
                         _ ->
                             ( state
                             , doc
                             , IO.log <| "Failed to create a new board"
                             )
-
                 _ ->
                     ( state
                     , doc
@@ -171,6 +175,13 @@ update msg ({ state, doc } as model) =
             , Cmd.none
             )
 
+        ToggleSearchMode ->
+            case state.mode of
+                SearchMode ->
+                    update SetDefaultMode model
+                _ ->
+                    update SetSearchMode model
+
         SetSearchTerm term ->
             ( { state | searchTerm = Just term }
             , doc
@@ -181,7 +192,6 @@ update msg ({ state, doc } as model) =
             case state.searchTerm of
                 Just term ->
                     update (NavigateTo term) model
-
                 Nothing ->
                     ( state
                     , doc
@@ -201,6 +211,19 @@ update msg ({ state, doc } as model) =
                     , doc
                     , IO.log <| "Nothing to copy"
                     )
+
+        Focus id ->
+            ( state
+            , doc
+            , Task.attempt (\_ -> NoOp) <| Dom.focus id
+            )
+
+        Blur id ->
+            ( state
+            , doc
+            , Task.attempt (\_ -> NoOp) <| Dom.blur id
+            )
+
 
 
 view : Model State Doc -> Html Msg
@@ -233,17 +256,13 @@ view ({ flags, doc, state } as model) =
             [ viewNavigationBar model
             ]
         , viewContent model
-        , if state.mode == SearchMode then
-            viewHistory flags.data
-
-          else
-            Html.text ""
+        , if state.mode == SearchMode then viewHistory flags.data else Html.text ""
         ]
 
 
 detail : D.Decoder String
 detail =
-    D.at [ "detail", "value" ] D.string
+    D.at ["detail", "value"] D.string
 
 
 viewNavigationBar : Model State Doc -> Html Msg
@@ -251,11 +270,10 @@ viewNavigationBar ({ doc, state } as model) =
     div
         [ css
             [ displayFlex
-            , padding (px 10)
+            , padding (px 5)
             , alignItems center
             , boxShadow5 zero (px 2) (px 8) zero (rgba 0 0 0 0.12)
             , borderBottom3 (px 1) solid (hex "ddd")
-            , height (px 40)
             ]
         ]
         [ viewNavButtons doc.history
@@ -292,6 +310,11 @@ viewSecondaryButtons =
             ]
         ]
         [ viewButton
+            True
+            ToggleSearchMode
+            [ text "🔍"
+            ]
+        , viewButton
             True
             CopyLink
             [ text "📋"
@@ -348,65 +371,44 @@ viewSuperbox : Model State Doc -> Html Msg
 viewSuperbox { doc, state } =
     div
         [ onStopPropagationClick NoOp
+        , Keyboard.onPress Enter (Blur "title-input")
         , css
             [ flexGrow (num 1)
-            , fontSize (Css.em 0.8)
             , padding (px 5)
             , borderRadius (px 5)
-            , backgroundColor (hex superboxBackgroundColor)
+            , border3 (px 2) solid (hex inputBackgroundColor)
             , color (hex "777")
             , margin2 (px 0) auto
-            , border zero
             , textAlign center
             , maxWidth (px 400)
             , position relative
-            , focus
-                [ color (hex Colors.blueBlack)
-                ]
+            , backgroundColor (hex inputBackgroundColor)
+            , fontSize (Css.em 0.8)
             , hover
-                [ color (hex Colors.blueBlack)
+                [ color (hex "999")
+                , backgroundColor (hex darkerInputBackgroundColor)
+                ]
+            , pseudoClass "focus-within"
+                [ color (hex "777")
+                , backgroundColor (hex "fff")
+                , border3 (px 2) solid (hex inputBackgroundColor)
                 ]
             ]
         ]
-        [ case state.mode of
-            DefaultMode ->
-                case currentDataUrl doc.history of
-                    Just dataUrl ->
-                        Html.fromUnstyled <| Gizmo.render Config.superboxDefault dataUrl
-
-                    Nothing ->
-                        div [ onClick SetSearchMode ] [ text " Empty Title" ]
-
-            EditMode ->
-                case currentDataUrl doc.history of
-                    Just dataUrl ->
-                        Html.fromUnstyled <| Gizmo.render Config.superboxEdit dataUrl
-
-                    Nothing ->
-                        text ""
-
-            SearchMode ->
-                input
-                    [ css
-                        [ width (pct 100)
-                        , margin zero
-                        , border zero
-                        , padding zero
-                        , cursor pointer
-                        , backgroundColor transparent
-                        , textAlign center
-                        , fontSize (Css.em 1)
-                        , color (hex Colors.blueBlack)
-                        ]
-                    , autofocus True
-                    , placeholder "History"
-                    , value <| Maybe.withDefault "" state.searchTerm
-                    , onInput SetSearchTerm
-                    , Keyboard.onPress Enter Search
-                    ]
+        [ case currentDataUrl doc.history of
+            Just dataUrl ->
+                viewLiveEdit "title" dataUrl
+            Nothing ->
+                div
                     []
+                    [ text "No document"
+                    ]
         ]
 
+
+viewLiveEdit : String -> String -> Html Msg
+viewLiveEdit prop url =
+    Html.fromUnstyled <| Gizmo.renderWith [Gizmo.attr "data-prop" prop, Gizmo.attr "data-id" "title-input"] Config.liveEdit url
 
 viewContent : Model State Doc -> Html Msg
 viewContent { doc, state } =
@@ -430,7 +432,6 @@ viewContent { doc, state } =
                     Nothing ->
                         viewEmptyContent
         ]
-
 
 viewEmptyContent : Html Msg
 viewEmptyContent =
@@ -481,18 +482,16 @@ viewEmptyContent =
             ]
         ]
 
-
 historyWidth : Float
 historyWidth =
-    400
-
+    500
 
 viewHistory : String -> Html Msg
 viewHistory url =
     div
         [ css
             [ position absolute
-            , top (px 50)
+            , top (px 75)
             , left (pct 50)
             , width (px historyWidth)
             , marginLeft (px -(historyWidth / 2))
@@ -508,17 +507,15 @@ subscriptions { state } =
         [ Navigation.currentUrl NavigateTo
         , Repo.created BoardCreated
         , Keyboard.shortcuts
-            [ ( Cmd T
-              , if state.mode /= SearchMode then
-                    SetSearchMode
-
-                else
-                    SetDefaultMode
-              )
-            , ( Cmd Left, NavigateBack )
-            , ( Cmd Right, NavigateForward )
-            , ( Cmd B, CreateBoard )
-            , ( Esc, SetDefaultMode )
+            [ (Cmd O, ToggleSearchMode)
+            , (Cmd Left, NavigateBack)
+            , (Cmd Right, NavigateForward)
+            , (Cmd N, CreateBoard)
+            , (Ctrl O, ToggleSearchMode)
+            , (Cmd Left, NavigateBack)
+            , (Cmd Right, NavigateForward)
+            , (Cmd N, CreateBoard)
+            , (Esc, SetDefaultMode)
             ]
         ]
 
@@ -526,9 +523,9 @@ subscriptions { state } =
 currentPair : History String -> Maybe Pair
 currentPair =
     History.current
-        >> Result.fromMaybe "No current url"
-        >> Result.andThen FarmUrl.parse
-        >> Result.toMaybe
+    >> Result.fromMaybe "No current url"
+    >> Result.andThen FarmUrl.parse
+    >> Result.toMaybe
 
 
 currentDataUrl : History String -> Maybe String
@@ -538,4 +535,4 @@ currentDataUrl =
 
 onStopPropagationClick : Msg -> Html.Attribute Msg
 onStopPropagationClick msg =
-    stopPropagationOn "click" (D.succeed ( msg, True ))
+    stopPropagationOn "click" (D.succeed (msg, True))
