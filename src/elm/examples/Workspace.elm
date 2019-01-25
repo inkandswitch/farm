@@ -1,29 +1,31 @@
 module Workspace exposing (Doc, Msg, State, gizmo)
 
-import Gizmo exposing (Flags, Model)
-import Html.Styled as Html exposing (..)
-import Html.Styled.Attributes exposing (css, value, autofocus, placeholder)
-import Html.Styled.Events exposing (..)
-import Css exposing (..)
-import IO
-import Colors
-import Navigation
-import FarmUrl
-import Dict
-import Repo
-import Json.Decode as D
-import History exposing (History)
-import Clipboard
-import Keyboard exposing (Combo(..))
 import Browser.Dom as Dom
+import Clipboard
+import Colors
+import Css exposing (..)
+import Dict
+import FarmUrl
+import Gizmo exposing (Flags, Model)
+import History exposing (History)
+import Html.Styled as Html exposing (..)
+import Html.Styled.Attributes exposing (autofocus, css, placeholder, value)
+import Html.Styled.Events exposing (..)
+import IO
+import Json.Decode as D
+import Keyboard exposing (Combo(..))
+import Navigation
+import Repo
 import Task
 
 
 inputBackgroundColor =
     "#e9e9e9"
 
+
 darkerInputBackgroundColor =
     "#e5e5e5"
+
 
 editTitleIcon =
     "📝"
@@ -37,6 +39,7 @@ gizmo =
         , view = Html.toUnstyled << view
         , subscriptions = subscriptions
         }
+
 
 type Mode
     = DefaultMode
@@ -145,11 +148,13 @@ update msg ({ state, doc } as model) =
                     case FarmUrl.create { code = "hypermerge:/@ink/board", data = url } of
                         Ok realmUrl ->
                             update (NavigateTo realmUrl) model
+
                         _ ->
                             ( state
                             , doc
                             , IO.log <| "Failed to create a new board"
                             )
+
                 _ ->
                     ( state
                     , doc
@@ -178,6 +183,7 @@ update msg ({ state, doc } as model) =
             case Debug.log "toggle" state.mode of
                 SearchMode ->
                     update SetDefaultMode model
+
                 _ ->
                     update SetSearchMode model
 
@@ -191,6 +197,7 @@ update msg ({ state, doc } as model) =
             case state.searchTerm of
                 Just term ->
                     update (NavigateTo term) model
+
                 Nothing ->
                     ( state
                     , doc
@@ -224,7 +231,6 @@ update msg ({ state, doc } as model) =
             )
 
 
-
 view : Model State Doc -> Html Msg
 view ({ flags, doc, state } as model) =
     let
@@ -255,13 +261,17 @@ view ({ flags, doc, state } as model) =
             [ viewNavigationBar model
             ]
         , viewContent model
-        , if state.mode == SearchMode then viewHistory flags.data else Html.text ""
+        , if state.mode == SearchMode then
+            viewHistory flags.data
+
+          else
+            Html.text ""
         ]
 
 
 detail : D.Decoder String
 detail =
-    D.at ["detail", "value"] D.string
+    D.at [ "detail", "value" ] D.string
 
 
 viewNavigationBar : Model State Doc -> Html Msg
@@ -397,6 +407,7 @@ viewSuperbox { doc, state } =
         [ case currentDataUrl doc.history of
             Just dataUrl ->
                 viewLiveEdit "title" dataUrl
+
             Nothing ->
                 div
                     []
@@ -415,6 +426,7 @@ viewLiveEdit prop url =
             ]
     in
     Html.fromUnstyled <| Gizmo.renderWith props "hypermerge:/@ink/liveEdit" url
+
 
 viewContent : Model State Doc -> Html Msg
 viewContent { doc, state } =
@@ -438,6 +450,7 @@ viewContent { doc, state } =
                     Nothing ->
                         viewEmptyContent
         ]
+
 
 viewEmptyContent : Html Msg
 viewEmptyContent =
@@ -488,9 +501,11 @@ viewEmptyContent =
             ]
         ]
 
+
 historyWidth : Float
 historyWidth =
     500
+
 
 viewHistory : String -> Html Msg
 viewHistory url =
@@ -503,7 +518,7 @@ viewHistory url =
             , marginLeft (px -(historyWidth / 2))
             ]
         ]
-        [ Html.fromUnstyled <| Gizmo.render "hypmerge:/@ink/historyViewer" url
+        [ Html.fromUnstyled <| Gizmo.render "hypermerge:/@ink/historyViewer" url
         ]
 
 
@@ -513,10 +528,10 @@ subscriptions { state } =
         [ Navigation.currentUrl NavigateTo
         , Repo.created BoardCreated
         , Keyboard.shortcuts
-            [ (Cmd O, ToggleSearchMode)
-            , (Cmd T, ToggleSearchMode)
-            , (Cmd B, CreateBoard)
-            , (Esc, SetDefaultMode)
+            [ ( Cmd O, ToggleSearchMode )
+            , ( Cmd T, ToggleSearchMode )
+            , ( Cmd B, CreateBoard )
+            , ( Esc, SetDefaultMode )
             ]
         , Keyboard.softShortcuts
             [ ( Cmd Left, NavigateBack )
@@ -528,9 +543,9 @@ subscriptions { state } =
 currentPair : History String -> Maybe Pair
 currentPair =
     History.current
-    >> Result.fromMaybe "No current url"
-    >> Result.andThen FarmUrl.parse
-    >> Result.toMaybe
+        >> Result.fromMaybe "No current url"
+        >> Result.andThen FarmUrl.parse
+        >> Result.toMaybe
 
 
 currentDataUrl : History String -> Maybe String
@@ -540,4 +555,4 @@ currentDataUrl =
 
 onStopPropagationClick : Msg -> Html.Attribute Msg
 onStopPropagationClick msg =
-    stopPropagationOn "click" (D.succeed (msg, True))
+    stopPropagationOn "click" (D.succeed ( msg, True ))
