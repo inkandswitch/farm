@@ -425,10 +425,6 @@ viewContent { doc, state } =
             Nothing ->
                 case currentPair doc.history of
                     Just ({ code, data } as pair) ->
-                        let
-                            url =
-                                Debug.log "Viewing " <| FarmUrl.create pair
-                        in
                         Html.fromUnstyled <| Gizmo.render code data
 
                     Nothing ->

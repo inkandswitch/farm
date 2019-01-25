@@ -29,6 +29,7 @@ type Combo
     | Option Combo -- Alt alias for Mac, represents option/⌥
     | Meta Combo
     | Cmd Combo -- Meta alias for Mac, represents command
+    | Window Combo -- Meta alias for Windows, represents ⊞
     -- Letters (match to lowercase)
     | A
     | B
@@ -149,7 +150,7 @@ inputElements =
 ifNotInput : Decoder msg -> String -> Decoder msg
 ifNotInput decoder tagName =
     case member tagName inputElements of
-        True -> Debug.log "is input" D.fail "Soft shortcuts don't active with input or textarea elements"
+        True -> D.fail "Soft shortcuts don't active with input or textarea elements"
         False -> decoder
     
 
@@ -177,20 +178,23 @@ comboDecoder combo =
         Option remainder ->
             comboModifierDecoder "altKey" (comboDecoder remainder)
 
+        Meta remainder ->
+            comboModifierDecoder "metaKey" (comboDecoder remainder)
+
         Cmd remainder ->
             comboModifierDecoder "metaKey" (comboDecoder remainder)
 
-        Meta remainder ->
+        Window remainder ->
             comboModifierDecoder "metaKey" (comboDecoder remainder)
 
         Shift remainder ->
             comboModifierDecoder "shiftKey" (comboDecoder remainder)
 
         Key key ->
-            keyDecoder <| String.toLower <| keyForComboCombo combo
+            keyDecoder <| (String.toLower <| keyForComboCombo combo)
 
         _ ->
-            keyDecoder <| String.toLower <| keyForComboCombo combo
+            keyDecoder <| (String.toLower <| keyForComboCombo combo)
 
 
 comboModifierDecoder : String -> Decoder () -> Decoder ()
