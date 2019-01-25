@@ -116,7 +116,11 @@ export default class Repo {
     const { path } = URL.parse(url)
     if (!path) throw new Error("No path in this url")
 
-    const keys = path.slice(1).split("/")
+    const keys = path
+      .slice(1)
+      .split("/")
+      .filter(key => key)
+
     const [id] = keys
 
     if (isValidId(id)) {
