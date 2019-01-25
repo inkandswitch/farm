@@ -418,8 +418,14 @@ viewSuperbox { doc, state } =
 
 viewLiveEdit : String -> String -> Html Msg
 viewLiveEdit prop url =
-    Html.fromUnstyled <| Gizmo.renderWith [ Gizmo.attr "data-prop" prop, Gizmo.attr "data-id" "title-input" ] "hypermerge:/@ink/liveEdit" url
-
+    let
+        props =
+            [ Gizmo.attr "prop" prop
+            , Gizmo.attr "input-id" "title-input"
+            , Gizmo.attr "default" "No title"
+            ]
+    in
+    Html.fromUnstyled <| Gizmo.renderWith props "hypermerge:/@ink/liveEdit" url
 
 viewContent : Model State Doc -> Html Msg
 viewContent { doc, state } =
