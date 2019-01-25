@@ -1,5 +1,5 @@
 {
-  "name": "farm2",
+  "name": "farm",
   "version": "1.0.1",
   "description": "Runtime-editable elm.",
   "main": "dist/electron.js",
