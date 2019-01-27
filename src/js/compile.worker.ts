@@ -6,8 +6,6 @@ if ((self as any).module) {
   ;(self as any).module.paths.push(resolve("./node_modules"))
 }
 
-const PERSIST = "PERSIST" in process.env
-
 import QueuedPort from "./QueuedPort"
 import { ToCompiler, FromCompiler } from "./Msg"
 import fs from "fs"
@@ -70,18 +68,11 @@ async function work(msg: ToCompiler) {
           debug: msg.debug,
         })
 
-        if (PERSIST && msg.persist) {
+        if (msg.persist) {
           const [, name = "Unknown"] = msg.source.match(/^module (\w+)/) || []
           const filename = `./src/elm/examples/${name}.elm`
-          const newFile = fs.createWriteStream(filename)
-          const format = spawn(elmFormat.paths["elm-format"], ["--stdin"])
-
-          format.stdout.pipe(newFile)
-          format.stderr.pipe(process.stderr)
-          format.stdin.write(msg.source)
-          await new Promise(res => {
-            format.stdout.on("end", res)
-          })
+          const formatted = await formatElmCode(msg.source)
+          await writeFile(filename, formatted)
         }
 
         const output = `
@@ -110,4 +101,21 @@ function getFilename(source: string): string {
     : /^gizmo /m.test(source)
       ? "./src/elm/Harness.elm" // Compile via Harness if `gizmo` function exists
       : "./src/elm/BotHarness.elm" // Otherwise, compile via BotHarness
+}
+
+function formatElmCode(source: string): Promise<string> {
+  return new Promise((res, rej) => {
+    let out = ""
+    const format = spawn(elmFormat.paths["elm-format"], ["--stdin"])
+    format.stdout
+      .on("data", chunk => {
+        out += chunk
+      })
+      .on("error", err => {
+        rej(err)
+      })
+      .on("end", () => {
+        res(out)
+      })
+  })
 }

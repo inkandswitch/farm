@@ -12,6 +12,7 @@ export interface Compile {
 export interface Compiled {
   t: "Compiled"
   url: string
+  persist?: boolean
   sourceHash: string
   outputHash: string
   output: string

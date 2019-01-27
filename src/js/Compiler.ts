@@ -6,6 +6,7 @@ import { sha1 } from "./Digest"
 
 type CompileWorker = QueuedWorker<Msg.ToCompiler, Msg.FromCompiler>
 
+const PERSIST = "PERSIST" in process.env
 const encoder = new TextEncoder()
 
 export default class Compiler {
@@ -26,7 +27,7 @@ export default class Compiler {
             delete state.error
             delete state.hypermergeFsDiagnostics
 
-            if (state.outputHash === msg.outputHash) break
+            if (!msg.persist && state.outputHash === msg.outputHash) break
 
             state.sourceHash = msg.sourceHash
             state.outputHash = msg.outputHash
@@ -60,28 +61,29 @@ export default class Compiler {
 
     this.docUrls.add(url)
 
-    this.repo.open(url).subscribe(
-      whenChanged(getElmSource, async (source, doc) => {
-        const sourceHash = await sha1(source)
-        if (sourceHash === doc.sourceHash) {
-          console.log("Source is unchanged, skipping compile")
-          return
-        }
+    this.repo.open(url).subscribe(async doc => {
+      const source = getElmSource(doc)
+      if (!source) return
 
-        console.log("Compiler received updated source file")
+      const sourceHash = await hashSource(doc)
+      if (sourceHash === doc.sourceHash) {
+        console.log("Source is unchanged, skipping compile")
+        return
+      }
 
-        this.worker.send({
-          t: "Compile",
-          url,
-          source,
-          sourceHash,
-          outputHash: doc.outputHash,
-          config: doc.config || {},
-          debug: doc.debug,
-          persist: doc.persist,
-        })
-      }),
-    )
+      console.log("Compiler received updated source file")
+
+      this.worker.send({
+        t: "Compile",
+        url,
+        source,
+        sourceHash,
+        outputHash: doc.outputHash,
+        config: doc.config || {},
+        debug: doc.debug,
+        persist: PERSIST && doc.persist,
+      })
+    })
 
     return this
   }
@@ -106,6 +108,14 @@ function rootError(filename: string, ...messages: string[]) {
 
 const getElmSource = (doc: any): string | undefined =>
   doc["Source.elm"] || doc["source.elm"]
+
+async function hashSource(doc: any): Promise<string> {
+  const extra = JSON.stringify({
+    debug: doc.debug,
+    config: doc.config,
+  })
+  return sha1(extra + doc.source)
+}
 
 function produceDiagnosticsFromMessage(error: string) {
   // first line is bogus:
