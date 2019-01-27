@@ -27,12 +27,12 @@ export default class Compiler {
             delete state.error
             delete state.hypermergeFsDiagnostics
 
-            if (!msg.persist && state.outputHash === msg.outputHash) {
-              console.log("Compiled output was identitical. Ignoring.")
+            if (state.outputHash === msg.outputHash) {
+              this.log(msg.url, "Compiled output was identitical. Ignoring.")
               break
             }
 
-            console.log("Compilation successful. Writing to doc.")
+            this.log(msg.url, "Compilation successful. Writing to doc.")
 
             state.sourceHash = msg.sourceHash
             state.outputHash = msg.outputHash
@@ -49,6 +49,8 @@ export default class Compiler {
           case "CompileError":
             state.error = msg.error
             state.sourceHash = msg.sourceHash
+
+            this.log(msg.url, "Compile error:", msg.url)
 
             state.hypermergeFsDiagnostics = produceDiagnosticsFromMessage(
               msg.error,
@@ -71,12 +73,18 @@ export default class Compiler {
       if (!source) return
 
       const sourceHash = await hashSource(doc)
+      const persist = PERSIST && doc.persist
+
       if (sourceHash === doc.sourceHash) {
-        console.log("Source is unchanged, skipping compile")
-        return
+        if (persist) {
+          this.log(url, "Source is unchanged, but PERSIST is set. Compiling.")
+        } else {
+          console.log("Source is unchanged, skipping compile.")
+          return
+        }
       }
 
-      console.log("Received updated source file. Sending to compiler...")
+      this.log(url, "Received updated source file. Sending to compiler...")
 
       this.worker.send({
         t: "Compile",
@@ -86,11 +94,16 @@ export default class Compiler {
         outputHash: doc.outputHash,
         config: doc.config || {},
         debug: doc.debug,
-        persist: PERSIST && doc.persist,
+        persist,
       })
     })
 
     return this
+  }
+
+  log(url: string, ...args: string[]): void {
+    const tag = url.replace("hypermerge:/", "").slice(0, 5)
+    console.log(`[${tag}]`, ...args)
   }
 
   terminate() {

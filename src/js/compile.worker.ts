@@ -109,6 +109,7 @@ function saveElmCode(filename: string, source: string): Promise<void> {
       "--output",
       filename,
     ])
+    format.stdout.on("end", () => res())
     format.stdin.write(source)
     format.stdin.end()
   })
