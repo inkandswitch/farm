@@ -3,6 +3,7 @@ module Board exposing (Doc, Msg, State, gizmo)
 import Array exposing (Array)
 import Browser.Events
 import Clipboard
+import Config
 import Css exposing (..)
 import Dict
 import Extra.Array as Array
@@ -210,7 +211,7 @@ update msg { state, doc } =
             , doc
             , srcs
                 |> List.map (\src -> [ ( "src", E.string src ) ])
-                |> List.map (Repo.createWithProps "hypermerge:/@ink/image" 1)
+                |> List.map (Repo.createWithProps Config.image 1)
                 |> Cmd.batch
             )
 
@@ -389,11 +390,11 @@ view { doc, state } =
             [ property "user-select" "none"
             , fontSize (px 14)
             , fill
-
-            -- , overflow hidden
+            , overflow hidden
             ]
 
         -- , onMouseWheel Scroll
+        , onContextMenu (SetMenu << BoardMenu)
         , onDragOver NoOp
         , onDrop DroppedImages
         , onPaste DroppedImages
@@ -402,8 +403,10 @@ view { doc, state } =
         , viewContextMenu doc state.menu
         , div
             [ css
-                [-- TODO: turns out this is hard:
-                 -- transform (translate2 (px <| negate state.scroll.x) (px <| negate state.scroll.y))
+                [ -- TODO: turns out this is hard:
+                  -- transform (translate2 (px <| negate state.scroll.x) (px <| negate state.scroll.y))
+                  fill
+                , overflow auto
                 ]
             ]
             (doc
@@ -418,8 +421,7 @@ view { doc, state } =
 viewBackground : Html Msg
 viewBackground =
     div
-        [ onContextMenu (SetMenu << BoardMenu)
-        , onMouseDown (SetMenu NoMenu)
+        [ onMouseDown (SetMenu NoMenu)
         , Attr.tabindex 0
         , css
             [ fill
@@ -523,10 +525,11 @@ viewContextMenu doc menuType =
 viewBoardMenu : Point -> Html Msg
 viewBoardMenu pt =
     menu
-        [ menuButton "Chat" (CreateCard "hypermerge:/@ink/chat")
-        , menuButton "Board" (CreateCard "hypermerge:/@ink/board")
-        , menuButton "Note" (CreateCard "hypermerge:/@ink/note")
-        , menuButton "Todo List" (CreateCard "hypermerge:/@ink/todoList")
+        [ menuButton "Chat" (CreateCard Config.chat)
+        , menuButton "Board" (CreateCard Config.board)
+        , menuButton "Note" (CreateCard Config.note)
+        , menuButton "Todo List" (CreateCard Config.todoList)
+        , menuButton "Oblique" (CreateCard Config.oblique)
         ]
 
 

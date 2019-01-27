@@ -1,5 +1,6 @@
 module Chat exposing (Doc, Msg, State, gizmo)
 
+import Config
 import Css exposing (..)
 import Dict
 import Gizmo exposing (Flags, Model)
@@ -121,13 +122,6 @@ update msg { flags, state, doc } =
 
 view : Model State Doc -> Html Msg
 view { flags, state, doc } =
-    let
-        avatarGizmo =
-            "hypermerge:/@ink/avatar"
-
-        titleGizmo =
-            "hypermerge:/@ink/editableTitle"
-    in
     div
         [ css
             [ displayFlex
@@ -148,7 +142,7 @@ view { flags, state, doc } =
             ]
             (doc.messages
                 |> groupWhile (\a b -> a.author == b.author)
-                |> List.map (viewGroup state ( avatarGizmo, titleGizmo ))
+                |> List.map (viewGroup state)
             )
         , inputBar state
         ]
@@ -222,8 +216,8 @@ inputBar state =
         ]
 
 
-viewGroup : State -> ( String, String ) -> ( Message, List Message ) -> Html Msg
-viewGroup state ( avatarGizmo, titleGizmo ) ( authorMessage, messages ) =
+viewGroup : State -> ( Message, List Message ) -> Html Msg
+viewGroup state ( authorMessage, messages ) =
     div
         [ css
             [ displayFlex
@@ -233,7 +227,7 @@ viewGroup state ( avatarGizmo, titleGizmo ) ( authorMessage, messages ) =
             ]
         ]
         [ div [ css [ flexShrink zero ] ]
-            [ fromUnstyled <| Gizmo.render avatarGizmo authorMessage.author
+            [ fromUnstyled <| Gizmo.render Config.avatar authorMessage.author
             ]
         , div
             [ css
@@ -250,7 +244,7 @@ viewGroup state ( avatarGizmo, titleGizmo ) ( authorMessage, messages ) =
                     , alignItems center
                     ]
                 ]
-                [ fromUnstyled <| Gizmo.render titleGizmo authorMessage.author
+                [ fromUnstyled <| Gizmo.render Config.editableTitle authorMessage.author
                 , viewTime state.zone authorMessage.time
                 ]
             , div
@@ -294,7 +288,12 @@ displayTime zone time =
         posix =
             Time.millisToPosix time
     in
-    String.fromInt (Time.toHour zone posix) ++ ":" ++ String.fromInt (Time.toMinute zone posix)
+    String.fromInt (Time.toHour zone posix) ++ ":" ++ formatMinutes (Time.toMinute zone posix)
+
+
+formatMinutes : Int -> String
+formatMinutes =
+    String.fromInt >> String.padLeft 2 '0'
 
 
 subscriptions : Model State Doc -> Sub Msg

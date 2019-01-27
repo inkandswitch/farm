@@ -3,20 +3,23 @@ module Workspace exposing (Doc, Msg, State, gizmo)
 import Browser.Dom as Dom
 import Clipboard
 import Colors
+import Config
 import Css exposing (..)
 import Dict
 import FarmUrl
 import Gizmo exposing (Flags, Model)
 import History exposing (History)
 import Html.Styled as Html exposing (..)
-import Html.Styled.Attributes exposing (autofocus, css, placeholder, value)
+import Html.Styled.Attributes as Attributes exposing (autofocus, css, placeholder, value)
 import Html.Styled.Events exposing (..)
 import IO
 import Json.Decode as D
+import Json.Encode as E
 import Keyboard exposing (Combo(..))
 import Navigation
 import Repo
 import Task
+import Tooltip
 
 
 inputBackgroundColor =
@@ -145,7 +148,7 @@ update msg ({ state, doc } as model) =
         BoardCreated ( ref, urls ) ->
             case List.head urls of
                 Just url ->
-                    case FarmUrl.create { code = "hypermerge:/@ink/board", data = url } of
+                    case FarmUrl.create { code = Config.board, data = url } of
                         Ok realmUrl ->
                             update (NavigateTo realmUrl) model
 
@@ -233,10 +236,6 @@ update msg ({ state, doc } as model) =
 
 view : Model State Doc -> Html Msg
 view ({ flags, doc, state } as model) =
-    let
-        navigationBar =
-            Maybe.withDefault "" <| Dict.get "navigationBar" flags.config
-    in
     div
         [ onClick SetDefaultMode
         , on "navigateback" (D.succeed NavigateBack)
@@ -279,10 +278,10 @@ viewNavigationBar ({ doc, state } as model) =
     div
         [ css
             [ displayFlex
-            , padding (px 5)
             , alignItems center
             , boxShadow5 zero (px 2) (px 8) zero (rgba 0 0 0 0.12)
             , borderBottom3 (px 1) solid (hex "ddd")
+            , height (px 40)
             ]
         ]
         [ viewNavButtons doc.history
@@ -295,7 +294,10 @@ viewNavButtons : History String -> Html Msg
 viewNavButtons history =
     div
         [ css
-            [ marginRight (px 10)
+            [ flex (num 1)
+            , alignItems start
+            , justifyContent start
+            , marginLeft (px 10)
             ]
         ]
         [ viewButton
@@ -311,46 +313,6 @@ viewNavButtons history =
         ]
 
 
-viewSecondaryButtons : Html Msg
-viewSecondaryButtons =
-    div
-        [ css
-            [ marginLeft (px 10)
-            ]
-        ]
-        [ viewButton
-            True
-            ToggleSearchMode
-            [ text "🔍"
-            ]
-        , viewButton
-            True
-            CopyLink
-            [ text "📋"
-            ]
-        , viewButton
-            True
-            CreateBoard
-            [ text "➕"
-            ]
-        ]
-
-
-activeButtonStyle =
-    [ cursor pointer
-    , color (hex Colors.hotPink)
-    , hover
-        [ color (hex Colors.darkerHotPink)
-        ]
-    ]
-
-
-inactiveButtonStyle =
-    [ cursor pointer
-    , color (hex "aaa")
-    ]
-
-
 viewButton : Bool -> Msg -> List (Html Msg) -> Html Msg
 viewButton isActive msg children =
     let
@@ -361,19 +323,110 @@ viewButton isActive msg children =
             else
                 inactiveButtonStyle
     in
-    button
+    span
         [ stopPropagationOn "click" (D.succeed ( msg, isActive ))
         , css
-            ([ flexShrink (num 0)
-             , border zero
-             , fontSize (Css.em 1)
-             , padding (px 5)
+            ([ display inlineBlock
+             , borderRadius (px 3)
+             , padding2 (px 3) (px 5)
              , fontWeight bold
+             , marginRight (px 5)
              ]
                 ++ style
             )
         ]
         children
+
+
+activeButtonStyle =
+    [ cursor pointer
+    , color (hex Colors.primary)
+    , border3 (px 1) solid (hex Colors.primary)
+    , hover
+        [ color (hex Colors.darkerPrimary)
+        , borderColor (hex Colors.darkerPrimary)
+        ]
+    ]
+
+
+inactiveButtonStyle =
+    [ cursor pointer
+    , border3 (px 1) solid (hex "aaa")
+    , color (hex "aaa")
+    ]
+
+
+viewSecondaryButtons : Html Msg
+viewSecondaryButtons =
+    div
+        [ css
+            [ flex (num 1)
+            , alignItems end
+            , justifyContent end
+            , marginRight (px 10)
+            , textAlign right
+            ]
+        ]
+        [ viewLink
+            True
+            ToggleSearchMode
+            (Tooltip.tooltip Tooltip.BottomLeft "Cmd+t")
+            [ text "search"
+            ]
+        , viewLink
+            True
+            CopyLink
+            (Tooltip.tooltip Tooltip.BottomLeft "Cmd+s")
+            [ text "share"
+            ]
+        , viewLink
+            True
+            CreateBoard
+            (Tooltip.tooltip Tooltip.BottomLeft "Cmd+n")
+            [ text "create"
+            ]
+        ]
+
+
+viewLink : Bool -> Msg -> List Style -> List (Html Msg) -> Html Msg
+viewLink isActive msg tooltip children =
+    let
+        style =
+            if isActive then
+                activeLinkStyle
+
+            else
+                inactiveLinkStyle
+    in
+    span
+        [ stopPropagationOn "click" (D.succeed ( msg, isActive ))
+        , css
+            ([ display inlineBlock
+             , border zero
+             , fontSize (Css.em 0.9)
+             , padding (px 5)
+             ]
+                ++ tooltip
+                ++ style
+            )
+        ]
+        children
+
+
+activeLinkStyle =
+    [ cursor pointer
+    , color (hex Colors.primary)
+    , hover
+        [ color (hex Colors.darkerPrimary)
+        ]
+    ]
+
+
+inactiveLinkStyle =
+    [ cursor pointer
+    , border3 (px 1) solid (hex "aaa")
+    , color (hex "aaa")
+    ]
 
 
 viewSuperbox : Model State Doc -> Html Msg
@@ -382,25 +435,21 @@ viewSuperbox { doc, state } =
         [ onStopPropagationClick NoOp
         , Keyboard.onPress Enter (Blur "title-input")
         , css
-            [ flexGrow (num 1)
+            [ flex (num 1)
+            , alignItems center
+            , justifyContent center
             , padding (px 5)
             , borderRadius (px 5)
-            , border3 (px 2) solid (hex inputBackgroundColor)
-            , color (hex "777")
-            , margin2 (px 0) auto
-            , textAlign center
-            , maxWidth (px 400)
+            , color (hex "333")
+            , margin2 (px 5) (px 5)
             , position relative
-            , backgroundColor (hex inputBackgroundColor)
-            , fontSize (Css.em 0.8)
+            , fontSize (Css.em 1.1)
+            , textAlign center
             , hover
-                [ color (hex "999")
-                , backgroundColor (hex darkerInputBackgroundColor)
+                [ color (hex "555")
                 ]
             , pseudoClass "focus-within"
-                [ color (hex "777")
-                , backgroundColor (hex "fff")
-                , border3 (px 2) solid (hex inputBackgroundColor)
+                [ color (hex "555")
                 ]
             ]
         ]
@@ -410,8 +459,11 @@ viewSuperbox { doc, state } =
 
             Nothing ->
                 div
-                    []
-                    [ text "No document"
+                    [ css
+                        [ margin2 (px 2) (px 0)
+                        ]
+                    ]
+                    [ text <| String.fromChar '\u{00A0}'
                     ]
         ]
 
@@ -425,7 +477,7 @@ viewLiveEdit prop url =
             , Gizmo.attr "default" "No title"
             ]
     in
-    Html.fromUnstyled <| Gizmo.renderWith props "hypermerge:/@ink/liveEdit" url
+    Html.fromUnstyled <| Gizmo.renderWith props Config.liveEdit url
 
 
 viewContent : Model State Doc -> Html Msg
@@ -487,10 +539,10 @@ viewEmptyContent =
                 , span
                     [ onClick CreateBoard
                     , css
-                        [ color (hex Colors.hotPink)
+                        [ color (hex Colors.primary)
                         , cursor pointer
                         , hover
-                            [ color (hex Colors.darkerHotPink)
+                            [ color (hex Colors.darkerPrimary)
                             ]
                         ]
                     ]
@@ -518,7 +570,7 @@ viewHistory url =
             , marginLeft (px -(historyWidth / 2))
             ]
         ]
-        [ Html.fromUnstyled <| Gizmo.render "hypermerge:/@ink/historyViewer" url
+        [ Html.fromUnstyled <| Gizmo.render Config.historyViewer url
         ]
 
 
@@ -530,12 +582,17 @@ subscriptions { state } =
         , Keyboard.shortcuts
             [ ( Cmd O, ToggleSearchMode )
             , ( Cmd T, ToggleSearchMode )
-            , ( Cmd B, CreateBoard )
-            , ( Esc, SetDefaultMode )
-            ]
-        , Keyboard.softShortcuts
-            [ ( Cmd Left, NavigateBack )
+            , ( Cmd S, CopyLink )
+            , ( Cmd N, CreateBoard )
+            , ( Cmd Left, NavigateBack )
             , ( Cmd Right, NavigateForward )
+            , ( Ctrl O, ToggleSearchMode )
+            , ( Ctrl T, ToggleSearchMode )
+            , ( Ctrl S, CopyLink )
+            , ( Ctrl N, CreateBoard )
+            , ( Ctrl Left, NavigateBack )
+            , ( Ctrl Right, NavigateForward )
+            , ( Esc, SetDefaultMode )
             ]
         ]
 

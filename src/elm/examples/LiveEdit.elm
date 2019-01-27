@@ -1,24 +1,26 @@
 module LiveEdit exposing (Doc, Msg, State, gizmo)
 
+import Css exposing (..)
+import Dict
+import Doc
 import Gizmo exposing (Flags, Model)
 import Html.Styled as Html exposing (..)
-import Html.Styled.Attributes exposing (css, value, id, placeholder)
+import Html.Styled.Attributes exposing (css, id, placeholder, value)
 import Html.Styled.Events exposing (onInput)
-import Css exposing (..)
-import Json.Encode as E
 import Json.Decode as D
-import Dict
+import Json.Encode as E
 import Value exposing (Value)
-import Doc
 
 
 propAttr : String
 propAttr =
     "prop"
 
+
 defaultAttr : String
 defaultAttr =
     "default"
+
 
 inputIdAttr : String
 inputIdAttr =
@@ -38,8 +40,7 @@ gizmo =
 {-| Ephemeral state not saved to the doc
 -}
 type alias State =
-    {
-    }
+    {}
 
 
 {-| Document state
@@ -54,6 +55,7 @@ init flags =
     , E.null
     , Cmd.none
     )
+
 
 {-| Message type for modifying State and Doc inside update
 -}
@@ -85,6 +87,7 @@ update msg { flags, state, doc } =
                     , Cmd.none
                     )
 
+
 set : String -> Value -> E.Value -> E.Value
 set key value doc =
     doc
@@ -96,36 +99,43 @@ set key value doc =
 view : Model State Doc -> Html Msg
 view { flags, doc } =
     let
-        prop = Dict.get propAttr flags.all
-        default = Maybe.withDefault "" <| Dict.get defaultAttr flags.all
-        inputId = Maybe.withDefault flags.data <| Dict.get inputIdAttr flags.all
+        prop =
+            Dict.get propAttr flags.all
+
+        default =
+            Maybe.withDefault "" <| Dict.get defaultAttr flags.all
+
+        inputId =
+            Maybe.withDefault flags.data <| Dict.get inputIdAttr flags.all
     in
     case prop of
         Just propName ->
             let
-                val = Value.toString <| getProp "" propName doc
+                val =
+                    Value.toString <| getProp "" propName doc
             in
-                input
-                    [ value val
-                    , onInput SetValue
-                    , placeholder default
-                    , id inputId
-                    , css
-                        [ all inherit
-                        , display initial
-                        , width (pct 100)
-                        , height (pct 100)
-                        ]
+            input
+                [ value val
+                , onInput SetValue
+                , placeholder default
+                , id inputId
+                , css
+                    [ all inherit
+                    , display initial
+                    , width (pct 100)
+                    , height (pct 100)
                     ]
-                    []
+                ]
+                []
+
         Nothing ->
             Html.text <| "Must define a " ++ propAttr ++ " attribute."
 
 
 getProp : String -> String -> Doc -> Value
 getProp default prop doc =
-    Result.withDefault (Value.String default)
-        <| D.decodeValue (propDecoder prop) doc
+    Result.withDefault (Value.String default) <|
+        D.decodeValue (propDecoder prop) doc
 
 
 propDecoder : String -> D.Decoder Value
