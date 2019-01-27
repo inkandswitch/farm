@@ -5,7 +5,6 @@
 .data*
 .tmp
 .ts-cache
-
+.cache
 .DS_Store
-
 *.log

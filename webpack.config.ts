@@ -4,6 +4,8 @@ import HtmlWebpackPlugin from "html-webpack-plugin"
 import nodeExternals from "webpack-node-externals"
 import HardSourcePlugin from "hard-source-webpack-plugin"
 
+const cacheDirectory = path.resolve(__dirname, ".cache")
+
 const shared: webpack.Configuration = {
   mode: "development",
   context: path.resolve(__dirname),
@@ -59,34 +61,37 @@ export default [
     name: "electron",
     entry: ["./src/electron"],
     target: "electron-main",
-    plugins: [new HardSourcePlugin()],
+    plugins: [new HardSourcePlugin({ cacheDirectory })],
   }),
 
   config({
     name: "farm",
     entry: ["./src/js/cli/farm"],
     target: "node",
-    plugins: [new HardSourcePlugin()],
+    plugins: [new HardSourcePlugin({ cacheDirectory })],
   }),
 
   config({
     name: "renderer",
     entry: ["./src/js"],
     target: "electron-renderer",
-    plugins: [new HtmlWebpackPlugin({ title: "Farm" }), new HardSourcePlugin()],
+    plugins: [
+      new HtmlWebpackPlugin({ title: "Farm" }),
+      new HardSourcePlugin({ cacheDirectory }),
+    ],
   }),
 
   config({
     name: "repo.worker",
     entry: ["./src/js/repo.worker"],
     target: "electron-renderer",
-    plugins: [new HardSourcePlugin()],
+    plugins: [new HardSourcePlugin({ cacheDirectory })],
   }),
 
   config({
     name: "compile.worker",
     entry: ["./src/js/compile.worker"],
     target: "electron-renderer",
-    plugins: [new HardSourcePlugin()],
+    plugins: [new HardSourcePlugin({ cacheDirectory })],
   }),
 ]
