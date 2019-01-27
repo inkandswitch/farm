@@ -3,10 +3,8 @@ import Compiler from "./Compiler"
 import * as Gizmo from "./Gizmo"
 import * as FarmUrl from "./FarmUrl"
 import * as GizmoWindow from "./GizmoWindow"
-import * as Identity from "./bootstrap/Identity"
-import * as Workspace from "./bootstrap/Workspace"
-import * as Registry from "./bootstrap/Registry"
 import * as Bs from "./bootstrap"
+import * as Workspace from "./bootstrap/Workspace"
 
 require("utp-native")
 
@@ -20,10 +18,10 @@ export default class App {
   compiler: Compiler = new Compiler(this.repo, "./compile.worker.js")
   root?: HTMLElement
 
-  registryUrl = load("rootRegistryUrl", () => Registry.data(this.repo))
+  registryUrl = load("rootRegistryUrl", () => Workspace.registryData(this.repo))
+  rootCodeUrl = load("rootCodeUrl", () => Workspace.code(this.repo))
   rootDataUrl = load("rootDataUrl", () => Workspace.data(this.repo))
-  rootCodeUrl?: string
-  selfDataUrl = load("selfDataUrl", () => Identity.data(this.repo))
+  selfDataUrl = load("selfDataUrl", () => Workspace.identityData(this.repo))
 
   constructor() {
     ;(self as any).repo = this.repo
@@ -49,8 +47,6 @@ export default class App {
     document.body.appendChild(style)
 
     this.repo.setRegistry(this.registryUrl).then(() => {
-      this.rootCodeUrl = load("rootCodeUrl", () => "hypermerge:/@ink/workspace")
-
       this.root = document.createElement("farm-ui")
       this.root.setAttribute("code", this.rootCodeUrl)
       this.root.setAttribute("data", this.rootDataUrl)
@@ -63,18 +59,27 @@ export default class App {
   }
 
   bootstrap(name: string) {
-    const bs = require("./bootstrap/" + name)
-    const code = bs.code(this.repo)
-    const data = bs.data(this.repo)
+    const mkCode = (<any>Workspace)[name]
+    const mkData =
+      (<any>Workspace)[name + "Data"] || ((repo: Repo) => repo.create())
+
+    if (!mkCode)
+      throw new Error(
+        `Could not find gizmo named "${name}". Check Workspace.ts`,
+      )
+    const code = mkCode(this.repo)
+    const data = mkData(this.repo)
+    const farm = FarmUrl.create({ code, data })
+
     console.log("\n\ncode url:", code, "\n\n")
     console.log("\n\ndata url:", data, "\n\n")
+    console.log("\n\nfarm url:", farm, "\n\n")
 
-    const farmUrl = FarmUrl.create({ code, data })
-    console.log("\n\nfarm url:", farmUrl, "\n\n")
+    return { code, data, farm }
   }
 
-  bootstrapCode(file: string, options: Bs.Opts) {
-    return Bs.code(this.repo, file, options)
+  createCode(file: string, options: Bs.Opts) {
+    return Bs.createCode(this.repo, file, options)
   }
 }
 
