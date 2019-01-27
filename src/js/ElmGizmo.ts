@@ -21,6 +21,7 @@ export interface ReceivePorts {
   repoOut?: ReceivePort<any>
   output?: ReceivePort<string[]>
   navigateToUrl?: ReceivePort<string>
+  sentNotifications?: ReceivePort<ElmNotification>
 }
 
 export interface SendPorts {
@@ -29,9 +30,16 @@ export interface SendPorts {
   created?: SendPort<[string, string[]]>
   rawDocs?: SendPort<[string, any]>
   navigatedUrls?: SendPort<string>
+  notificationClicked?: SendPort<string>
 }
 
 export type Ports = ReceivePorts & SendPorts
+
+export interface ElmNotification {
+  ref: string
+  title: string
+  body: string
+}
 
 export interface Unmount {
   t: "Unmount"
@@ -105,6 +113,11 @@ export default class ElmGizmo {
     this.subscribeTo(ports.repoOut, this.onRepoOut)
     this.subscribeTo(ports.output, this.onOutput)
     this.subscribeTo(ports.navigateToUrl, this.onNavigateToUrl)
+    this.subscribeTo(ports.sentNotifications, this.onNotification)
+  }
+
+  hasPort<K extends keyof Ports>(name: K): boolean {
+    return Boolean(this.app.ports && this.app.ports[name])
   }
 
   withPort<K extends keyof Ports>(name: K, fn: (port: Ports[K]) => void) {
@@ -226,6 +239,16 @@ export default class ElmGizmo {
         composed: true,
       }),
     )
+  }
+
+  onNotification = (notif: ElmNotification) => {
+    const result = new Notification(notif.title, {
+      body: notif.body,
+    })
+
+    result.onclick = () => {
+      this.withPort("notificationClicked", this.send(notif.ref))
+    }
   }
 
   close() {
