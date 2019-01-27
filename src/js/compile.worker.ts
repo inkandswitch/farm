@@ -82,11 +82,9 @@ async function work(msg: ToCompiler) {
         const outputHash = await sha1(output)
 
         port.send({ t: "Compiled", url, output, sourceHash, outputHash })
-        console.log(`Elm compile success: ${url}`)
         return done()
       } catch (err) {
         port.send({ t: "CompileError", url, sourceHash, error: err.message })
-        console.log(`Elm compile error: ${url}`)
         return done()
       }
       break

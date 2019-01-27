@@ -19,17 +19,15 @@ export default class Compiler {
     this.worker = new QueuedWorker(url)
 
     this.worker.subscribe(msg => {
-      const handle = this.repo.open(msg.url)
-
-      handle.change((state: any) => {
+      this.repo.change(msg.url, (state: any) => {
         switch (msg.t) {
           case "Compiled":
             delete state.error
             delete state.hypermergeFsDiagnostics
 
             if (state.outputHash === msg.outputHash) {
-              this.log(msg.url, "Compiled output was identitical. Ignoring.")
-              break
+              console.log("Compiled output was identitical. Ignoring.")
+              return
             }
 
             this.log(msg.url, "Compilation successful. Writing to doc.")
@@ -44,7 +42,7 @@ export default class Compiler {
 
             state.outputUrl = outputUrl
 
-            break
+            return
 
           case "CompileError":
             state.error = msg.error
@@ -55,11 +53,9 @@ export default class Compiler {
             state.hypermergeFsDiagnostics = produceDiagnosticsFromMessage(
               msg.error,
             )
-            break
+            return
         }
       })
-
-      handle.close()
     })
   }
 
@@ -77,14 +73,14 @@ export default class Compiler {
 
       if (sourceHash === doc.sourceHash) {
         if (persist) {
-          this.log(url, "Source is unchanged, but PERSIST is set. Compiling.")
+          this.log(url, "Source is unchanged, but PERSIST is set. Compiling...")
         } else {
           console.log("Source is unchanged, skipping compile.")
           return
         }
+      } else {
+        this.log(url, "Source has changed. Sending to compiler...")
       }
-
-      this.log(url, "Received updated source file. Sending to compiler...")
 
       this.worker.send({
         t: "Compile",
