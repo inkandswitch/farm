@@ -4,7 +4,7 @@ import HtmlWebpackPlugin from "html-webpack-plugin"
 import nodeExternals from "webpack-node-externals"
 import HardSourcePlugin from "hard-source-webpack-plugin"
 
-const cacheDirectory = path.resolve(__dirname, ".cache")
+const cacheDirectory = undefined //path.resolve(__dirname, ".cache")
 
 const shared: webpack.Configuration = {
   mode: "development",
