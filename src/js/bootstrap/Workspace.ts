@@ -184,6 +184,7 @@ export function workspace(repo: Repo) {
     config: {
       board: board(repo),
       liveEdit: liveEdit(repo),
+      historyViewer: historyViewer(repo)
     },
   })
 }
