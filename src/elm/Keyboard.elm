@@ -17,6 +17,11 @@ import Html.Styled.Events as HtmlEvents
 
     NOTE: All KeyboardEvent.key values are passed through String.toLower
     TODO: Can we easily support both Html and Html.Styled?
+    TODO: Could this be simplified by decoding the event to a record (nice to have
+        regardless), building a validation requirements from the combo (could
+        use something like elm-validate), and just generating validation results.
+        Operation becomes more like: build validators for the combos, decode
+        the event object, test the validators and dispatch on first success.
 -}
 
 type Combo

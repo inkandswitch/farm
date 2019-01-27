@@ -1,4 +1,28 @@
-module Colors exposing (hotPink, darkerHotPink, blueBlack)
+module Colors exposing (
+    primary
+    , darkerPrimary
+    , farmGreen
+    , darkerFarmGreen
+    , hotPink
+    , darkerHotPink
+    , blueBlack
+    )
+
+primary : String
+primary =
+    farmGreen
+
+darkerPrimary : String
+darkerPrimary =
+    darkerFarmGreen
+
+farmGreen: String
+farmGreen =
+    "#02b200"
+
+darkerFarmGreen : String
+darkerFarmGreen =
+    "#039400"
 
 hotPink : String
 hotPink =
