@@ -9,6 +9,10 @@ export function data(repo: Repo) {
   return workspaceData(repo)
 }
 
+export function article(repo: Repo) {
+  return Bs.code(repo, "Article.elm")
+}
+
 export function avatar(repo: Repo) {
   return Bs.code(repo, "SimpleAvatar.elm")
 }
@@ -138,7 +142,7 @@ export function wiki(repo: Repo) {
   return Bs.code(repo, "Wiki.elm", {
     title: "Wiki",
     config: {
-      article: Bs.code(repo, "Article.elm"),
+      article: article(repo),
       articleIndex: Bs.code(repo, "ArticleIndex.elm", {
         config: {
           articleIndexItem: Bs.code(repo, "ArticleIndexItem.elm"),
