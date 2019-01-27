@@ -1,5 +1,6 @@
 declare const self: DedicatedWorkerGlobalScope
 import { resolve } from "path"
+import elmFormat from "elm-format"
 
 if ((self as any).module) {
   ;(self as any).module.paths.push(resolve("./node_modules"))
@@ -15,6 +16,7 @@ import AsyncQueue from "./AsyncQueue"
 import { lock } from "proper-lockfile"
 import { promisify } from "util"
 import { sha1 } from "./Digest"
+import { spawn } from "child_process"
 
 const writeFile = promisify(fs.writeFile)
 
@@ -70,7 +72,16 @@ async function work(msg: ToCompiler) {
 
         if (PERSIST && msg.persist) {
           const [, name = "Unknown"] = msg.source.match(/^module (\w+)/) || []
-          await writeFile(`./src/elm/examples/${name}.elm`, msg.source)
+          const filename = `./src/elm/examples/${name}.elm`
+          const newFile = fs.createWriteStream(filename)
+          const format = spawn(elmFormat.paths["elm-format"], ["--stdin"])
+
+          format.stdout.pipe(newFile)
+          format.stderr.pipe(process.stderr)
+          format.stdin.write(msg.source)
+          await new Promise(res => {
+            format.stdout.on("end", res)
+          })
         }
 
         const output = `
