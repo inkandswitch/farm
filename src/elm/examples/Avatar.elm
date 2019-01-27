@@ -1,5 +1,6 @@
 module Avatar exposing (Doc, Msg, State, gizmo)
 
+import Colors
 import Css exposing (..)
 import File exposing (File)
 import File.Select as Select
@@ -10,6 +11,11 @@ import Html.Styled.Attributes as Attr exposing (autofocus, css, href, placeholde
 import Html.Styled.Events exposing (keyCode, on, onBlur, onClick, onInput)
 import Json.Decode as Json
 import Task
+
+
+defaultName : String
+defaultName =
+    "Mysterious Stranger"
 
 
 gizmo : Gizmo.Program State Doc Msg
@@ -44,10 +50,6 @@ type Msg
     = PickImage
     | GotFiles File (List File)
     | GotPreviews (List String)
-    | Edit
-    | Typing String
-    | KeyDown Int
-    | Blur
     | NoOp
 
 
@@ -84,34 +86,6 @@ update msg { state, doc } =
             , Cmd.none
             )
 
-        Edit ->
-            ( { state | editing = True, input = doc.title }, doc, Cmd.none )
-
-        KeyDown key ->
-            if key == 13 then
-                ( { state | editing = False, input = Nothing }
-                , { doc | title = state.input }
-                , Cmd.none
-                )
-
-            else if key == 27 then
-                ( { state | editing = False, input = Nothing }
-                , doc
-                , Cmd.none
-                )
-
-            else
-                ( state, doc, Cmd.none )
-
-        Blur ->
-            ( { state | editing = False, input = Nothing }
-            , doc
-            , Cmd.none
-            )
-
-        Typing typing ->
-            ( { state | input = Just typing }, doc, Cmd.none )
-
         NoOp ->
             ( state, doc, Cmd.none )
 
@@ -121,68 +95,70 @@ subscriptions { state, doc } =
     Sub.none
 
 
-onKeyDown : (Int -> msg) -> Attribute msg
-onKeyDown tagger =
-    on "keydown" (Json.map tagger keyCode)
-
-
 view : Gizmo.Model State Doc -> Html Msg
 view { state, doc } =
-    let
-        _ =
-            Debug.log "view" ( state, doc )
-    in
-    div []
-        [ viewImage doc.imageData
-        , viewEditableText doc.title state.input state.editing
+    case doc.imageData of
+        Just data ->
+            imageAvatar data
+
+        Nothing ->
+            case doc.title of
+                Just name ->
+                    textAvatar <| defaultIfEmpty "Mysterious Stanger" name
+
+                Nothing ->
+                    textAvatar "Mysterious Stranger"
+
+
+imageAvatar : String -> Html Msg
+imageAvatar imageSrc =
+    div
+        [ css
+            [ width (px 36)
+            , height (px 36)
+            , backgroundImage (url imageSrc)
+            , backgroundPosition center
+            , backgroundRepeat noRepeat
+            , backgroundSize contain
+            ]
+        ]
+        []
+
+
+textAvatar : String -> Html Msg
+textAvatar name =
+    div
+        [ onClick PickImage
+        , css
+            [ width (px 36)
+            , height (px 36)
+            , borderRadius (pct 50)
+            , border3 (px 1) solid (hex Colors.primary)
+            , color (hex Colors.primary)
+            , padding (px 0)
+            , displayFlex
+            , alignItems center
+            , justifyContent center
+            , fontSize (Css.em 0.9)
+            , overflow hidden
+            ]
+        ]
+        [ text <| initials name
         ]
 
 
-viewImage : Maybe String -> Html Msg
-viewImage imageData =
-    div []
-        [ case imageData of
-            Just data ->
-                img
-                    [ css
-                        [ width (px 48)
-                        , borderRadius (px 24)
-                        ]
-                    , src data
-                    ]
-                    []
-
-            Nothing ->
-                button [ onClick PickImage ] [ text "Import Image" ]
-        ]
+initials : String -> String
+initials name =
+    name
+        |> String.words
+        |> List.map (String.left 1)
+        |> String.join ""
 
 
-viewEditableText : Maybe String -> Maybe String -> Bool -> Html Msg
-viewEditableText contents typing editing =
-    case editing of
-        False ->
-            div [ onClick Edit ]
-                [ case contents of
-                    Nothing ->
-                        text "[Mysterious Stranger]"
+defaultIfEmpty : String -> String -> String
+defaultIfEmpty default str =
+    if String.isEmpty str then
+        default
 
-                    Just thevalue ->
-                        text thevalue
-                ]
-
-        True ->
-            div []
-                [ input
-                    [ onKeyDown KeyDown
-                    , onBlur Blur
-                    , onInput Typing
-                    , autofocus True
-                    , case typing of
-                        Just v ->
-                            value v
-
-                        Nothing ->
-                            placeholder "Set a name..."
-                    ]
-                    []
-                ]
+    else
+        str
