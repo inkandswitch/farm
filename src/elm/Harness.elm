@@ -92,8 +92,12 @@ subscriptions model =
 
 view : Model -> Html Msg
 view model =
-    gizmo.view model
-        |> Html.map Custom
+    if model.isMounted then
+        gizmo.view model
+            |> Html.map Custom
+
+    else
+        Html.text ""
 
 
 main : Platform.Program InputFlags Model Msg
