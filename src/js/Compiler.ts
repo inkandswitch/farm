@@ -27,7 +27,12 @@ export default class Compiler {
             delete state.error
             delete state.hypermergeFsDiagnostics
 
-            if (!msg.persist && state.outputHash === msg.outputHash) break
+            if (!msg.persist && state.outputHash === msg.outputHash) {
+              console.log("Compiled output was identitical. Ignoring.")
+              break
+            }
+
+            console.log("Compilation successful. Writing to doc.")
 
             state.sourceHash = msg.sourceHash
             state.outputHash = msg.outputHash
@@ -71,7 +76,7 @@ export default class Compiler {
         return
       }
 
-      console.log("Compiler received updated source file")
+      console.log("Received updated source file. Sending to compiler...")
 
       this.worker.send({
         t: "Compile",
@@ -114,7 +119,7 @@ async function hashSource(doc: any): Promise<string> {
     debug: doc.debug,
     config: doc.config,
   })
-  return sha1(extra + doc.source)
+  return sha1(extra + getElmSource(doc))
 }
 
 function produceDiagnosticsFromMessage(error: string) {
