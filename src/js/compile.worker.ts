@@ -36,7 +36,7 @@ async function work(msg: ToCompiler) {
   switch (msg.t) {
     case "Compile":
       const { sourceHash } = msg
-      const source = msg.source.replace(/^module \w+/, "module Source")
+      const source = msg.source.replace(/^module +\w+/, "module Source")
 
       const sourceFile = "./.tmp/Source.elm"
       const lockOpts = { stale: 5000, retries: 5, realpath: false }

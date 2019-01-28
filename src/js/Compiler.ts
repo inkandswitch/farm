@@ -45,6 +45,10 @@ export default class Compiler {
             return
 
           case "CompileError":
+            if (state.error === msg.error) {
+              console.log("Compile error is already in doc. Ignoring.")
+              return
+            }
             state.error = msg.error
             state.sourceHash = msg.sourceHash
 
