@@ -249,7 +249,7 @@ viewHistoryItem focused index url =
 viewProperty : String -> String -> Html Msg
 viewProperty prop url =
     Html.fromUnstyled <|
-        Gizmo.renderWith [ Gizmo.attr "data-prop" prop ] "hypermerge:/@ink/property" url
+        Gizmo.renderWith [ Gizmo.attr "data-prop" prop ] Config.property url
 
 
 onStopPropagationClick : Msg -> Html.Attribute Msg
