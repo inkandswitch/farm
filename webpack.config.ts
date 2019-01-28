@@ -1,6 +1,7 @@
 import path from "path"
 import webpack from "webpack"
-import HtmlWebpackPlugin from "html-webpack-plugin"
+import HtmlPlugin from "html-webpack-plugin"
+import CopyPlugin from "copy-webpack-plugin"
 import nodeExternals from "webpack-node-externals"
 import HardSourcePlugin from "hard-source-webpack-plugin"
 
@@ -76,7 +77,7 @@ export default [
     entry: ["./src/js"],
     target: "electron-renderer",
     plugins: [
-      new HtmlWebpackPlugin({ title: "Farm" }),
+      new HtmlPlugin({ title: "Farm" }),
       new HardSourcePlugin({ cacheDirectory }),
     ],
   }),
@@ -93,5 +94,37 @@ export default [
     entry: ["./src/js/compile.worker"],
     target: "electron-renderer",
     plugins: [new HardSourcePlugin({ cacheDirectory })],
+  }),
+
+  config({
+    name: "hypermerge-devtools/main",
+    entry: ["./src/hypermerge-devtools/main"],
+    target: "web",
+    plugins: [
+      new HtmlPlugin({
+        title: "Hypermerge 1",
+        filename: "hypermerge-devtools/main.html",
+      }),
+      new CopyPlugin([
+        {
+          from: "./src/hypermerge-devtools/manifest.json",
+          to: "hypermerge-devtools/",
+        },
+      ]),
+      new HardSourcePlugin({ cacheDirectory }),
+    ],
+  }),
+
+  config({
+    name: "hypermerge-devtools/panel",
+    entry: ["./src/hypermerge-devtools/panel"],
+    target: "web",
+    plugins: [
+      new HtmlPlugin({
+        title: "Hypermerge 2",
+        filename: "hypermerge-devtools/panel.html",
+      }),
+      new HardSourcePlugin({ cacheDirectory }),
+    ],
   }),
 ]

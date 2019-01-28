@@ -17,7 +17,9 @@
   },
   "devDependencies": {
     "@types/bs58": "^3.0.30",
+    "@types/chrome": "^0.0.78",
     "@types/commander": "^2.12.2",
+    "@types/copy-webpack-plugin": "^4.4.2",
     "@types/debug": "^0.0.31",
     "@types/electron": "^1.6.10",
     "@types/express": "^4.16.0",
@@ -30,6 +32,7 @@
     "@types/webpack": "^4.4.17",
     "@types/webpack-dev-middleware": "^2.0.2",
     "@types/webpack-node-externals": "^1.6.3",
+    "copy-webpack-plugin": "^4.6.0",
     "cross-env": "^5.2.0",
     "electron": "^3.0.7",
     "electron-rebuild": "^1.8.2",

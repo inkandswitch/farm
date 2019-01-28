@@ -35,6 +35,8 @@ app.on("open-url", (_event, url) => {
 contextMenu({})
 
 function createWindow(): BrowserWindow {
+  // BrowserWindow.addDevToolsExtension(path.resolve("./dist/hypermerge-devtools"))
+
   const win = new BrowserWindow({
     width: 800,
     height: 600,
