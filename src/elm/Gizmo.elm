@@ -16,6 +16,8 @@ port module Gizmo exposing
     , render
     , renderWindow
     , renderWith
+    , portal
+    , portalTo
     , sandbox
     , send
     )
@@ -180,6 +182,19 @@ renderWindow code data closeMsg =
         , Events.on "windowclose" (Json.succeed closeMsg)
         ]
         []
+
+
+portal : Html.Attribute msg
+portal =
+    portalTo "body"
+
+
+{-| Render a gizmo as a child of an element specified by a CSS selector.
+    Note: Uses `document.querySelector` under the hood.
+-}
+portalTo : String -> Html.Attribute msg
+portalTo =
+    attr "portaltarget"
 
 
 attr : String -> String -> Html.Attribute msg

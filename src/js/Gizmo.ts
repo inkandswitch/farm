@@ -20,15 +20,17 @@ export function setSelfDataUrl(selfDataUrl: string) {
 export function constructorForWindow(window: Window) {
   class GizmoElement extends (window as any).HTMLElement {
     static get observedAttributes() {
-      return ["code", "data"]
+      return ["code", "data", "portaltarget"]
     }
 
     gizmo?: ElmGizmo
     source?: Handle<any>
     repo = ElmGizmo.repo
+    portal: HTMLElement | null
 
     constructor() {
       super()
+      this.portal = null
     }
 
     get dataUrl(): string | null {
@@ -37,6 +39,10 @@ export function constructorForWindow(window: Window) {
 
     get codeUrl(): string | null {
       return this.getAttribute("code") || null
+    }
+
+    get portalTarget(): string | null {
+      return this.getAttribute("portaltarget") || null
     }
 
     get attrs(): { [k: string]: string } {
@@ -67,6 +73,7 @@ export function constructorForWindow(window: Window) {
     }
 
     disconnectedCallback() {
+      this.unmount()
       if (this.source) {
         this.source.close()
         delete this.source
@@ -89,15 +96,26 @@ export function constructorForWindow(window: Window) {
     mount(elm: any, codeDoc: any) {
       this.unmount()
 
-      const { codeUrl, dataUrl } = this
+      const { codeUrl, dataUrl, portalTarget } = this
       if (!codeUrl || !dataUrl) return
 
-      const node = (this as any).ownerDocument.createElement("div")
-      // this.shadowRoot.appendChild(node)
-      this.appendChild(node)
+      let elmNode: any
+      if (portalTarget) {
+        const portalTargetNode = (this as any).ownerDocument.querySelector(portalTarget)
+        if (!portalTargetNode) return
+        this.portal = this.getPortal(codeUrl, dataUrl)
+        elmNode = (this as any).ownerDocument.createElement("div")
+
+        if (!this.portal) return
+        this.portal.appendChild(elmNode)
+        portalTargetNode.appendChild(this.portal)
+      } else {
+        elmNode = (this as any).ownerDocument.createElement("div")
+        this.appendChild(elmNode)
+      }
 
       this.repo.once(dataUrl, (doc: any) => {
-        this.gizmo = new ElmGizmo(node, elm, {
+        this.gizmo = new ElmGizmo(elmNode, elm, {
           code: codeUrl,
           data: dataUrl,
           config: codeDoc.config,
@@ -115,7 +133,19 @@ export function constructorForWindow(window: Window) {
         delete this.gizmo
       }
 
-      this.innerHTML = ""
+      if (this.portal) {
+        this.portal.innerHTML = ""
+        this.portal.remove()
+      } else {
+        this.innerHTML = ""
+      }
+    }
+
+    getPortal(code: string, data: string) {
+      const portal = (this as any).ownerDocument.createElement("div")
+      portal.setAttribute("portal-code", code)
+      portal.setAttribute("portal-data", data)
+      return portal
     }
 
     toElm(code: string, outputHash: string) {
