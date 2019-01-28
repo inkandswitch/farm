@@ -529,7 +529,6 @@ viewBoardMenu pt =
         , menuButton "Board" (CreateCard Config.board)
         , menuButton "Note" (CreateCard Config.note)
         , menuButton "Todo List" (CreateCard Config.todoList)
-        , menuButton "Oblique" (CreateCard Config.oblique)
         ]
 
 

@@ -19,6 +19,7 @@ export function board(repo: Repo) {
       chat: chat(repo),
       note: note(repo),
       todoList: todoList(repo),
+      image: image(repo)
     },
   })
 
@@ -31,7 +32,12 @@ export function board(repo: Repo) {
 }
 
 export function chat(repo: Repo) {
-  return Bs.code(repo, "Chat.elm")
+  return Bs.code(repo, "Chat.elm", {
+    config: {
+      avatar: avatar(repo),
+      editableTitle: editableTitle(repo)
+    }
+  })
 }
 
 export function counter(repo: Repo) {
