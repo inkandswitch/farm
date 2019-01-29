@@ -1,4 +1,4 @@
-module History exposing (History, empty, current, hasSeen, hasBack, hasForward, push, back, forward)
+module History exposing (History, empty, current, hasSeen, hasBack, hasForward, push, replace, back, forward)
 
 import List exposing (length, isEmpty)
 import ListSet exposing (ListSet)
@@ -47,6 +47,11 @@ push val history =
         , forward = []
         , seen = (ListSet.insert val history.seen)
     }
+
+
+replace : a -> History a -> History a
+replace val history =
+    { history | backward = val :: (Maybe.withDefault [] <| List.tail history.backward) }
 
 
 back : History a -> History a

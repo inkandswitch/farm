@@ -92,6 +92,7 @@ init flags =
 type Msg
     = NoOp
     | ChangeCodeDoc String
+    | NavigateReplace String
     | NavigateTo String
     | NavigateBack
     | NavigateForward
@@ -123,7 +124,7 @@ update msg ({ state, doc } as model) =
                     if code /= newCodeUrl then
                         case FarmUrl.create { code = newCodeUrl, data = data } of
                             Ok newFarmUrl ->
-                                update (NavigateTo newFarmUrl) model
+                                update (NavigateReplace newFarmUrl) model
 
                             Err err ->
                                 update NoOp model
@@ -133,6 +134,20 @@ update msg ({ state, doc } as model) =
 
                 Nothing ->
                     update NoOp model
+
+        NavigateReplace url ->
+            case FarmUrl.parse url of
+                Ok pair ->
+                    ( { state | mode = DefaultMode Nothing }
+                    , { doc | history = History.replace url doc.history }
+                    , IO.log <| "Navigating to " ++ url
+                    )
+
+                Err err ->
+                    ( { state | mode = DefaultMode (Just ( url, err )) }
+                    , doc
+                    , IO.log <| "Could not navigate to " ++ url ++ ". " ++ err
+                    )
 
         NavigateTo url ->
             case FarmUrl.parse url of
@@ -428,7 +443,7 @@ viewSecondaryButtons =
             True
             ToggleSearchMode
             (Tooltip.tooltip Tooltip.BottomLeft "Cmd+t")
-            [ text "search"
+            [ text "open"
             ]
         , viewLink
             True
