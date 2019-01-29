@@ -1,26 +1,22 @@
 module History exposing (History, empty, current, hasSeen, hasBack, hasForward, push, back, forward)
 
 import List exposing (length, isEmpty)
+import ListSet exposing (ListSet)
 
 {- NOTE: Allows going back to the empty state -}
 
 type alias History a =
     { backward : List a
     , forward : List a
-    , seen : List a
+    , seen : ListSet a
     }
-
-
-uniqueAdd : a -> List a -> List a
-uniqueAdd val list =
-    if List.member val list then list else (val :: list)
 
 
 empty : History a
 empty =
     { backward = []
     , forward = []
-    , seen = []
+    , seen = ListSet.empty
     }
 
 
@@ -49,7 +45,7 @@ push val history =
     { history
         | backward = val :: history.backward
         , forward = []
-        , seen = (uniqueAdd val history.seen)
+        , seen = (ListSet.insert val history.seen)
     }
 
 

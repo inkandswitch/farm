@@ -194,19 +194,14 @@ export function workspace(repo: Repo) {
     config: {
       board: board(repo),
       liveEdit: liveEdit(repo),
-      historyViewer: historyViewer(repo)
+      historyViewer: historyViewer(repo),
+      property: property(repo)
     },
   })
 }
 
 export function workspaceData(repo: Repo) {
-  return repo.create({
-    history: {
-      backward: [],
-      forward: [],
-      seen: [],
-    },
-  })
+  return repo.create()
 }
 
 export function chatIcon(repo: Repo) {

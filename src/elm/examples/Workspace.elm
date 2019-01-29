@@ -10,12 +10,13 @@ import FarmUrl
 import Gizmo exposing (Flags, Model)
 import History exposing (History)
 import Html.Styled as Html exposing (..)
-import Html.Styled.Attributes as Attributes exposing (autofocus, css, placeholder, value)
+import Html.Styled.Attributes as Attributes exposing (autofocus, css, placeholder, selected, value)
 import Html.Styled.Events exposing (..)
 import IO
 import Json.Decode as D
 import Json.Encode as E
 import Keyboard exposing (Combo(..))
+import ListSet exposing (ListSet)
 import Navigation
 import Repo
 import Task
@@ -44,18 +45,20 @@ gizmo =
         }
 
 
+type alias Error =
+    ( String, String )
+
+
 type Mode
-    = DefaultMode
+    = DefaultMode (Maybe Error)
     | EditMode
-    | SearchMode
+    | SearchMode (Maybe String)
 
 
 {-| Ephemeral state not saved to the doc
 -}
 type alias State =
-    { error : Maybe ( String, String )
-    , mode : Mode
-    , searchTerm : Maybe String
+    { mode : Mode
     }
 
 
@@ -69,16 +72,16 @@ type alias Pair =
 -}
 type alias Doc =
     { history : History String
+    , codeDocs : ListSet String
     }
 
 
 init : Flags -> ( State, Doc, Cmd Msg )
 init flags =
-    ( { error = Nothing
-      , mode = DefaultMode
-      , searchTerm = Nothing
+    ( { mode = DefaultMode Nothing
       }
     , { history = History.empty
+      , codeDocs = ListSet.empty
       }
     , Cmd.none
     )
@@ -88,6 +91,7 @@ init flags =
 -}
 type Msg
     = NoOp
+    | ChangeCodeDoc String
     | NavigateTo String
     | NavigateBack
     | NavigateForward
@@ -113,36 +117,86 @@ update msg ({ state, doc } as model) =
             , Cmd.none
             )
 
+        ChangeCodeDoc newCodeUrl ->
+            case currentPair doc.history of
+                Just { code, data } ->
+                    if code /= newCodeUrl then
+                        case FarmUrl.create { code = newCodeUrl, data = data } of
+                            Ok newFarmUrl ->
+                                update (NavigateTo newFarmUrl) model
+
+                            Err err ->
+                                update NoOp model
+
+                    else
+                        update NoOp model
+
+                Nothing ->
+                    update NoOp model
+
         NavigateTo url ->
             case FarmUrl.parse url of
                 Ok pair ->
-                    ( { state | mode = DefaultMode, searchTerm = Nothing, error = Nothing }
-                    , { doc | history = History.push url doc.history }
+                    ( { state | mode = DefaultMode Nothing }
+                    , { doc
+                        | history = History.push url doc.history
+                        , codeDocs = ListSet.insert pair.code doc.codeDocs
+                      }
                     , IO.log <| "Navigating to " ++ url
                     )
 
                 Err err ->
-                    ( { state | error = Just ( url, err ), mode = DefaultMode }
+                    ( { state | mode = DefaultMode (Just ( url, err )) }
                     , doc
                     , IO.log <| "Could not navigate to " ++ url ++ ". " ++ err
                     )
 
         NavigateBack ->
-            ( { state | mode = DefaultMode, searchTerm = Nothing, error = Nothing }
-            , { doc | history = History.back doc.history }
+            let
+                newHistory =
+                    History.back doc.history
+
+                newDoc =
+                    case currentCodeUrl newHistory of
+                        Just url ->
+                            { doc
+                                | history = newHistory
+                                , codeDocs = ListSet.insert url doc.codeDocs
+                            }
+
+                        Nothing ->
+                            { doc | history = newHistory }
+            in
+            ( { state | mode = DefaultMode Nothing }
+            , newDoc
             , IO.log <| "Navigating backwards"
             )
 
         NavigateForward ->
-            ( { state | mode = DefaultMode, searchTerm = Nothing, error = Nothing }
-            , { doc | history = History.forward doc.history }
+            let
+                newHistory =
+                    History.forward doc.history
+
+                newDoc =
+                    case currentCodeUrl newHistory of
+                        Just url ->
+                            { doc
+                                | history = newHistory
+                                , codeDocs = ListSet.insert url doc.codeDocs
+                            }
+
+                        Nothing ->
+                            { doc | history = newHistory }
+            in
+            ( { state | mode = DefaultMode Nothing }
+            , newDoc
             , IO.log <| "Navigating forwards"
             )
 
         CreateBoard ->
             ( state
             , doc
-            , Repo.create "WorkspaceCreateBoardDataDoc" 2
+            , Repo.create "WorkspaceCreateBoardDataDoc" 1
             )
 
         BoardCreated ( ref, urls ) ->
@@ -165,43 +219,51 @@ update msg ({ state, doc } as model) =
                     )
 
         SetDefaultMode ->
-            ( { state | mode = DefaultMode, searchTerm = Nothing }
+            ( { state | mode = DefaultMode Nothing }
             , doc
             , Cmd.none
             )
 
         SetEditMode ->
-            ( { state | mode = EditMode, searchTerm = Nothing }
+            ( { state | mode = EditMode }
             , doc
             , Cmd.none
             )
 
         SetSearchMode ->
-            ( { state | mode = SearchMode }
+            ( { state | mode = SearchMode Nothing }
             , doc
             , Cmd.none
             )
 
         ToggleSearchMode ->
             case Debug.log "toggle" state.mode of
-                SearchMode ->
+                SearchMode term ->
                     update SetDefaultMode model
 
                 _ ->
                     update SetSearchMode model
 
         SetSearchTerm term ->
-            ( { state | searchTerm = Just term }
+            ( { state | mode = SearchMode (Just term) }
             , doc
             , Cmd.none
             )
 
         Search ->
-            case state.searchTerm of
-                Just term ->
-                    update (NavigateTo term) model
+            case state.mode of
+                SearchMode searchTerm ->
+                    case searchTerm of
+                        Just term ->
+                            update (NavigateTo term) model
 
-                Nothing ->
+                        Nothing ->
+                            ( state
+                            , doc
+                            , Cmd.none
+                            )
+
+                _ ->
                     ( state
                     , doc
                     , Cmd.none
@@ -260,11 +322,12 @@ view ({ flags, doc, state } as model) =
             [ viewNavigationBar model
             ]
         , viewContent model
-        , if state.mode == SearchMode then
-            viewHistory flags.data
+        , case state.mode of
+            SearchMode _ ->
+                viewHistory flags.data
 
-          else
-            Html.text ""
+            _ ->
+                Html.text ""
         ]
 
 
@@ -285,6 +348,12 @@ viewNavigationBar ({ doc, state } as model) =
             ]
         ]
         [ viewNavButtons doc.history
+        , case currentCodeUrl doc.history of
+            Just url ->
+                viewCodeSelect url doc.codeDocs
+
+            Nothing ->
+                Html.text ""
         , viewSuperbox model
         , viewSecondaryButtons
         ]
@@ -311,6 +380,32 @@ viewNavButtons history =
             [ text ">"
             ]
         ]
+
+
+viewCodeSelect : String -> ListSet String -> Html Msg
+viewCodeSelect currentUrl knownUrls =
+    select
+        [ onInput ChangeCodeDoc
+        , value currentUrl
+        ]
+        (viewCodeSelectOption currentUrl
+            :: (List.map viewCodeSelectOption <| ListSet.remove currentUrl knownUrls)
+        )
+
+
+viewCodeSelectOption : String -> Html Msg
+viewCodeSelectOption url =
+    option
+        [ value url
+        ]
+        [ viewProperty "title" url
+        ]
+
+
+viewProperty : String -> String -> Html Msg
+viewProperty prop url =
+    Html.fromUnstyled <|
+        Gizmo.renderWith [ Gizmo.attr "data-prop" prop ] Config.property url
 
 
 viewButton : Bool -> Msg -> List (Html Msg) -> Html Msg
@@ -490,11 +585,21 @@ viewContent { doc, state } =
             , property "isolation" "isolate"
             ]
         ]
-        [ case state.error of
-            Just ( url, err ) ->
-                text <| "'" ++ url ++ "' could not be parsed: " ++ err
+        [ case state.mode of
+            DefaultMode error ->
+                case error of
+                    Just ( url, err ) ->
+                        text <| "'" ++ url ++ "' could not be parsed: " ++ err
 
-            Nothing ->
+                    Nothing ->
+                        case currentPair doc.history of
+                            Just ({ code, data } as pair) ->
+                                Html.fromUnstyled <| Gizmo.render code data
+
+                            Nothing ->
+                                viewEmptyContent
+
+            _ ->
                 case currentPair doc.history of
                     Just ({ code, data } as pair) ->
                         Html.fromUnstyled <| Gizmo.render code data
@@ -608,6 +713,11 @@ currentPair =
 currentDataUrl : History String -> Maybe String
 currentDataUrl =
     currentPair >> Maybe.map .data
+
+
+currentCodeUrl : History String -> Maybe String
+currentCodeUrl =
+    currentPair >> Maybe.map .code
 
 
 onStopPropagationClick : Msg -> Html.Attribute Msg
