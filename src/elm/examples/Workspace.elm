@@ -152,44 +152,14 @@ update msg ({ state, doc } as model) =
                     )
 
         NavigateBack ->
-            let
-                newHistory =
-                    History.back doc.history
-
-                newDoc =
-                    case currentCodeUrl newHistory of
-                        Just url ->
-                            { doc
-                                | history = newHistory
-                                , codeDocs = ListSet.insert url doc.codeDocs
-                            }
-
-                        Nothing ->
-                            { doc | history = newHistory }
-            in
             ( { state | mode = DefaultMode Nothing }
-            , newDoc
+            , { doc | history = History.back doc.history }
             , IO.log <| "Navigating backwards"
             )
 
         NavigateForward ->
-            let
-                newHistory =
-                    History.forward doc.history
-
-                newDoc =
-                    case currentCodeUrl newHistory of
-                        Just url ->
-                            { doc
-                                | history = newHistory
-                                , codeDocs = ListSet.insert url doc.codeDocs
-                            }
-
-                        Nothing ->
-                            { doc | history = newHistory }
-            in
             ( { state | mode = DefaultMode Nothing }
-            , newDoc
+            , { doc | history = History.forward doc.history }
             , IO.log <| "Navigating forwards"
             )
 
