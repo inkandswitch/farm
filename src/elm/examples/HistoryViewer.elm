@@ -237,12 +237,32 @@ viewHistoryItem focused index url =
                 ]
             ]
         ]
-        [ case RealmUrl.parse url of
+        (case RealmUrl.parse url of
             Ok { code, data } ->
-                viewProperty "title" data
+                [ viewDataTitle data
+                , viewCodeTitle code
+                ]
 
             Err err ->
-                Html.text err
+                [ Html.text err
+                ]
+        )
+
+
+viewDataTitle : String -> Html Msg
+viewDataTitle url =
+    viewProperty "title" url
+
+
+viewCodeTitle : String -> Html Msg
+viewCodeTitle url =
+    span
+        [ css
+            [ color (hex "aaa")
+            , marginLeft (px 5)
+            ]
+        ]
+        [ viewProperty "title" url
         ]
 
 
