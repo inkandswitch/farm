@@ -34,6 +34,7 @@ export default class Compiler {
 
             state.sourceHash = msg.sourceHash
             state.outputHash = msg.outputHash
+            state.lastEditTimestamp = Math.floor(Date.now() / 1000)
 
             const outputUrl = repo.writeFile(
               encoder.encode(msg.output),
