@@ -251,7 +251,7 @@ viewHistoryItem focused index url =
 
 viewDataTitle : String -> Html Msg
 viewDataTitle url =
-    viewProperty "title" url
+    viewProperty "title" "No title" url
 
 
 viewCodeTitle : String -> Html Msg
@@ -262,14 +262,20 @@ viewCodeTitle url =
             , marginLeft (px 5)
             ]
         ]
-        [ viewProperty "title" url
+        [ viewProperty "title" "No title" url
         ]
 
 
-viewProperty : String -> String -> Html Msg
-viewProperty prop url =
+viewProperty : String -> String -> String -> Html Msg
+viewProperty prop default url =
+    let
+        attrs =
+            [ Gizmo.attr "prop" prop
+            , Gizmo.attr "default" default
+            ]
+    in
     Html.fromUnstyled <|
-        Gizmo.renderWith [ Gizmo.attr "data-prop" prop ] Config.property url
+        Gizmo.renderWith attrs Config.property url
 
 
 onStopPropagationClick : Msg -> Html.Attribute Msg

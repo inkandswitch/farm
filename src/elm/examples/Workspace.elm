@@ -367,7 +367,7 @@ viewCodeSelectOption url =
 viewProperty : String -> String -> Html Msg
 viewProperty prop url =
     Html.fromUnstyled <|
-        Gizmo.renderWith [ Gizmo.attr "data-prop" prop ] Config.property url
+        Gizmo.renderWith [ Gizmo.attr "prop" prop ] Config.property url
 
 
 viewButton : Bool -> Msg -> List (Html Msg) -> Html Msg

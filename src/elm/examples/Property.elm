@@ -1,18 +1,23 @@
 module Property exposing (Doc, Msg, State, gizmo)
 
+import Css exposing (..)
+import Dict
 import Gizmo exposing (Flags, Model)
 import Html.Styled as Html exposing (..)
 import Html.Styled.Attributes exposing (css)
-import Css exposing (..)
-import Json.Encode as E
 import Json.Decode as D
-import Dict
+import Json.Encode as E
 import Value exposing (Value)
 
 
 attr : String
 attr =
-    "data-prop"
+    "prop"
+
+
+defaultAttr : String
+defaultAttr =
+    "default"
 
 
 gizmo : Gizmo.Program State Doc Msg
@@ -63,17 +68,26 @@ update msg { state, doc } =
 
 view : Model State Doc -> Html Msg
 view { flags, doc } =
-    case Dict.get attr flags.all of
-        Just prop ->
-            Html.text <| Value.toString <| getProp prop doc
+    let
+        prop =
+            Dict.get attr flags.all
+
+        default =
+            Maybe.withDefault "" <| Dict.get defaultAttr flags.all
+    in
+    case prop of
+        Just propName ->
+            Html.text <| Value.toString <| getProp default propName doc
+
         Nothing ->
             Html.text <| "Must define a " ++ attr ++ " attribute."
 
 
-getProp : String -> Doc -> Value
-getProp prop doc =
-    Result.withDefault Value.Null
-        <| D.decodeValue (propDecoder prop) doc
+getProp : String -> String -> Doc -> Value
+getProp default prop doc =
+    Result.withDefault (Value.String default) <|
+        D.decodeValue (propDecoder prop) doc
+
 
 propDecoder : String -> D.Decoder Value
 propDecoder prop =
