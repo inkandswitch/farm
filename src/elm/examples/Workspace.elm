@@ -221,19 +221,11 @@ update msg ({ state, doc } as model) =
             )
 
         Search ->
-            case state.mode of
-                SearchMode searchTerm ->
-                    case searchTerm of
-                        Just term ->
-                            update (NavigateTo term) model
+            case modeSearchTerm state.mode of
+                Just searchTerm ->
+                    update (NavigateTo searchTerm) model
 
-                        Nothing ->
-                            ( state
-                            , doc
-                            , Cmd.none
-                            )
-
-                _ ->
+                Nothing ->
                     ( state
                     , doc
                     , Cmd.none
@@ -555,21 +547,11 @@ viewContent { doc, state } =
             , property "isolation" "isolate"
             ]
         ]
-        [ case state.mode of
-            DefaultMode error ->
-                case error of
-                    Just ( url, err ) ->
-                        text <| "'" ++ url ++ "' could not be parsed: " ++ err
+        [ case modeError state.mode of
+            Just ( url, err ) ->
+                text <| "'" ++ url ++ "' could not be parsed: " ++ err
 
-                    Nothing ->
-                        case currentPair doc.history of
-                            Just ({ code, data } as pair) ->
-                                Html.fromUnstyled <| Gizmo.render code data
-
-                            Nothing ->
-                                viewEmptyContent
-
-            _ ->
+            Nothing ->
                 case currentPair doc.history of
                     Just ({ code, data } as pair) ->
                         Html.fromUnstyled <| Gizmo.render code data
@@ -693,3 +675,23 @@ currentCodeUrl =
 onStopPropagationClick : Msg -> Html.Attribute Msg
 onStopPropagationClick msg =
     stopPropagationOn "click" (D.succeed ( msg, True ))
+
+
+modeSearchTerm : Mode -> Maybe String
+modeSearchTerm mode =
+    case mode of
+        SearchMode searchTerm ->
+            searchTerm
+
+        _ ->
+            Nothing
+
+
+modeError : Mode -> Maybe Error
+modeError mode =
+    case mode of
+        DefaultMode error ->
+            error
+
+        _ ->
+            Nothing
