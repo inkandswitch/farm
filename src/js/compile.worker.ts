@@ -51,15 +51,7 @@ async function work(msg: ToCompiler) {
       try {
         await writeFile(sourceFile, source)
 
-        // TODO: support other config types
-        const configContents = [
-          "module Config exposing (..)",
-          "",
-          ...Object.keys(msg.config).map(k => `${k} = "${msg.config[k]}"`),
-          "",
-        ].join("\n")
-
-        await writeFile("./.tmp/Config.elm", configContents)
+        await writeFile("./.tmp/Config.elm", configContents(msg.config))
 
         const filename = getFilename(source)
         const out = await elm.compileToString([filename], {
@@ -111,4 +103,50 @@ function saveElmCode(filename: string, source: string): Promise<void> {
     format.stdin.write(source)
     format.stdin.end()
   })
+}
+
+function configContents(config: { [key: string]: any }): string {
+  const keys = Object.keys(config)
+  const reserved = ["getString", "map", "keys"]
+
+  return [
+    "module Config exposing (..)",
+    "",
+    `keys = ${configValue(keys)}`,
+    "",
+    ...keys
+      .filter(k => !reserved.includes(k))
+      .map(k => `${k} = ${configValue(config[k])}`),
+    "",
+    `getString : String -> Maybe String`,
+    `getString key =`,
+    `    case key of`,
+    ...keys
+      .filter(k => typeof config[k] === "string")
+      .map(k => `        "${k}" -> Just ${configValue(config[k])}`),
+    "        _ -> Nothing",
+    "",
+  ].join("\n")
+}
+
+function configValue(value: any): string {
+  switch (value != null ? typeof value : null) {
+    case "string":
+    case "number":
+      return JSON.stringify(value)
+    case "boolean":
+      return value ? "True" : "False"
+
+    case "object":
+      if (Array.isArray(value)) {
+        return `[ ${value.map(configValue).join(", ")} ]`
+      } else {
+        return `{ ${Object.keys(value)
+          .map(k => `${k} = ${configValue(value[k])}`)
+          .join(", ")} }`
+      }
+
+    default:
+      return "Nothing"
+  }
 }

@@ -4,7 +4,7 @@ export interface Compile {
   source: string
   sourceHash: string
   outputHash: string | null
-  config: { [k: string]: string }
+  config: { [k: string]: any }
   debug?: boolean
   persist?: boolean
 }
