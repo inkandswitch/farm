@@ -21,7 +21,9 @@ export function code(repo: Repo, file: string, opts: Opts = {}): string {
     })
     return cached
   } else {
-    return createCode(repo, file, opts)
+    const created = createCode(repo, file, opts)
+    cache.set(file, created)
+    return created
   }
 }
 
