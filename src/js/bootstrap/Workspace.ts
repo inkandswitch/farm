@@ -19,6 +19,7 @@ export function avatar(repo: Repo) {
 
 export function board(repo: Repo) {
   const url = Bs.code(repo, "Board.elm", {
+    title: "Board",
     config: {
       chat: chat(repo),
       note: note(repo),
@@ -37,6 +38,7 @@ export function board(repo: Repo) {
 
 export function chat(repo: Repo) {
   return Bs.code(repo, "Chat.elm", {
+    title: "Chat",
     config: {
       avatar: avatar(repo),
       editableTitle: editableTitle(repo)
@@ -77,6 +79,22 @@ export function historyViewer(repo: Repo) {
   })
 }
 
+export function createPicker(repo: Repo) {
+  return Bs.code(repo, "CreatePicker.elm", {
+    config: {
+      property: property(repo),
+    },
+  })
+}
+
+export function rendererPicker(repo: Repo) {
+  return Bs.code(repo, "RendererPicker.elm", {
+    config: {
+      property: property(repo),
+    },
+  })
+}
+
 export function identityData(repo: Repo) {
   return repo.create({
     title: "Mysterious Stranger",
@@ -96,7 +114,9 @@ export function navigationBar(repo: Repo) {
 }
 
 export function note(repo: Repo) {
-  return Bs.code(repo, "Note.elm")
+  return Bs.code(repo, "Note.elm", {
+    title: "Note"
+  })
 }
 
 export function property(repo: Repo) {
@@ -110,6 +130,8 @@ export function registryData(repo: Repo) {
     chat: chat(repo),
     editableTitle: editableTitle(repo),
     historyViewer: historyViewer(repo),
+    rendererPicker: rendererPicker(repo),
+    createPicker: createPicker(repo),
     image: image(repo),
     liveEdit: liveEdit(repo),
     navigationBar: navigationBar(repo),
@@ -135,7 +157,9 @@ export function superboxEdit(repo: Repo) {
 }
 
 export function todoList(repo: Repo) {
-  return Bs.code(repo, "TodoList.elm")
+  return Bs.code(repo, "TodoList.elm", {
+    title: "Todo List"
+  })
 }
 
 export function wiki(repo: Repo) {
@@ -194,14 +218,23 @@ export function workspace(repo: Repo) {
     config: {
       board: board(repo),
       liveEdit: liveEdit(repo),
-      historyViewer: historyViewer(repo),
+      openPicker: historyViewer(repo),
+      rendererPicker: rendererPicker(repo),
+      createPicker: createPicker(repo),
       property: property(repo)
     },
   })
 }
 
 export function workspaceData(repo: Repo) {
-  return repo.create()
+  return repo.create({
+    codeDocs: [
+      board(repo),
+      note(repo),
+      chat(repo),
+      todoList(repo)
+    ]
+  })
 }
 
 export function chatIcon(repo: Repo) {

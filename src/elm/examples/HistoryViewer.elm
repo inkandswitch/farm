@@ -8,7 +8,7 @@ import Css exposing (..)
 import Gizmo exposing (Flags, Model)
 import History exposing (History)
 import Html.Styled as Html exposing (..)
-import Html.Styled.Attributes exposing (css, id, placeholder, value)
+import Html.Styled.Attributes exposing (attribute, css, draggable, id, placeholder, value)
 import Html.Styled.Events exposing (..)
 import IO
 import Json.Decode as D
@@ -224,6 +224,8 @@ viewHistoryItem focused index url =
     in
     div
         [ onStopPropagationClick (NavigateTo url)
+        , draggable "true"
+        , attribute "ondragstart" ("event.dataTransfer.setData(\"application/farm-url\", \"" ++ url ++ "\")")
         , css
             [ padding (px 15)
             , fontSize (Css.em 0.8)

@@ -16,23 +16,12 @@ import IO
 import Json.Decode as D
 import Json.Encode as E
 import Keyboard exposing (Combo(..))
+import Link
 import ListSet exposing (ListSet)
 import Navigation
 import Repo
 import Task
 import Tooltip
-
-
-inputBackgroundColor =
-    "#e9e9e9"
-
-
-darkerInputBackgroundColor =
-    "#e5e5e5"
-
-
-editTitleIcon =
-    "📝"
 
 
 gizmo : Gizmo.Program State Doc Msg
@@ -49,16 +38,17 @@ type alias Error =
     ( String, String )
 
 
-type Mode
-    = DefaultMode (Maybe Error)
-    | EditMode
-    | SearchMode (Maybe String)
+type Picker
+    = OpenPicker (Maybe String)
+    | CreatePicker
+    | RendererPicker
 
 
 {-| Ephemeral state not saved to the doc
 -}
 type alias State =
-    { mode : Mode
+    { error : Maybe Error
+    , activePicker : Maybe Picker
     }
 
 
@@ -78,7 +68,8 @@ type alias Doc =
 
 init : Flags -> ( State, Doc, Cmd Msg )
 init flags =
-    ( { mode = DefaultMode Nothing
+    ( { error = Nothing
+      , activePicker = Nothing
       }
     , { history = History.empty
       , codeDocs = ListSet.empty
@@ -91,40 +82,39 @@ init flags =
 -}
 type Msg
     = NoOp
-    | ChangeCodeDoc String
-    | NavigateReplace String
     | NavigateTo String
     | NavigateBack
     | NavigateForward
-    | CreateBoard
-    | BoardCreated ( Repo.Ref, List String )
-    | SetDefaultMode
-    | SetEditMode
-    | SetSearchMode
-    | ToggleSearchMode
-    | SetSearchTerm String
-    | Search
-    | CopyLink
+    | Create String
+    | CreateDocCreated ( Repo.Ref, List String )
+    | ToggleOpenPicker
+    | ToggleCreatePicker
+    | ToggleRendererPicker
+    | HideActivePicker
+    | SetOpenSearchTerm String
+    | Open String
+    | ChangeRenderer String
+    | CopyShareLink
     | Focus String
     | Blur String
 
 
 update : Msg -> Model State Doc -> ( State, Doc, Cmd Msg )
 update msg ({ state, doc } as model) =
-    case msg of
+    case Debug.log "update" msg of
         NoOp ->
             ( state
             , doc
             , Cmd.none
             )
 
-        ChangeCodeDoc newCodeUrl ->
+        ChangeRenderer newCodeUrl ->
             case currentPair doc.history of
                 Just { code, data } ->
                     if code /= newCodeUrl then
                         case FarmUrl.create { code = newCodeUrl, data = data } of
                             Ok newFarmUrl ->
-                                update (NavigateReplace newFarmUrl) model
+                                update (NavigateTo newFarmUrl) model
 
                             Err err ->
                                 update NoOp model
@@ -135,118 +125,117 @@ update msg ({ state, doc } as model) =
                 Nothing ->
                     update NoOp model
 
-        NavigateReplace url ->
-            case FarmUrl.parse url of
-                Ok pair ->
-                    ( { state | mode = DefaultMode Nothing }
-                    , { doc | history = History.replace url doc.history }
-                    , IO.log <| "Navigating to " ++ url
-                    )
-
-                Err err ->
-                    ( { state | mode = DefaultMode (Just ( url, err )) }
-                    , doc
-                    , IO.log <| "Could not navigate to " ++ url ++ ". " ++ err
-                    )
-
         NavigateTo url ->
             case FarmUrl.parse url of
                 Ok pair ->
-                    ( { state | mode = DefaultMode Nothing }
+                    ( { state | activePicker = Nothing }
                     , { doc
                         | history = History.push url doc.history
                         , codeDocs = ListSet.insert pair.code doc.codeDocs
                       }
-                    , IO.log <| "Navigating to " ++ url
+                    , IO.log <| "Navigating to  " ++ url
                     )
 
                 Err err ->
-                    ( { state | mode = DefaultMode (Just ( url, err )) }
+                    ( { state | activePicker = Nothing, error = Just ( url, err ) }
                     , doc
                     , IO.log <| "Could not navigate to " ++ url ++ ". " ++ err
                     )
 
         NavigateBack ->
-            ( { state | mode = DefaultMode Nothing }
+            ( { state | activePicker = Nothing }
             , { doc | history = History.back doc.history }
             , IO.log <| "Navigating backwards"
             )
 
         NavigateForward ->
-            ( { state | mode = DefaultMode Nothing }
+            ( { state | activePicker = Nothing }
             , { doc | history = History.forward doc.history }
             , IO.log <| "Navigating forwards"
             )
 
-        CreateBoard ->
-            ( state
-            , doc
-            , Repo.create "WorkspaceCreateBoardDataDoc" 1
-            )
+        Create codeUrl ->
+            case Link.getId codeUrl of
+                Ok id ->
+                    ( state
+                    , doc
+                    , Repo.create ("WorkspaceCreate:" ++ id) 1
+                    )
 
-        BoardCreated ( ref, urls ) ->
-            case List.head urls of
-                Just url ->
-                    case FarmUrl.create { code = Config.board, data = url } of
-                        Ok realmUrl ->
-                            update (NavigateTo realmUrl) model
+                Err err ->
+                    ( state
+                    , doc
+                    , IO.log <| "Invalid code url" ++ codeUrl
+                    )
+
+        CreateDocCreated ( ref, urls ) ->
+            case ( String.split ":" ref, List.head urls ) of
+                ( [ "WorkspaceCreate", codeId ], Just dataUrl ) ->
+                    case FarmUrl.create { code = Link.create codeId, data = dataUrl } of
+                        Ok farmUrl ->
+                            update (NavigateTo farmUrl) model
 
                         _ ->
                             ( state
                             , doc
-                            , IO.log <| "Failed to create a new board"
+                            , IO.log <| "Failed to create a new gizmo"
                             )
 
                 _ ->
                     ( state
                     , doc
-                    , IO.log <| "Failed to create a new board"
+                    , IO.log <| "Failed to create a new gizmo"
                     )
 
-        SetDefaultMode ->
-            ( { state | mode = DefaultMode Nothing }
+        HideActivePicker ->
+            ( { state | activePicker = Nothing }
             , doc
             , Cmd.none
             )
 
-        SetEditMode ->
-            ( { state | mode = EditMode }
-            , doc
-            , Cmd.none
-            )
-
-        SetSearchMode ->
-            ( { state | mode = SearchMode Nothing }
-            , doc
-            , Cmd.none
-            )
-
-        ToggleSearchMode ->
-            case Debug.log "toggle" state.mode of
-                SearchMode term ->
-                    update SetDefaultMode model
+        ToggleCreatePicker ->
+            case Maybe.map isCreatePicker state.activePicker of
+                Just True ->
+                    update HideActivePicker model
 
                 _ ->
-                    update SetSearchMode model
-
-        SetSearchTerm term ->
-            ( { state | mode = SearchMode (Just term) }
-            , doc
-            , Cmd.none
-            )
-
-        Search ->
-            case modeSearchTerm state.mode of
-                Just searchTerm ->
-                    update (NavigateTo searchTerm) model
-
-                Nothing ->
-                    ( state
+                    ( { state | activePicker = Debug.log "set picker" (Just CreatePicker) }
                     , doc
                     , Cmd.none
                     )
 
-        CopyLink ->
+        ToggleRendererPicker ->
+            case Maybe.map isRendererPicker state.activePicker of
+                Just True ->
+                    update HideActivePicker model
+
+                _ ->
+                    ( { state | activePicker = Just RendererPicker }
+                    , doc
+                    , Cmd.none
+                    )
+
+        ToggleOpenPicker ->
+            case Maybe.map isOpenPicker state.activePicker of
+                Just True ->
+                    update HideActivePicker model
+
+                _ ->
+                    ( { state | activePicker = Just (OpenPicker Nothing) }
+                    , doc
+                    , Cmd.none
+                    )
+
+        SetOpenSearchTerm term ->
+            ( { state | activePicker = Just <| OpenPicker (Just term) }
+            , doc
+            , Cmd.none
+            )
+
+        Open url ->
+            update (NavigateTo url) model
+
+        CopyShareLink ->
             case History.current doc.history of
                 Just url ->
                     ( state
@@ -276,13 +265,8 @@ update msg ({ state, doc } as model) =
 view : Model State Doc -> Html Msg
 view ({ flags, doc, state } as model) =
     div
-        [ onClick SetDefaultMode
-        , on "navigateback" (D.succeed NavigateBack)
-        , on "navigateforward" (D.succeed NavigateForward)
+        [ onClick HideActivePicker
         , on "navigate" (D.map NavigateTo detail)
-        , on "defaultmode" (D.succeed SetDefaultMode)
-        , on "editmode" (D.succeed SetEditMode)
-        , on "searchmode" (D.succeed SetSearchMode)
         , css
             [ displayFlex
             , flexDirection column
@@ -299,18 +283,105 @@ view ({ flags, doc, state } as model) =
             [ viewNavigationBar model
             ]
         , viewContent model
-        , case state.mode of
-            SearchMode _ ->
-                viewHistory flags.data
-
-            _ ->
-                Html.text ""
         ]
 
 
 detail : D.Decoder String
 detail =
     D.at [ "detail", "value" ] D.string
+
+
+viewRendererPicker : Model State Doc -> Html Msg
+viewRendererPicker { flags } =
+    div
+        [ on "select" (D.map ChangeRenderer detail)
+        , css
+            [ position absolute
+            , top (pct 100)
+            , right (px 0)
+            , marginTop (px 10)
+            , width (px 300)
+            , zIndex (int 1)
+            , before
+                [ zIndex (int 2)
+                , display block
+                , position absolute
+                , top (px -5)
+                , width (px 10)
+                , height (px 10)
+                , right (px 10)
+                , property "content" "''"
+                , borderLeft3 (px 1) solid (hex "ccc")
+                , borderTop3 (px 1) solid (hex "ccc")
+                , backgroundColor (hex "fff")
+                , property "transform" "rotate(45deg)"
+                ]
+            ]
+        ]
+        [ Html.fromUnstyled <| Gizmo.render Config.rendererPicker flags.data
+        ]
+
+
+viewOpenPicker : Model State Doc -> Html Msg
+viewOpenPicker { flags } =
+    div
+        --[ on "select" (D.map NavigateTo detail)
+        [ css
+            [ position absolute
+            , top (pct 100)
+            , left (px 0)
+            , marginTop (px 10)
+            , width (px 300)
+            , zIndex (int 1)
+            , before
+                [ zIndex (int 2)
+                , display block
+                , position absolute
+                , top (px -5)
+                , width (px 10)
+                , height (px 10)
+                , left (px 10)
+                , property "content" "''"
+                , borderLeft3 (px 1) solid (hex "ccc")
+                , borderTop3 (px 1) solid (hex "ccc")
+                , backgroundColor (hex "fff")
+                , property "transform" "rotate(45deg)"
+                ]
+            ]
+        ]
+        [ Html.fromUnstyled <| Gizmo.render Config.openPicker flags.data
+        ]
+
+
+viewCreatePicker : Model State Doc -> Html Msg
+viewCreatePicker { flags } =
+    div
+        [ on "select" (D.map Create detail)
+        , css
+            [ position absolute
+            , top (pct 100)
+            , left (px 0)
+            , marginTop (px 10)
+            , width (px 300)
+            , zIndex (int 1)
+            , before
+                [ zIndex (int 2)
+                , display block
+                , position absolute
+                , top (px -5)
+                , width (px 10)
+                , height (px 10)
+                , left (px 10)
+                , property "content" "''"
+                , borderLeft3 (px 1) solid (hex "ccc")
+                , borderTop3 (px 1) solid (hex "ccc")
+                , backgroundColor (hex "fff")
+                , property "transform" "rotate(45deg)"
+                ]
+            ]
+        ]
+        [ Html.fromUnstyled <| Gizmo.render Config.createPicker flags.data
+        ]
 
 
 viewNavigationBar : Model State Doc -> Html Msg
@@ -324,58 +395,59 @@ viewNavigationBar ({ doc, state } as model) =
             , height (px 40)
             ]
         ]
-        [ viewNavButtons doc.history
-        , case currentCodeUrl doc.history of
-            Just url ->
-                viewCodeSelect url doc.codeDocs
-
-            Nothing ->
-                Html.text ""
-        , viewSuperbox model
+        [ viewNavButtons model
+        , viewTitle model
         , viewSecondaryButtons
         ]
 
 
-viewNavButtons : History String -> Html Msg
-viewNavButtons history =
+viewNavButtons : Model State Doc -> Html Msg
+viewNavButtons model =
     div
         [ css
-            [ flex (num 1)
-            , alignItems start
+            [ alignItems start
             , justifyContent start
             , marginLeft (px 10)
             ]
         ]
-        [ viewButton
-            (History.hasBack history)
-            NavigateBack
-            [ text "<"
+        [ div
+            [ css
+                [ display inlineBlock
+                , position relative
+                ]
             ]
-        , viewButton
-            (History.hasForward history)
-            NavigateForward
-            [ text ">"
+            [ viewLink
+                True
+                ToggleOpenPicker
+                (Tooltip.tooltip Tooltip.BottomRight "Cmd+t")
+                [ text "open"
+                ]
+            , case Maybe.map isOpenPicker model.state.activePicker of
+                Just True ->
+                    viewOpenPicker model
+
+                _ ->
+                    Html.text ""
             ]
-        ]
+        , div
+            [ css
+                [ display inlineBlock
+                , position relative
+                ]
+            ]
+            [ viewLink
+                True
+                ToggleCreatePicker
+                (Tooltip.tooltip Tooltip.BottomRight "Cmd+n")
+                [ text "new"
+                ]
+            , case Maybe.map isCreatePicker model.state.activePicker of
+                Just True ->
+                    viewCreatePicker model
 
-
-viewCodeSelect : String -> ListSet String -> Html Msg
-viewCodeSelect currentUrl knownUrls =
-    select
-        [ onInput ChangeCodeDoc
-        , value currentUrl
-        ]
-        (viewCodeSelectOption currentUrl
-            :: (List.map viewCodeSelectOption <| ListSet.remove currentUrl knownUrls)
-        )
-
-
-viewCodeSelectOption : String -> Html Msg
-viewCodeSelectOption url =
-    option
-        [ value url
-        ]
-        [ viewProperty "title" url
+                _ ->
+                    Html.text ""
+            ]
         ]
 
 
@@ -432,8 +504,7 @@ viewSecondaryButtons : Html Msg
 viewSecondaryButtons =
     div
         [ css
-            [ flex (num 1)
-            , alignItems end
+            [ alignItems end
             , justifyContent end
             , marginRight (px 10)
             , textAlign right
@@ -441,21 +512,9 @@ viewSecondaryButtons =
         ]
         [ viewLink
             True
-            ToggleSearchMode
-            (Tooltip.tooltip Tooltip.BottomLeft "Cmd+t")
-            [ text "open"
-            ]
-        , viewLink
-            True
-            CopyLink
+            CopyShareLink
             (Tooltip.tooltip Tooltip.BottomLeft "Cmd+s")
             [ text "share"
-            ]
-        , viewLink
-            True
-            CreateBoard
-            (Tooltip.tooltip Tooltip.BottomLeft "Cmd+n")
-            [ text "create"
             ]
         ]
 
@@ -501,8 +560,8 @@ inactiveLinkStyle =
     ]
 
 
-viewSuperbox : Model State Doc -> Html Msg
-viewSuperbox { doc, state } =
+viewTitle : Model State Doc -> Html Msg
+viewTitle ({ doc, state } as model) =
     div
         [ onStopPropagationClick NoOp
         , Keyboard.onPress Enter (Blur "title-input")
@@ -516,7 +575,7 @@ viewSuperbox { doc, state } =
             , margin2 (px 5) (px 5)
             , position relative
             , fontSize (Css.em 1.1)
-            , textAlign center
+            , displayFlex
             , hover
                 [ color (hex "555")
                 ]
@@ -525,18 +584,49 @@ viewSuperbox { doc, state } =
                 ]
             ]
         ]
-        [ case currentDataUrl doc.history of
-            Just dataUrl ->
-                viewLiveEdit "title" dataUrl
+        (case currentPair doc.history of
+            Just { code, data } ->
+                [ viewDataTitle data
+                , viewRendererTitle model code
+                ]
 
             Nothing ->
-                div
+                [ div
                     [ css
                         [ margin2 (px 2) (px 0)
                         ]
                     ]
                     [ text <| String.fromChar '\u{00A0}'
                     ]
+                ]
+        )
+
+
+viewDataTitle : String -> Html Msg
+viewDataTitle dataUrl =
+    viewLiveEdit "title" dataUrl
+
+
+viewRendererTitle : Model State Doc -> String -> Html Msg
+viewRendererTitle model codeUrl =
+    div
+        []
+        [ span
+            [ onClick ToggleRendererPicker
+            , css
+                [ color (hex "aaa")
+                , fontSize (Css.em 0.8)
+                , cursor pointer
+                ]
+            ]
+            [ viewProperty "title" codeUrl
+            ]
+        , case Maybe.map isRendererPicker model.state.activePicker of
+            Just True ->
+                viewRendererPicker model
+
+            _ ->
+                Html.text ""
         ]
 
 
@@ -562,7 +652,7 @@ viewContent { doc, state } =
             , property "isolation" "isolate"
             ]
         ]
-        [ case modeError state.mode of
+        [ case state.error of
             Just ( url, err ) ->
                 text <| "'" ++ url ++ "' could not be parsed: " ++ err
 
@@ -600,16 +690,16 @@ viewEmptyContent =
                     , marginBottom (px 15)
                     ]
                 ]
-                [ text "Welcome to FarmPin!"
+                [ text "Welcome to Farm!"
                 ]
             , p
                 [ css
                     [ margin2 (px 10) (px 0)
                     ]
                 ]
-                [ text "Enter a farm url into the navigation bar and press enter to begin. Alternatively, you can "
+                [ text "Get started by opening an existing farm url using the "
                 , span
-                    [ onClick CreateBoard
+                    [ onStopPropagationClick ToggleOpenPicker
                     , css
                         [ color (hex Colors.primary)
                         , cursor pointer
@@ -618,53 +708,23 @@ viewEmptyContent =
                             ]
                         ]
                     ]
-                    [ text "click here"
+                    [ text "open menu"
                     ]
-                , text " to create a brand new board of your own!"
+                , text " in the top left. Or you can create a new gizmo using the "
+                , span
+                    [ onStopPropagationClick ToggleCreatePicker
+                    , css
+                        [ color (hex Colors.primary)
+                        , cursor pointer
+                        , hover
+                            [ color (hex Colors.darkerPrimary)
+                            ]
+                        ]
+                    ]
+                    [ text "create menu"
+                    ]
+                , text ", also in the top left!"
                 ]
-            ]
-        ]
-
-
-historyWidth : Float
-historyWidth =
-    500
-
-
-viewHistory : String -> Html Msg
-viewHistory url =
-    div
-        [ css
-            [ position absolute
-            , top (px 75)
-            , left (pct 50)
-            , width (px historyWidth)
-            , marginLeft (px -(historyWidth / 2))
-            ]
-        ]
-        [ Html.fromUnstyled <| Gizmo.render Config.historyViewer url
-        ]
-
-
-subscriptions : Model State Doc -> Sub Msg
-subscriptions { state } =
-    Sub.batch
-        [ Navigation.currentUrl NavigateTo
-        , Repo.created BoardCreated
-        , Keyboard.shortcuts
-            [ ( Cmd O, ToggleSearchMode )
-            , ( Cmd T, ToggleSearchMode )
-            , ( Cmd S, CopyLink )
-            , ( Cmd N, CreateBoard )
-            , ( Cmd Left, NavigateBack )
-            , ( Cmd Right, NavigateForward )
-            , ( Ctrl O, ToggleSearchMode )
-            , ( Ctrl T, ToggleSearchMode )
-            , ( Ctrl S, CopyLink )
-            , ( Ctrl N, CreateBoard )
-            , ( Ctrl Left, NavigateBack )
-            , ( Ctrl Right, NavigateForward )
-            , ( Esc, SetDefaultMode )
             ]
         ]
 
@@ -692,21 +752,66 @@ onStopPropagationClick msg =
     stopPropagationOn "click" (D.succeed ( msg, True ))
 
 
-modeSearchTerm : Mode -> Maybe String
-modeSearchTerm mode =
-    case mode of
-        SearchMode searchTerm ->
+openPickerSearchTerm : Maybe Picker -> Maybe String
+openPickerSearchTerm picker =
+    case picker of
+        Just (OpenPicker searchTerm) ->
             searchTerm
 
         _ ->
             Nothing
 
 
-modeError : Mode -> Maybe Error
-modeError mode =
-    case mode of
-        DefaultMode error ->
-            error
+isOpenPicker : Picker -> Bool
+isOpenPicker picker =
+    case picker of
+        OpenPicker _ ->
+            True
 
         _ ->
-            Nothing
+            False
+
+
+isRendererPicker : Picker -> Bool
+isRendererPicker picker =
+    case picker of
+        RendererPicker ->
+            True
+
+        _ ->
+            False
+
+
+isCreatePicker : Picker -> Bool
+isCreatePicker picker =
+    case picker of
+        CreatePicker ->
+            True
+
+        _ ->
+            False
+
+
+subscriptions : Model State Doc -> Sub Msg
+subscriptions { state } =
+    Sub.batch
+        [ Navigation.currentUrl NavigateTo
+        , Repo.created CreateDocCreated
+        , Keyboard.shortcuts
+            [ ( Cmd O, ToggleOpenPicker )
+            , ( Cmd T, ToggleOpenPicker )
+            , ( Cmd I, ToggleRendererPicker )
+            , ( Cmd S, CopyShareLink )
+            , ( Cmd N, ToggleCreatePicker )
+            , ( Cmd Left, NavigateBack )
+            , ( Cmd Right, NavigateForward )
+            , ( Ctrl O, ToggleOpenPicker )
+            , ( Ctrl T, ToggleOpenPicker )
+            , ( Ctrl S, CopyShareLink )
+            , ( Ctrl I, ToggleRendererPicker )
+            , ( Ctrl N, ToggleCreatePicker )
+            , ( Ctrl Left, NavigateBack )
+            , ( Ctrl Right, NavigateForward )
+            , ( Esc, HideActivePicker )
+            ]
+        ]
