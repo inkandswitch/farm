@@ -46,8 +46,22 @@ When editing Farm code in VSCode changes made to a Source.elm key will be synchr
 
 Good luck! If you have questions, don't hesitate to ask here in the Github Issues or on the automerge slack.
 
+### Starting multiple instances of Farm on one machine
+
+Each instance of Farm must have it's own [Repo][repo] directory.
+By setting the `REPO_ROOT` environment variable, we can open a second instance
+of Farm:
+
+```sh
+REPO_ROOT=.data2 yarn start
+```
+
+The default `REPO_ROOT` value is `.data`.
+
 ### Code highlighting & formatting for Elm code in Hypermerge
 
 The upstream Elm extension assumes files are written to disk, which Hypermerge documents are not. As a result, when working on Hypermerge documents you'll want to use our patched version of the Elm vscode extension. Download the [latest Release](https://github.com/inkandswitch/vscode-elm/releases/latest). Install by selecting
 "Extensions: Install from VSX..." from the Command Palette, and selecting the downloaded
 .vsx file.
+
+[repo]: https://github.com/automerge/hypermerge/tree/fork#concepts
