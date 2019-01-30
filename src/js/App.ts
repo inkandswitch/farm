@@ -8,6 +8,8 @@ import * as Workspace from "./bootstrap/Workspace"
 
 require("utp-native")
 
+const REPO_ROOT = process.env.REPO_ROOT || ""
+
 // make the web worker thread-safe:
 ;(<any>process).dlopen = () => {
   throw new Error("Load native module is not thread-safe")
@@ -84,6 +86,7 @@ export default class App {
 }
 
 function load(key: string, def: () => string): string {
+  key = REPO_ROOT + key
   if (localStorage[key]) return localStorage[key]
   const value = def()
   localStorage[key] = value
