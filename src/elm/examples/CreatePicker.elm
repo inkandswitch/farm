@@ -5,6 +5,7 @@ import Clipboard
 import Colors
 import Config
 import Css exposing (..)
+import Draggable
 import Gizmo exposing (Flags, Model)
 import History exposing (History)
 import Html.Styled as Html exposing (..)
@@ -15,10 +16,10 @@ import Json.Decode as D
 import Json.Encode as E
 import Keyboard exposing (Combo(..))
 import Link
+import ListSet exposing (ListSet)
 import Navigation
 import RealmUrl
 import Task
-import ListSet exposing (ListSet)
 
 
 focusColor =
@@ -38,8 +39,7 @@ gizmo =
 {-| Ephemeral state not saved to the doc
 -}
 type alias State =
-    {
-    }
+    {}
 
 
 {-| Document state
@@ -51,7 +51,7 @@ type alias Doc =
 
 init : Flags -> ( State, Doc, Cmd Msg )
 init flags =
-    ( { }
+    ( {}
     , { codeDocs = ListSet.empty
       }
     , Cmd.none
@@ -104,23 +104,25 @@ view ({ doc, state } as model) =
 
 viewItem : String -> Html Msg
 viewItem url =
-    div
-        [ onStopPropagationClick (Select url)
-        , css
-            [ padding (px 15)
-            , fontSize (Css.em 0.8)
-            , textOverflow ellipsis
-            , property "white-space" "nowrap"
-            , overflow hidden
-            , cursor pointer
-            , borderTop3 (px 1) solid (hex "ddd")
-            , backgroundColor (hex "fff")
-            , hover
-                [ backgroundColor (hex "f5f5f5")
+    Draggable.draggable ( "application/hypermerge-url", url )
+        [ div
+            [ onStopPropagationClick (Select url)
+            , css
+                [ padding (px 15)
+                , fontSize (Css.em 0.8)
+                , textOverflow ellipsis
+                , property "white-space" "nowrap"
+                , overflow hidden
+                , cursor pointer
+                , borderTop3 (px 1) solid (hex "ddd")
+                , backgroundColor (hex "fff")
+                , hover
+                    [ backgroundColor (hex "f5f5f5")
+                    ]
                 ]
             ]
-        ]
-        [ viewProperty "title" "No title" url
+            [ viewProperty "title" "No title" url
+            ]
         ]
 
 

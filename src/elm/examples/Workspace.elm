@@ -91,7 +91,6 @@ type Msg
     | ToggleCreatePicker
     | ToggleRendererPicker
     | HideActivePicker
-    | SetOpenSearchTerm String
     | Open String
     | ChangeRenderer String
     | CopyShareLink
@@ -225,12 +224,6 @@ update msg ({ state, doc } as model) =
                     , doc
                     , Cmd.none
                     )
-
-        SetOpenSearchTerm term ->
-            ( { state | activePicker = Just <| OpenPicker (Just term) }
-            , doc
-            , Cmd.none
-            )
 
         Open url ->
             update (NavigateTo url) model
@@ -451,12 +444,6 @@ viewNavButtons model =
         ]
 
 
-viewProperty : String -> String -> Html Msg
-viewProperty prop url =
-    Html.fromUnstyled <|
-        Gizmo.renderWith [ Gizmo.attr "prop" prop ] Config.property url
-
-
 viewButton : Bool -> Msg -> List (Html Msg) -> Html Msg
 viewButton isActive msg children =
     let
@@ -630,18 +617,6 @@ viewRendererTitle model codeUrl =
         ]
 
 
-viewLiveEdit : String -> String -> Html Msg
-viewLiveEdit prop url =
-    let
-        props =
-            [ Gizmo.attr "prop" prop
-            , Gizmo.attr "input-id" "title-input"
-            , Gizmo.attr "default" "No title"
-            ]
-    in
-    Html.fromUnstyled <| Gizmo.renderWith props Config.liveEdit url
-
-
 viewContent : Model State Doc -> Html Msg
 viewContent { doc, state } =
     div
@@ -729,6 +704,24 @@ viewEmptyContent =
         ]
 
 
+viewProperty : String -> String -> Html Msg
+viewProperty prop url =
+    Html.fromUnstyled <|
+        Gizmo.renderWith [ Gizmo.attr "prop" prop ] Config.property url
+
+
+viewLiveEdit : String -> String -> Html Msg
+viewLiveEdit prop url =
+    let
+        props =
+            [ Gizmo.attr "prop" prop
+            , Gizmo.attr "input-id" "title-input"
+            , Gizmo.attr "default" "No title"
+            ]
+    in
+    Html.fromUnstyled <| Gizmo.renderWith props Config.liveEdit url
+
+
 currentPair : History String -> Maybe Pair
 currentPair =
     History.current
@@ -737,29 +730,9 @@ currentPair =
         >> Result.toMaybe
 
 
-currentDataUrl : History String -> Maybe String
-currentDataUrl =
-    currentPair >> Maybe.map .data
-
-
-currentCodeUrl : History String -> Maybe String
-currentCodeUrl =
-    currentPair >> Maybe.map .code
-
-
 onStopPropagationClick : Msg -> Html.Attribute Msg
 onStopPropagationClick msg =
     stopPropagationOn "click" (D.succeed ( msg, True ))
-
-
-openPickerSearchTerm : Maybe Picker -> Maybe String
-openPickerSearchTerm picker =
-    case picker of
-        Just (OpenPicker searchTerm) ->
-            searchTerm
-
-        _ ->
-            Nothing
 
 
 isOpenPicker : Picker -> Bool

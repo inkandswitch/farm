@@ -5,6 +5,7 @@ import Browser.Events
 import Clipboard
 import Config
 import Css exposing (..)
+import DataTransfer
 import Dict
 import Extra.Array as Array
 import FarmUrl
@@ -13,6 +14,7 @@ import Gizmo exposing (Flags, Model)
 import Html.Styled as Html exposing (Html, button, div, fromUnstyled, input, text, toUnstyled)
 import Html.Styled.Attributes as Attr exposing (css, value)
 import Html.Styled.Events as Events exposing (on, onClick, onDoubleClick, onInput, onMouseDown, onMouseUp)
+import IO
 import Json.Decode as Json exposing (Decoder)
 import Json.Encode as E
 import Repo exposing (Ref, Url)
@@ -106,12 +108,14 @@ type Msg
     | Click Int
     | SetMenu Menu
     | CreateCard Url
-    | DroppedImages (List File)
+    | HandleFiles (List File)
     | CreateImages (List String)
+    | CreateImage String
     | Created ( Ref, List Url )
     | NavigateToCard Int
     | Scroll Point
     | ScrollEnd
+    | EmbedGizmo String
 
 
 update : Msg -> Model State Doc -> ( State, Doc, Cmd Msg )
@@ -204,13 +208,23 @@ update msg { state, doc, flags } =
                 _ ->
                     ( state, doc, Cmd.none )
 
-        DroppedImages files ->
+        EmbedGizmo url ->
+            case FarmUrl.parse url of
+                Ok { code, data } ->
+                    ( state
+                    , doc |> pushCard (newCard code data)
+                    , Cmd.none
+                    )
+
+                Err err ->
+                    ( state, doc, Cmd.none )
+
+        HandleFiles files ->
             ( state
             , doc
-            , files
-                |> List.map File.toUrl
-                |> Task.sequence
-                |> Task.perform CreateImages
+            , Debug.log "files" files
+                |> List.map fileToCmd
+                |> Cmd.batch
             )
 
         CreateImages srcs ->
@@ -220,6 +234,12 @@ update msg { state, doc, flags } =
                 |> List.map (\src -> [ ( "src", E.string src ) ])
                 |> List.map (Repo.createWithProps Config.image 1)
                 |> Cmd.batch
+            )
+
+        CreateImage src ->
+            ( state
+            , doc
+            , Repo.createWithProps Config.image 1 [ ( "src", E.string src ) ]
             )
 
         NavigateToCard n ->
@@ -245,6 +265,22 @@ update msg { state, doc, flags } =
 
         ScrollEnd ->
             ( { state | scrolling = False }, doc, Cmd.none )
+
+
+fileToCmd : File -> Cmd Msg
+fileToCmd file =
+    case String.split "/" (File.mime file) of
+        [ "image", _ ] ->
+            Task.perform CreateImage <| File.toUrl file
+
+        [ "application", "farm-url" ] ->
+            Task.perform EmbedGizmo <| File.toString file
+
+        [ "application", "hypermerge-url" ] ->
+            Task.perform CreateCard <| File.toString file
+
+        _ ->
+            IO.log <| "Unknown file type"
 
 
 subscriptions : Model State Doc -> Sub Msg
@@ -420,8 +456,8 @@ view { doc, state } =
         -- , onMouseWheel Scroll
         , onContextMenu (SetMenu << BoardMenu)
         , onDragOver NoOp
-        , onDrop DroppedImages
-        , onPaste DroppedImages
+        , onDrop HandleFiles
+        , onPaste HandleFiles
         ]
         [ viewBackground
         , viewContextMenu doc state.menu
@@ -685,7 +721,7 @@ onDragOver =
 onDrop : (List File -> msg) -> Html.Attribute msg
 onDrop mkMsg =
     onPreventStop "drop"
-        (dataTransferDecoder |> Json.map mkMsg)
+        (dataTransferFileDecoder |> Json.map mkMsg)
 
 
 onPaste : (List File -> msg) -> Html.Attribute msg
@@ -696,12 +732,12 @@ onPaste mkMsg =
 
 clipboardDecoder : Decoder (List File)
 clipboardDecoder =
-    Json.at [ "clipboardData", "files" ] (Json.list File.decoder)
+    Json.field "clipboardData" DataTransfer.elmFileDecoder
 
 
-dataTransferDecoder : Decoder (List File)
-dataTransferDecoder =
-    Json.at [ "dataTransfer", "files" ] (Json.list File.decoder)
+dataTransferFileDecoder : Decoder (List File)
+dataTransferFileDecoder =
+    Json.field "dataTransfer" DataTransfer.elmFileDecoder
 
 
 movementDecoder : Decoder Point

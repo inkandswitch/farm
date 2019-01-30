@@ -5,6 +5,7 @@ import * as FarmUrl from "./FarmUrl"
 import * as GizmoWindow from "./GizmoWindow"
 import * as Bs from "./bootstrap"
 import * as Workspace from "./bootstrap/Workspace"
+import * as Draggable from "./Draggable"
 
 require("utp-native")
 
@@ -31,6 +32,7 @@ export default class App {
     Gizmo.setCompiler(this.compiler)
     Gizmo.setSelfDataUrl(this.selfDataUrl)
 
+    customElements.define("farm-draggable", Draggable.constructorForWindow(window))
     customElements.define("farm-ui", Gizmo.constructorForWindow(window))
     customElements.define(
       "farm-window",
@@ -43,6 +45,21 @@ export default class App {
       "realm-window",
       GizmoWindow.constructorForWindow(window),
     )
+
+    // XXX: Elm-compatible DataTransfer
+    Object.defineProperty(DataTransfer.prototype, "elmFiles", {
+      get() {
+        return Array.prototype.map.call(this.items, (item: DataTransferItem) => {
+          const file = item.getAsFile()
+          if (file) {
+            return file
+          } else {
+            return new File([this.getData(item.type)], item.type, { type: item.type })
+          }
+        })
+      }
+    })
+
 
     const style = document.createElement("style")
     style.innerHTML = css()

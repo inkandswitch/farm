@@ -5,10 +5,11 @@ import Clipboard
 import Colors
 import Config
 import Css exposing (..)
+import Draggable
 import Gizmo exposing (Flags, Model)
 import History exposing (History)
 import Html.Styled as Html exposing (..)
-import Html.Styled.Attributes exposing (attribute, css, draggable, id, placeholder, value)
+import Html.Styled.Attributes exposing (css, id, placeholder, value)
 import Html.Styled.Events exposing (..)
 import IO
 import Json.Decode as D
@@ -222,33 +223,33 @@ viewHistoryItem focused index url =
             else
                 unfocusedStyle
     in
-    div
-        [ onStopPropagationClick (NavigateTo url)
-        , draggable "true"
-        , attribute "ondragstart" ("event.dataTransfer.setData(\"application/farm-url\", \"" ++ url ++ "\")")
-        , css
-            [ padding (px 15)
-            , fontSize (Css.em 0.8)
-            , textOverflow ellipsis
-            , property "white-space" "nowrap"
-            , overflow hidden
-            , cursor pointer
-            , borderTop3 (px 1) solid (hex "ddd")
-            , hover
-                [ backgroundColor (hex "f5f5f5")
+    Draggable.draggable ( "application/farm-url", url )
+        [ div
+            [ onStopPropagationClick (NavigateTo url)
+            , css
+                [ padding (px 15)
+                , fontSize (Css.em 0.8)
+                , textOverflow ellipsis
+                , property "white-space" "nowrap"
+                , overflow hidden
+                , cursor pointer
+                , borderTop3 (px 1) solid (hex "ddd")
+                , hover
+                    [ backgroundColor (hex "f5f5f5")
+                    ]
                 ]
             ]
-        ]
-        (case RealmUrl.parse url of
-            Ok { code, data } ->
-                [ viewDataTitle data
-                , viewCodeTitle code
-                ]
+            (case RealmUrl.parse url of
+                Ok { code, data } ->
+                    [ viewDataTitle data
+                    , viewCodeTitle code
+                    ]
 
-            Err err ->
-                [ Html.text err
-                ]
-        )
+                Err err ->
+                    [ Html.text err
+                    ]
+            )
+        ]
 
 
 viewDataTitle : String -> Html Msg
