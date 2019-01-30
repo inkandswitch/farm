@@ -18,6 +18,7 @@ import Json.Encode as E
 import Repo exposing (Ref, Url)
 import Task
 import Tuple exposing (pair)
+import Uri
 import VsCode
 
 
@@ -51,6 +52,12 @@ type alias Card =
     , w : Float
     , h : Float
     , z : Int
+    }
+
+
+type alias Pair =
+    { code : Url
+    , data : Url
     }
 
 
@@ -108,7 +115,7 @@ type Msg
 
 
 update : Msg -> Model State Doc -> ( State, Doc, Cmd Msg )
-update msg { state, doc } =
+update msg { state, doc, flags } =
     case msg of
         NoOp ->
             ( state, doc, Cmd.none )
@@ -221,6 +228,7 @@ update msg { state, doc } =
             , doc
                 |> getCard n
                 |> Result.fromMaybe "Could not find this card"
+                |> Result.map resolveCard
                 |> Result.andThen FarmUrl.create
                 |> Result.map (E.string >> Gizmo.emit "navigate")
                 |> Result.withDefault Cmd.none
@@ -281,6 +289,22 @@ pushCard card doc =
 updateCard : Int -> (Card -> Card) -> Doc -> Doc
 updateCard n f doc =
     { doc | cards = doc.cards |> Array.update n f }
+
+
+resolveCard : Card -> Pair
+resolveCard { code, data } =
+    Pair (resolveUrl code) (resolveUrl data)
+
+
+resolveUrl : Url -> Url
+resolveUrl url =
+    case Uri.parse url of
+        Ok _ ->
+            url
+
+        Err _ ->
+            Config.getString url
+                |> Maybe.withDefault url
 
 
 menuPosition : Menu -> Point
@@ -452,7 +476,7 @@ viewCard n card =
                 [ overflow hidden
                 ]
             ]
-            [ fromUnstyled <| Gizmo.render card.code card.data
+            [ fromUnstyled <| Gizmo.render (resolveUrl card.code) (resolveUrl card.data)
             ]
         , viewResize n
         ]
@@ -525,10 +549,10 @@ viewContextMenu doc menuType =
 viewBoardMenu : Point -> Html Msg
 viewBoardMenu pt =
     menu
-        [ menuButton "Chat" (CreateCard Config.chat)
-        , menuButton "Board" (CreateCard Config.board)
-        , menuButton "Note" (CreateCard Config.note)
-        , menuButton "Todo List" (CreateCard Config.todoList)
+        [ menuButton "Chat" (CreateCard "chat")
+        , menuButton "Board" (CreateCard "board")
+        , menuButton "Note" (CreateCard "note")
+        , menuButton "Todo List" (CreateCard "todoList")
         ]
 
 
