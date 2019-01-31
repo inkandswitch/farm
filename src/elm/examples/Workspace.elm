@@ -395,7 +395,7 @@ viewNavigationBar ({ doc, state } as model) =
 
 
 viewNavButtons : Model State Doc -> Html Msg
-viewNavButtons model =
+viewNavButtons ({ doc } as model) =
     div
         [ css
             [ alignItems start
@@ -403,7 +403,17 @@ viewNavButtons model =
             , marginLeft (px 10)
             ]
         ]
-        [ div
+        [ viewButton
+            (History.hasBack doc.history)
+            NavigateBack
+            [ text "<"
+            ]
+        , viewButton
+            (History.hasForward doc.history)
+            NavigateForward
+            [ text ">"
+            ]
+        , div
             [ css
                 [ display inlineBlock
                 , position relative
