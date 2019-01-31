@@ -31,6 +31,7 @@ export default class App {
     Gizmo.setRepo(this.repo)
     Gizmo.setCompiler(this.compiler)
     Gizmo.setSelfDataUrl(this.selfDataUrl)
+    Compiler.setSelfDataUrl(this.selfDataUrl)
 
     customElements.define("farm-draggable", Draggable.constructorForWindow(window))
     customElements.define("farm-ui", Gizmo.constructorForWindow(window))

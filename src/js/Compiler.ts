@@ -3,6 +3,7 @@ import * as Msg from "./Msg"
 import Repo from "./Repo"
 import { whenChanged } from "./Subscription"
 import { sha1 } from "./Digest"
+import * as Author from "./Author"
 
 type CompileWorker = QueuedWorker<Msg.ToCompiler, Msg.FromCompiler>
 
@@ -10,6 +11,12 @@ const PERSIST = "PERSIST" in process.env
 const encoder = new TextEncoder()
 
 export default class Compiler {
+  static selfDataUrl: string
+
+  static setSelfDataUrl(url: string) {
+    Compiler.selfDataUrl = url
+  }
+
   worker: CompileWorker
   repo: Repo
   docUrls: Set<String> = new Set()
@@ -35,6 +42,7 @@ export default class Compiler {
             state.sourceHash = msg.sourceHash
             state.outputHash = msg.outputHash
             state.lastEditTimestamp = Math.floor(Date.now() / 1000)
+            state.authors = Author.recordAuthor(Compiler.selfDataUrl, state.authors)
 
             const outputUrl = repo.writeFile(
               encoder.encode(msg.output),

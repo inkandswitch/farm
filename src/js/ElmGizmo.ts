@@ -3,6 +3,7 @@ import * as Diff from "./Diff"
 import Repo from "./Repo"
 import Compiler from "./Compiler"
 import { Handle } from "hypermerge/dist/Handle"
+import * as Author from "./Author"
 
 export interface ReceivePort<T> {
   subscribe(fn: (msg: T) => void): void
@@ -167,12 +168,14 @@ export default class ElmGizmo {
 
       const changes = Diff.getChanges(prevDoc, doc)
       Diff.applyChanges(state, changes)
+      state.authors = Author.recordAuthor(ElmGizmo.selfDataUrl, state.authors)
     })
   }
 
   onInit = (doc: any) => {
     this.handle.change((state: any) => {
       defaults(state, doc)
+      state.authors = Author.recordAuthor(ElmGizmo.selfDataUrl, state.authors)
     })
 
     this.handle.subscribe(doc => {
