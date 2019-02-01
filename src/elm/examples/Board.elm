@@ -36,6 +36,7 @@ gizmo =
 
 type Action
     = None
+    | Create Point
     | Moving Int Point
     | Resizing Int Size
 
@@ -107,15 +108,15 @@ type Msg
     | Remove Int
     | Click Int
     | SetMenu Menu
-    | CreateCard Url
-    | HandleFiles (List File)
-    | CreateImages (List String)
-    | CreateImage String
+    | CreateCard Point Url
+    | HandleDrop Point (List File)
+    | HandlePaste Point (List File)
+    | CreateImage Point String
     | Created ( Ref, List Url )
     | NavigateToCard Int
     | Scroll Point
     | ScrollEnd
-    | EmbedGizmo String
+    | EmbedGizmo Point String
 
 
 update : Msg -> Model State Doc -> ( State, Doc, Cmd Msg )
@@ -156,9 +157,6 @@ update msg { state, doc, flags } =
 
         MouseDelta delta ->
             case state.action of
-                None ->
-                    ( state, doc, Cmd.none )
-
                 Moving n pt ->
                     ( { state | action = Moving n (moveBy delta pt) }
                     , doc
@@ -170,6 +168,9 @@ update msg { state, doc, flags } =
                     , doc
                     , Cmd.none
                     )
+
+                _ ->
+                    ( state, doc, Cmd.none )
 
         Click n ->
             ( state, doc |> bumpZ n, Cmd.none )
@@ -194,54 +195,62 @@ update msg { state, doc, flags } =
         SetMenu m ->
             ( { state | menu = m }, doc, Cmd.none )
 
-        CreateCard code ->
-            ( state, doc, Repo.create code 1 )
+        CreateCard position code ->
+            ( { state | action = Create position }
+            , doc
+            , Repo.create code 1
+            )
+
+        CreateImage position src ->
+            ( { state | action = Create position }
+            , doc
+            , Repo.createWithProps Config.image 1 [ ( "src", E.string src ) ]
+            )
 
         Created ( code, urls ) ->
             case urls of
                 [ data ] ->
                     let
+                        pos =
+                            actionPosition state.action
+
                         card =
-                            newCard code data
-                                |> moveTo (menuPosition state.menu)
+                            newCard code data |> moveTo pos
                     in
-                    ( { state | menu = NoMenu }, doc |> pushCard card, Cmd.none )
+                    ( { state | menu = NoMenu, action = None }, doc |> pushCard card, Cmd.none )
 
                 _ ->
                     ( state, doc, Cmd.none )
 
-        EmbedGizmo url ->
+        EmbedGizmo position url ->
             case FarmUrl.parse url of
                 Ok { code, data } ->
+                    let
+                        card =
+                            newCard code data |> moveTo position
+                    in
                     ( state
-                    , doc |> pushCard (newCard code data)
+                    , doc |> pushCard card
                     , Cmd.none
                     )
 
                 Err err ->
                     ( state, doc, Cmd.none )
 
-        HandleFiles files ->
+        HandleDrop position files ->
             ( state
             , doc
-            , Debug.log "files" files
-                |> List.map fileToCmd
+            , files
+                |> List.map (dropFileToCmd position)
                 |> Cmd.batch
             )
 
-        CreateImages srcs ->
+        HandlePaste position files ->
             ( state
             , doc
-            , srcs
-                |> List.map (\src -> [ ( "src", E.string src ) ])
-                |> List.map (Repo.createWithProps Config.image 1)
+            , files
+                |> List.map (dropFileToCmd position)
                 |> Cmd.batch
-            )
-
-        CreateImage src ->
-            ( state
-            , doc
-            , Repo.createWithProps Config.image 1 [ ( "src", E.string src ) ]
             )
 
         NavigateToCard n ->
@@ -269,17 +278,32 @@ update msg { state, doc, flags } =
             ( { state | scrolling = False }, doc, Cmd.none )
 
 
-fileToCmd : File -> Cmd Msg
-fileToCmd file =
+actionPosition : Action -> Point
+actionPosition action =
+    case action of
+        Create position ->
+            position
+
+        _ ->
+            origin
+
+
+origin : Point
+origin =
+    { x = 0, y = 0 }
+
+
+dropFileToCmd : Point -> File -> Cmd Msg
+dropFileToCmd position file =
     case String.split "/" (File.mime file) of
         [ "image", _ ] ->
-            Task.perform CreateImage <| File.toUrl file
+            Task.perform (CreateImage position) <| File.toUrl file
 
         [ "application", "farm-url" ] ->
-            Task.perform EmbedGizmo <| File.toString file
+            Task.perform (EmbedGizmo position) <| File.toString file
 
         [ "application", "hypermerge-url" ] ->
-            Task.perform CreateCard <| File.toString file
+            Task.perform (CreateCard position) <| File.toString file
 
         _ ->
             IO.log <| "Unknown file type"
@@ -350,22 +374,9 @@ hideMenu state =
     { state | menu = NoMenu }
 
 
-menuPosition : Menu -> Point
-menuPosition mnu =
-    case mnu of
-        BoardMenu pt ->
-            pt
-
-        _ ->
-            { x = 0, y = 0 }
-
-
 applyAction : Action -> Doc -> Doc
 applyAction action doc =
     case action of
-        None ->
-            doc
-
         Moving n pt ->
             doc
                 |> updateCard n (moveTo pt)
@@ -373,6 +384,9 @@ applyAction action doc =
 
         Resizing n size ->
             doc |> updateCard n (resizeTo size)
+
+        _ ->
+            doc
 
 
 snap : Float -> Float
@@ -396,14 +410,17 @@ snapSize { w, h } =
 snapAction : Action -> Action
 snapAction action =
     case action of
-        None ->
-            action
-
         Moving n pt ->
             Moving n (snapPoint pt)
 
         Resizing n size ->
             Resizing n (snapSize size)
+
+        Create pt ->
+            Create (snapPoint pt)
+
+        _ ->
+            action
 
 
 bumpZ : Int -> Doc -> Doc
@@ -472,8 +489,8 @@ view { doc, state } =
         -- , onMouseWheel Scroll
         , onContextMenu (SetMenu << BoardMenu)
         , onDragOver NoOp
-        , onDrop HandleFiles
-        , onPaste HandleFiles
+        , onDrop HandleDrop
+        , onPaste HandlePaste
         ]
         [ viewContextMenu doc state.menu
         , div
@@ -605,10 +622,10 @@ viewContextMenu doc menuType =
 viewBoardMenu : Point -> Html Msg
 viewBoardMenu pt =
     menu
-        [ menuButton "Chat" (CreateCard "chat")
-        , menuButton "Board" (CreateCard "board")
-        , menuButton "Note" (CreateCard "note")
-        , menuButton "Todo List" (CreateCard "todoList")
+        [ menuButton "Chat" (CreateCard pt "chat")
+        , menuButton "Board" (CreateCard pt "board")
+        , menuButton "Note" (CreateCard pt "note")
+        , menuButton "Todo List" (CreateCard pt "todoList")
         ]
 
 
@@ -738,16 +755,20 @@ onDragOver =
     onPreventStop "dragover" << Json.succeed
 
 
-onDrop : (List File -> msg) -> Html.Attribute msg
+onDrop : (Point -> List File -> msg) -> Html.Attribute msg
 onDrop mkMsg =
-    onPreventStop "drop"
-        (dataTransferFileDecoder |> Json.map mkMsg)
+    onPreventStop "drop" <|
+        Json.map2 mkMsg
+            xyOffsetDecoder
+            dataTransferFileDecoder
 
 
-onPaste : (List File -> msg) -> Html.Attribute msg
+onPaste : (Point -> List File -> msg) -> Html.Attribute msg
 onPaste mkMsg =
-    onPreventStop "paste"
-        (clipboardDecoder |> Json.map mkMsg)
+    onPreventStop "paste" <|
+        Json.map2 mkMsg
+            xyDecoder
+            clipboardDecoder
 
 
 clipboardDecoder : Decoder (List File)
@@ -779,3 +800,10 @@ xyDecoder =
     Json.map2 Point
         (Json.field "x" Json.float)
         (Json.field "y" Json.float)
+
+
+xyOffsetDecoder : Decoder Point
+xyOffsetDecoder =
+    Json.map2 Point
+        (Json.field "offsetX" Json.float)
+        (Json.field "offsetY" Json.float)
