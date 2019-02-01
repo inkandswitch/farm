@@ -22,6 +22,7 @@ import Navigation
 import Repo
 import Task
 import Tooltip
+import VsCode
 
 
 gizmo : Gizmo.Program State Doc Msg
@@ -185,7 +186,11 @@ update msg ({ state, doc } as model) =
                     currentPair doc.history
                         |> Result.fromMaybe "No current gizmo"
                         |> Result.andThen (\p -> FarmUrl.create { p | code = codeUrl })
-                        |> Result.map (\farmUrl -> update (NavigateTo farmUrl) model)
+                        |> Result.map
+                            (\farmUrl ->
+                                update (NavigateTo farmUrl) model
+                                    |> withCmd (VsCode.open farmUrl)
+                            )
                         |> Result.withDefault ( state, doc, Cmd.none )
 
                 _ ->
@@ -264,6 +269,11 @@ update msg ({ state, doc } as model) =
             , doc
             , Task.attempt (\_ -> NoOp) <| Dom.blur id
             )
+
+
+withCmd : Cmd msg -> ( state, doc, Cmd msg ) -> ( state, doc, Cmd msg )
+withCmd cmd ( state, doc, prevCmd ) =
+    ( state, doc, Cmd.batch [ cmd, prevCmd ] )
 
 
 view : Model State Doc -> Html Msg

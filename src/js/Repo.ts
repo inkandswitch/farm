@@ -1,4 +1,5 @@
 import { RepoFrontend } from "hypermerge/dist/RepoFrontend"
+import {ChangeFn} from "hypermerge"
 import { Handle } from "hypermerge/dist/Handle"
 import QueuedWorker from "./QueuedWorker"
 import { validateDocURL } from "hypermerge/dist/Metadata"
@@ -87,11 +88,8 @@ export default class Repo {
     return this
   }
 
-  change = (url: string, fn: Function): this => {
-    this.front
-      .open(this.resolveUrl(url))
-      .change(fn)
-      .close()
+  change = (url: string, fn: ChangeFn): this => {
+    this.front.change(this.resolveUrl(url), fn)
     return this
   }
 
