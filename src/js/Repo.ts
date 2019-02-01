@@ -108,7 +108,12 @@ export default class Repo {
   }
 
   fork = (url: string): string => {
-    return this.front.fork(this.resolveUrl(url))
+    const newUrl = this.front.fork(this.resolveUrl(url))
+    this.change(newUrl, (state: any) => {
+      // Set title for all forked docs:
+      state.title = `Fork of ${state.title}`
+    })
+    return newUrl
   }
 
   // hypermerge:/registry/key -> hypermerge:/abc123
