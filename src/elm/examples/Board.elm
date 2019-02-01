@@ -759,7 +759,7 @@ onDrop : (Point -> List File -> msg) -> Html.Attribute msg
 onDrop mkMsg =
     onPreventStop "drop" <|
         Json.map2 mkMsg
-            xyOffsetDecoder
+            xyDecoder
             dataTransferFileDecoder
 
 
