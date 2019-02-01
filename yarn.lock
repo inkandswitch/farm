@@ -620,7 +620,7 @@ base-x@^3.0.2:
   dependencies:
     safe-buffer "^5.0.1"
 
-base64-js@^1.0.2:
+base64-js@^1.0.2, base64-js@^1.1.2:
   version "1.3.0"
   resolved "https://registry.yarnpkg.com/base64-js/-/base64-js-1.3.0.tgz#cab1e6118f051095e58b5281aea8c1cd22bfc0e3"
   integrity sha512-ccav/yGvoa80BQDljCxsmmQ3Xvx60/UpBIij5QN21W3wBi/hhIC9OoO+KLpu9IJTS9j4DRVJ3aDDF9cMSoa2lw==
@@ -804,6 +804,13 @@ brorand@^1.0.1:
   resolved "https://registry.yarnpkg.com/brorand/-/brorand-1.1.0.tgz#12c25efe40a45e3c323eb8675a0a0ce57b22371f"
   integrity sha1-EsJe/kCkXjwyPrhnWgoM5XsiNx8=
 
+brotli@^1.3.2:
+  version "1.3.2"
+  resolved "https://registry.yarnpkg.com/brotli/-/brotli-1.3.2.tgz#525a9cad4fcba96475d7d388f6aecb13eed52f46"
+  integrity sha1-UlqcrU/LqWR119OI9q7LE+7VL0Y=
+  dependencies:
+    base64-js "^1.1.2"
+
 browserify-aes@^1.0.0, browserify-aes@^1.0.4:
   version "1.2.0"
   resolved "https://registry.yarnpkg.com/browserify-aes/-/browserify-aes-1.2.0.tgz#326734642f403dabc3003209853bb70ad428ef48"
@@ -875,7 +882,7 @@ buffer-alloc-unsafe@^1.0.0, buffer-alloc-unsafe@^1.1.0:
   resolved "https://registry.yarnpkg.com/buffer-alloc-unsafe/-/buffer-alloc-unsafe-1.1.0.tgz#bd7dc26ae2972d0eda253be061dba992349c19f0"
   integrity sha512-TEM2iMIEQdJ2yjPJoSIsldnleVaAk1oW3DBVUykyOLsEsFmEc9kn+SFFPz+gl54KQNxlDnAwCXosOS9Okx2xAg==
 
-buffer-alloc@^1.1.0:
+buffer-alloc@^1.1.0, buffer-alloc@^1.2.0:
   version "1.2.0"
   resolved "https://registry.yarnpkg.com/buffer-alloc/-/buffer-alloc-1.2.0.tgz#890dd90d923a873e08e10e5fd51a57e5b7cce0ec"
   integrity sha512-CFsHQgjtW1UChdXgbyJGtnm+O/uLQeZdtbDo8mfUgYXCHSM1wgrVxXm6bSyrUuErEb+4sYVGCzASBRot7zyrow==
@@ -2063,6 +2070,13 @@ fast-bitfield@^1.2.1:
   dependencies:
     count-trailing-zeros "^1.0.1"
 
+fast-bitfield@^1.2.2:
+  version "1.2.2"
+  resolved "https://registry.yarnpkg.com/fast-bitfield/-/fast-bitfield-1.2.2.tgz#7f08cdb46a6384b887a64127b56aa4d59bc8fa25"
+  integrity sha512-t8HYqkuE3YEqNcyWlAfh55479aTxO+GpYwvQvJppYqyBfSmRdNIhzY2m09FKN/MENTzq4wH6heHOIvsPyMAwvQ==
+  dependencies:
+    count-trailing-zeros "^1.0.1"
+
 fast-deep-equal@^1.0.0:
   version "1.1.0"
   resolved "https://registry.yarnpkg.com/fast-deep-equal/-/fast-deep-equal-1.1.0.tgz#c053477817c86b51daa853c81e059b733d023614"
@@ -2583,10 +2597,24 @@ hypercore-crypto@^1.0.0:
     sodium-universal "^2.0.0"
     uint64be "^2.0.2"
 
-hypercore-protocol@^6.4.1, hypercore-protocol@^6.7.1:
+hypercore-protocol@^6.4.1:
   version "6.7.1"
   resolved "https://registry.yarnpkg.com/hypercore-protocol/-/hypercore-protocol-6.7.1.tgz#e0f51c8594b1ea8639a4499296f77bf96d2619d6"
   integrity sha512-6jjMwL/XgeAl9BDUWmAJmIum7ynHGqajCnXt5VbJuxNLKkPI8WQS2kpMfcvotI5QHKMu/15+92ZPM6WoYDtd8g==
+  dependencies:
+    buffer-alloc-unsafe "^1.0.0"
+    buffer-from "^1.0.0"
+    inherits "^2.0.3"
+    protocol-buffers-encodings "^1.1.0"
+    readable-stream "^2.2.6"
+    sodium-universal "^2.0.0"
+    sorted-indexof "^1.0.0"
+    varint "^5.0.0"
+
+hypercore-protocol@^6.9.0:
+  version "6.9.0"
+  resolved "https://registry.yarnpkg.com/hypercore-protocol/-/hypercore-protocol-6.9.0.tgz#8ebf2b0abf191da634919a7ea7599cba96ab292f"
+  integrity sha512-80kUQN6aZhdip4vHRhLyYrJ8Uhj34Xw1RdAtMwQNChoOlnVAvOzVh+ffIs6NiqBF4ExU25ToOvPTaYv+pYZBbg==
   dependencies:
     buffer-alloc-unsafe "^1.0.0"
     buffer-from "^1.0.0"
@@ -2663,15 +2691,49 @@ hypercore@^6.21.0:
     unordered-array-remove "^1.0.2"
     unordered-set "^2.0.0"
 
+hypercore@^6.24.0:
+  version "6.24.0"
+  resolved "https://registry.yarnpkg.com/hypercore/-/hypercore-6.24.0.tgz#4f6581ceb89e76714d92b36c32f3a5bad1c9d0f9"
+  integrity sha512-mjZl7+UvGKcRAIR33yWxEutahjxE2sG6INJAIQww1btNEOQCmQY0XoA2+zYnYgxRQK2z3MRjRfuHyTZrD4UQOA==
+  dependencies:
+    array-lru "^1.1.0"
+    atomic-batcher "^1.0.2"
+    bitfield-rle "^2.2.1"
+    buffer-alloc "^1.2.0"
+    buffer-alloc-unsafe "^1.0.0"
+    buffer-from "^1.0.0"
+    bulk-write-stream "^1.1.3"
+    codecs "^1.2.0"
+    fast-bitfield "^1.2.2"
+    flat-tree "^1.6.0"
+    from2 "^2.3.0"
+    hypercore-crypto "^1.0.0"
+    hypercore-protocol "^6.4.1"
+    inherits "^2.0.3"
+    inspect-custom-symbol "^1.1.0"
+    last-one-wins "^1.0.4"
+    memory-pager "^1.0.2"
+    merkle-tree-stream "^3.0.3"
+    pretty-hash "^1.0.1"
+    process-nextick-args "^1.0.7"
+    random-access-file "^2.0.1"
+    sodium-universal "^2.0.0"
+    sparse-bitfield "^3.0.0"
+    thunky "^1.0.1"
+    uint64be "^2.0.1"
+    unordered-array-remove "^1.0.2"
+    unordered-set "^2.0.0"
+
 "hypermerge@github:automerge/hypermerge#fork":
-  version "1.0.34"
-  resolved "https://codeload.github.com/automerge/hypermerge/tar.gz/0c60a07e2a95440a07c391a84fa94a840bd1030f"
+  version "1.0.36"
+  resolved "https://codeload.github.com/automerge/hypermerge/tar.gz/628fe3234ff8d996deb7f2d49ee14899a7c421c7"
   dependencies:
     automerge "0.9.2"
+    brotli "^1.3.2"
     bs58 "^4.0.1"
     debug "^4.1.0"
-    hypercore "^6.20.2"
-    hypercore-protocol "^6.7.1"
+    hypercore "^6.24.0"
+    hypercore-protocol "^6.9.0"
     js-sha1 "^0.6.0"
 
 iconv-lite@0.4.23:
