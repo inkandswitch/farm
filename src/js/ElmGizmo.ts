@@ -4,6 +4,7 @@ import Repo from "./Repo"
 import Compiler from "./Compiler"
 import { Handle } from "hypermerge/dist/Handle"
 import * as Author from "./Author"
+import { shell } from "electron"
 
 export interface ReceivePort<T> {
   subscribe(fn: (msg: T) => void): void
@@ -250,6 +251,8 @@ export default class ElmGizmo {
       case "Copy":
         ;(<any>navigator).clipboard.writeText(str)
         break
+      case "OpenExternal":
+        shell.openExternal(str)
     }
   }
 
