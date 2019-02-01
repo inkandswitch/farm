@@ -21,8 +21,7 @@ export function code(repo: Repo, file: string, opts: Opts = {}): string {
     })
     return cached
   } else {
-    const createOpts = Object.assign({lastEditTimestamp: Date.now()}, opts)
-    const created = createCode(repo, file, createOpts)
+    const created = createCode(repo, file, opts)
     cache.set(file, created)
     return created
   }
@@ -31,6 +30,7 @@ export function code(repo: Repo, file: string, opts: Opts = {}): string {
 export function createCode(repo: Repo, file: string, opts: Opts = {}): string {
   const name = file.replace(/\.elm$/, "")
   opts.title = opts.title || `${name} source`
+  opts.lastEditTimestamp = Date.now()
   return repo.create({ ...opts, "Source.elm": sourceFor(file) })
 }
 
