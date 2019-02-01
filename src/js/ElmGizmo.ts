@@ -32,6 +32,7 @@ export interface SendPorts {
   rawDocs?: SendPort<[string, any]>
   navigatedUrls?: SendPort<string>
   notificationClicked?: SendPort<string>
+  pasted?: SendPort<ClipboardEvent>
 }
 
 export type Ports = ReceivePorts & SendPorts
@@ -115,6 +116,18 @@ export default class ElmGizmo {
     this.subscribeTo(ports.output, this.onOutput)
     this.subscribeTo(ports.navigateToUrl, this.onNavigateToUrl)
     this.subscribeTo(ports.sentNotifications, this.onNotification)
+
+    if (this.hasPort("pasted")) {
+      const onPaste = (event: ClipboardEvent) => {
+        if (event.srcElement && event.srcElement.localName === "input") return
+        this.withPort("pasted", this.send(event))
+      }
+
+      document.addEventListener("paste", onPaste)
+      this.disposables.push(() => {
+        document.removeEventListener("paste", onPaste)
+      })
+    }
   }
 
   hasPort<K extends keyof Ports>(name: K): boolean {
