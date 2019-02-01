@@ -10,15 +10,12 @@ import Html.Styled.Attributes as Attr exposing (autofocus, css, href, placeholde
 import Html.Styled.Events exposing (keyCode, on, onBlur, onClick, onInput)
 import Json.Decode as Json
 import Task
+import Colors
 
 
 defaultName : String
 defaultName =
-    "Mysterious Strange"
-
-
-hotPink =
-    hex "#ff69b4"
+    "Mysterious Stranger"
 
 
 gizmo : Gizmo.Program State Doc Msg
@@ -136,8 +133,8 @@ textAvatar name =
             [ width (px 36)
             , height (px 36)
             , borderRadius (pct 50)
-            , border3 (px 1) solid hotPink
-            , color hotPink
+            , border3 (px 1) solid (hex Colors.primary)
+            , color (hex Colors.primary)
             , padding (px 0)
             , displayFlex
             , alignItems center

@@ -1,5 +1,6 @@
 module SmallAvatar exposing (Doc, Msg, State, gizmo)
 
+import Colors
 import Css exposing (..)
 import File exposing (File)
 import File.Select as Select
@@ -14,10 +15,6 @@ import Task
 defaultName : String
 defaultName =
     "Mysterious Stranger"
-
-
-hotPink =
-    hex "#ff69b4"
 
 
 gizmo : Gizmo.Program State Doc Msg
@@ -111,8 +108,8 @@ textAvatar name =
             [ width (px 15)
             , height (px 15)
             , borderRadius (pct 50)
-            , border3 (px 1) solid hotPink
-            , color hotPink
+            , border3 (px 1) solid (hex Colors.primary)
+            , color (hex Colors.primary)
             , padding (px 0)
             , displayFlex
             , alignItems center
