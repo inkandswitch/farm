@@ -48,7 +48,8 @@ export default class Repo {
     return registry
   }
 
-  async readFile(url: string): Promise<HyperFile> {
+  async readFile(origUrl: string): Promise<HyperFile> {
+    const url = origUrl.replace(":///", ":/")
     return (
       this.fileCache.get(url) ||
       new Promise<HyperFile>(res => {
@@ -62,7 +63,7 @@ export default class Repo {
   }
 
   writeFile(data: Uint8Array, mimeType: string): string {
-    return this.front.writeFile(data, mimeType)
+    return this.front.writeFile(data, mimeType).replace(":/", ":///")
   }
 
   create = (props: object = {}): string => {

@@ -15,14 +15,9 @@ Object.assign(self, {
   app,
 })
 
-protocol.registerBufferProtocol("hyperfile", (request, callback) => {
-  const id = request.url.slice(12)
-  console.log(`HYPERFILE-RENDER6='${id}'`)
-  app.repo.front.readFile(id, (_data, mimeType) => {
-    console.log(`HYPERFILE-RENDERb='${_data.length} bytes'`)
-    const data = Buffer.from(_data)
-    callback({ mimeType, data })
-  })
+protocol.registerBufferProtocol("hyperfile", async ({ url }, callback) => {
+  const { mimeType, data } = await app.repo.readFile(url)
+  callback({ mimeType, data: Buffer.from(data) })
 })
 
 ipcRenderer.on("open-url", (_event: any, url: string) => {
