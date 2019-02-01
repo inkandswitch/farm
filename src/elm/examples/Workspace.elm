@@ -94,6 +94,7 @@ type Msg
     | HideActivePicker
     | Open String
     | Fork String
+    | Edit String
     | ChangeRenderer String
     | CopyShareLink
     | Focus String
@@ -243,6 +244,9 @@ update msg ({ state, doc } as model) =
 
         Fork url ->
             ( state, doc, Repo.fork "CodeFork" url )
+
+        Edit url ->
+            ( state, doc, VsCode.open url )
 
         CopyShareLink ->
             case History.current doc.history of
@@ -569,9 +573,18 @@ viewSecondaryButtons doc =
                     [ viewLink
                         True
                         (Fork code)
-                        (Tooltip.tooltip Tooltip.BottomRight "Cmd+Shift+f")
+                        (Tooltip.tooltip Tooltip.BottomLeft "Cmd+Shift+f")
                         [ text "fork"
                         ]
+                    , case History.current doc.history of
+                        Nothing ->
+                            text ""
+
+                        Just farmUrl ->
+                            viewLink True
+                                (Edit farmUrl)
+                                (Tooltip.tooltip Tooltip.BottomLeft "Edit in VS Code")
+                                [ text "edit" ]
                     ]
         , viewLink
             True
