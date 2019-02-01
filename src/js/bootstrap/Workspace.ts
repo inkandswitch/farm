@@ -21,16 +21,16 @@ export function pickerItem(identity: string, repo: Repo) {
   return Bs.code(identity, repo, "PickerItem.elm", {
     config: {
       property: property(identity, repo),
-      authors: authors(identity, repo)
-    }
+      authors: authors(identity, repo),
+    },
   })
 }
 
 export function authors(identity: string, repo: Repo) {
   return Bs.code(identity, repo, "Authors.elm", {
     config: {
-      smallAvatar: smallAvatar(identity, repo)
-    }
+      smallAvatar: smallAvatar(identity, repo),
+    },
   })
 }
 
@@ -45,7 +45,8 @@ export function board(identity: string, repo: Repo) {
       chat: chat(identity, repo),
       note: note(identity, repo),
       todoList: todoList(identity, repo),
-      image: image(identity, repo)
+      image: image(identity, repo),
+      dotGrid: Bs.asset(repo, "dot_grid.svg"),
     },
   })
 
@@ -62,8 +63,8 @@ export function chat(identity: string, repo: Repo) {
     title: "Chat",
     config: {
       avatar: avatar(identity, repo),
-      editableTitle: editableTitle(identity, repo)
-    }
+      editableTitle: editableTitle(identity, repo),
+    },
   })
 }
 
@@ -96,7 +97,7 @@ export function historyViewer(identity: string, repo: Repo) {
   return Bs.code(identity, repo, "HistoryViewer.elm", {
     config: {
       property: property(identity, repo),
-      authors: authors(identity, repo)
+      authors: authors(identity, repo),
     },
   })
 }
@@ -105,7 +106,7 @@ export function createPicker(identity: string, repo: Repo) {
   return Bs.code(identity, repo, "CreatePicker.elm", {
     config: {
       property: property(identity, repo),
-      pickerItem: pickerItem(identity, repo)
+      pickerItem: pickerItem(identity, repo),
     },
   })
 }
@@ -114,7 +115,7 @@ export function rendererPicker(identity: string, repo: Repo) {
   return Bs.code(identity, repo, "RendererPicker.elm", {
     config: {
       property: property(identity, repo),
-      pickerItem: pickerItem(identity, repo)
+      pickerItem: pickerItem(identity, repo),
     },
   })
 }
@@ -143,7 +144,7 @@ export function navigationBar(identity: string, repo: Repo) {
 
 export function note(identity: string, repo: Repo) {
   return Bs.code(identity, repo, "Note.elm", {
-    title: "Note"
+    title: "Note",
   })
 }
 
@@ -189,7 +190,7 @@ export function superboxEdit(identity: string, repo: Repo) {
 
 export function todoList(identity: string, repo: Repo) {
   return Bs.code(identity, repo, "TodoList.elm", {
-    title: "Todo List"
+    title: "Todo List",
   })
 }
 
@@ -252,7 +253,7 @@ export function workspace(identity: string, repo: Repo) {
       openPicker: historyViewer(identity, repo),
       rendererPicker: rendererPicker(identity, repo),
       createPicker: createPicker(identity, repo),
-      property: property(identity, repo)
+      property: property(identity, repo),
     },
   })
 }
@@ -263,8 +264,8 @@ export function workspaceData(identity: string, repo: Repo) {
       board(identity, repo),
       note(identity, repo),
       chat(identity, repo),
-      todoList(identity, repo)
-    ]
+      todoList(identity, repo),
+    ],
   })
 }
 

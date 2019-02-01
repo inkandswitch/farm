@@ -137,6 +137,7 @@ update msg { state, doc, flags } =
 
                 Just card ->
                     ( { state | action = Moving n { x = card.x, y = card.y } }
+                        |> hideMenu
                     , doc
                     , Cmd.none
                     )
@@ -148,6 +149,7 @@ update msg { state, doc, flags } =
 
                 Just card ->
                     ( { state | action = Resizing n { w = card.w, h = card.h } }
+                        |> hideMenu
                     , doc
                     , Cmd.none
                     )
@@ -343,6 +345,11 @@ resolveUrl url =
                 |> Maybe.withDefault url
 
 
+hideMenu : State -> State
+hideMenu state =
+    { state | menu = NoMenu }
+
+
 menuPosition : Menu -> Point
 menuPosition mnu =
     case mnu of
@@ -468,33 +475,37 @@ view { doc, state } =
         , onDrop HandleFiles
         , onPaste HandleFiles
         ]
-        [ viewBackground
-        , viewContextMenu doc state.menu
+        [ viewContextMenu doc state.menu
         , div
             [ css
                 [ -- TODO: turns out this is hard:
                   -- transform (translate2 (px <| negate state.scroll.x) (px <| negate state.scroll.y))
                   fill
+                , backgroundColor (hex "f9f8f3")
+                , backgroundImage (url Config.dotGrid)
+                , backgroundAttachment local
                 , overflow auto
                 ]
             ]
-            (doc
-                |> applyAction state.action
-                |> .cards
-                |> Array.indexedMap viewCard
-                |> Array.toList
+            (viewClickShield
+                :: (doc
+                        |> applyAction state.action
+                        |> .cards
+                        |> Array.indexedMap viewCard
+                        |> Array.toList
+                   )
             )
         ]
 
 
-viewBackground : Html Msg
-viewBackground =
+viewClickShield : Html Msg
+viewClickShield =
     div
         [ onMouseDown (SetMenu NoMenu)
         , Attr.tabindex 0
         , css
             [ fill
-            , backgroundColor (hex "f9f8f3")
+            , zIndex (int 1)
             ]
         ]
         []
