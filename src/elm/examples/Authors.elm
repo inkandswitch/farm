@@ -5,11 +5,12 @@ import Config
 import Css exposing (..)
 import Gizmo
 import Html.Styled as Html exposing (..)
+import Html.Styled.Attributes exposing (css)
 
 
-maxDisplayAttr =
-    "max"
-
+maxAuthors : Int
+maxAuthors =
+    3
 
 gizmo : Gizmo.Program State Doc Msg
 gizmo =
@@ -77,11 +78,16 @@ view { flags, state, doc } =
 
 viewAuthors : List String -> Html Msg
 viewAuthors authors =
-    if List.length authors > 3 then
+    if List.length authors > maxAuthors then
         div
-            []
-            [ viewAuthorList <| List.take 3 authors
-            , viewRemaining 3 authors
+            [ css
+                [ displayFlex
+                , flexDirection row
+                , alignItems center
+                ]
+            ]
+            [ viewAuthorList <| List.take maxAuthors authors
+            , viewRemaining maxAuthors authors
             ]
 
     else
@@ -91,13 +97,24 @@ viewAuthors authors =
 viewAuthorList : List String -> Html Msg
 viewAuthorList authors =
     div
-        []
+        [ css
+            [ displayFlex
+            , flexDirection row
+            , padding2 (px 3) (px 0)
+            ]
+        ]
         (List.map viewAuthor authors)
 
 
 viewAuthor : String -> Html Msg
 viewAuthor author =
-    Html.fromUnstyled <| Gizmo.render Config.smallAvatar author
+    div
+        [ css
+            [ marginRight (px 3)
+            ]
+        ]
+        [ Html.fromUnstyled <| Gizmo.render Config.smallAvatar author
+        ]
 
 
 viewRemaining : Int -> List String -> Html Msg
@@ -106,7 +123,14 @@ viewRemaining max authors =
         remaining =
             List.length authors - max
     in
-    text <| "& " ++ String.fromInt remaining ++ " more"
+    span
+        [ css
+            [ color (hex "aaa")
+            , fontSize (Css.em 0.8)
+            ]
+        ]
+        [ text <| "and " ++ String.fromInt remaining ++ " more"
+        ]
 
 
 viewEmpty : Html Msg
