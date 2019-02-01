@@ -237,7 +237,7 @@ update msg ({ state, doc } as model) =
             update (NavigateTo url) model
 
         Fork url ->
-            ( state, doc, Repo.fork "CodeFork:" url )
+            ( state, doc, Repo.fork "CodeFork" url )
 
         CopyShareLink ->
             case History.current doc.history of
@@ -401,7 +401,7 @@ viewNavigationBar ({ doc, state } as model) =
         ]
         [ viewNavButtons model
         , viewTitle model
-        , viewSecondaryButtons
+        , viewSecondaryButtons doc
         ]
 
 
@@ -462,24 +462,6 @@ viewNavButtons ({ doc } as model) =
                 _ ->
                     Html.text ""
             ]
-        , case currentPair doc.history of
-            Nothing ->
-                text ""
-
-            Just { code } ->
-                div
-                    [ css
-                        [ display inlineBlock
-                        , position relative
-                        ]
-                    ]
-                    [ viewLink
-                        True
-                        (Fork code)
-                        (Tooltip.tooltip Tooltip.BottomRight "Cmd+Shift+f")
-                        [ text "fork"
-                        ]
-                    ]
         ]
 
 
@@ -526,8 +508,8 @@ inactiveButtonStyle =
     ]
 
 
-viewSecondaryButtons : Html Msg
-viewSecondaryButtons =
+viewSecondaryButtons : Doc -> Html Msg
+viewSecondaryButtons doc =
     div
         [ css
             [ alignItems end
@@ -536,7 +518,25 @@ viewSecondaryButtons =
             , textAlign right
             ]
         ]
-        [ viewLink
+        [ case currentPair doc.history of
+            Nothing ->
+                text ""
+
+            Just { code } ->
+                div
+                    [ css
+                        [ display inlineBlock
+                        , position relative
+                        ]
+                    ]
+                    [ viewLink
+                        True
+                        (Fork code)
+                        (Tooltip.tooltip Tooltip.BottomRight "Cmd+Shift+f")
+                        [ text "fork"
+                        ]
+                    ]
+        , viewLink
             True
             CopyShareLink
             (Tooltip.tooltip Tooltip.BottomLeft "Cmd+s")
