@@ -378,6 +378,7 @@ viewCreatePicker { flags } =
             , marginTop (px 10)
             , width (px 300)
             , zIndex (int 1)
+            , backgroundColor (hex "fff")
             , before
                 [ zIndex (int 2)
                 , display block
@@ -394,7 +395,10 @@ viewCreatePicker { flags } =
                 ]
             ]
         ]
-        [ Html.fromUnstyled <| Gizmo.render Config.createPicker flags.data
+        [ div [ css [ pickerStyle ] ]
+            [ viewNewGizmo
+            , Html.fromUnstyled <| Gizmo.render Config.createPicker flags.data
+            ]
         ]
 
 
@@ -475,6 +479,18 @@ viewNavButtons ({ doc } as model) =
         ]
 
 
+pickerStyle : Style
+pickerStyle =
+    batch
+        [ boxShadow5 zero (px 2) (px 8) zero (rgba 0 0 0 0.12)
+        , border3 (px 1) solid (hex "ddd")
+        , borderRadius (px 5)
+        , maxHeight (px 400)
+        , overflowX hidden
+        , overflowY auto
+        ]
+
+
 viewButton : Bool -> Msg -> List (Html Msg) -> Html Msg
 viewButton isActive msg children =
     let
@@ -498,6 +514,17 @@ viewButton isActive msg children =
             )
         ]
         children
+
+
+viewNewGizmo =
+    div
+        [ css
+            [ padding (px 10)
+            , cursor pointer
+            ]
+        , onClick (Fork Config.gizmoTemplate)
+        ]
+        [ text "+ Develop new Gizmo" ]
 
 
 activeButtonStyle =

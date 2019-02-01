@@ -120,6 +120,12 @@ export function rendererPicker(identity: string, repo: Repo) {
   })
 }
 
+export function gizmoTemplate(identity: string, repo: Repo) {
+  return Bs.code(identity, repo, "GizmoTemplate.elm", {
+    title: "My Gizmo",
+  })
+}
+
 export function identityData(repo: Repo) {
   const identity = repo.create({
     title: "Mysterious Stranger",
@@ -254,6 +260,7 @@ export function workspace(identity: string, repo: Repo) {
       rendererPicker: rendererPicker(identity, repo),
       createPicker: createPicker(identity, repo),
       property: property(identity, repo),
+      gizmoTemplate: gizmoTemplate(identity, repo),
     },
   })
 }

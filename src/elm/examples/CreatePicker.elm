@@ -84,22 +84,8 @@ update msg ({ flags, state, doc } as model) =
 view : Model State Doc -> Html Msg
 view ({ doc, state } as model) =
     div
-        [ css
-            [ boxShadow5 zero (px 2) (px 8) zero (rgba 0 0 0 0.12)
-            , border3 (px 1) solid (hex "ddd")
-            , borderRadius (px 5)
-            , maxHeight (px 400)
-            , width (pct 100)
-            , backgroundColor (hex "#fff")
-            , overflowX hidden
-            , overflowY auto
-            , fontFamilies [ "system-ui" ]
-            ]
-        ]
-        [ div
-            []
-            (List.map viewItem doc.codeDocs)
-        ]
+        []
+        (List.map viewItem doc.codeDocs)
 
 
 viewItem : String -> Html Msg
