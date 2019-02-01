@@ -106,22 +106,10 @@ viewItem : String -> Html Msg
 viewItem url =
     div
         [ onStopPropagationClick (Select url)
-        , css
-            [ padding (px 15)
-            , fontSize (Css.em 0.8)
-            , textOverflow ellipsis
-            , property "white-space" "nowrap"
-            , overflow hidden
-            , cursor pointer
-            , borderTop3 (px 1) solid (hex "ddd")
-            , backgroundColor (hex "fff")
-            , hover
-                [ backgroundColor (hex "f5f5f5")
-                ]
-            ]
         ]
-        [ viewProperty "title" "No title" url
+        [ Html.fromUnstyled <| Gizmo.render Config.pickerItem url
         ]
+
 
 
 viewProperty : String -> String -> String -> Html Msg

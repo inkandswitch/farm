@@ -1,4 +1,4 @@
-module SimpleAvatar exposing (Doc, Msg, State, gizmo)
+module SmallAvatar exposing (Doc, Msg, State, gizmo)
 
 import Css exposing (..)
 import File exposing (File)
@@ -6,15 +6,14 @@ import File.Select as Select
 import Gizmo
 import Html
 import Html.Styled exposing (..)
-import Html.Styled.Attributes as Attr exposing (autofocus, css, href, placeholder, src, value)
-import Html.Styled.Events exposing (keyCode, on, onBlur, onClick, onInput)
+import Html.Styled.Attributes as Attr exposing (autofocus, css, href, placeholder, src, title, value)
 import Json.Decode as Json
 import Task
 
 
 defaultName : String
 defaultName =
-    "Mysterious Strange"
+    "Mysterious Stranger"
 
 
 hotPink =
@@ -34,9 +33,7 @@ gizmo =
 {-| Internal state not persisted to a document
 -}
 type alias State =
-    { editing : Bool
-    , input : Maybe String
-    }
+    {}
 
 
 {-| Document state
@@ -50,18 +47,13 @@ type alias Doc =
 {-| Message type for modifying State and Doc inside update
 -}
 type Msg
-    = PickImage
-    | GotFiles File (List File)
-    | GotPreviews (List String)
-    | NoOp
+    = NoOp
 
 
 init : Gizmo.Flags -> ( State, Doc, Cmd Msg )
 init =
     always
-        ( { editing = False
-          , input = Nothing
-          }
+        ( {}
         , { title = Nothing
           , imageData = Nothing
           }
@@ -71,24 +63,7 @@ init =
 
 update : Msg -> Gizmo.Model State Doc -> ( State, Doc, Cmd Msg )
 update msg { state, doc } =
-    case Debug.log "update" msg of
-        PickImage ->
-            ( state, doc, Select.files [ "image/*" ] GotFiles )
-
-        GotFiles file files ->
-            ( state
-            , doc
-            , Task.perform GotPreviews <|
-                Task.sequence <|
-                    List.map File.toUrl (file :: files)
-            )
-
-        GotPreviews urls ->
-            ( state
-            , { doc | imageData = List.head urls }
-            , Cmd.none
-            )
-
+    case msg of
         NoOp ->
             ( state, doc, Cmd.none )
 
@@ -100,25 +75,25 @@ subscriptions { state, doc } =
 
 view : Gizmo.Model State Doc -> Html Msg
 view { state, doc } =
+    let
+        name =
+            Maybe.withDefault "Mysterious Stranger" doc.title
+    in
     case doc.imageData of
         Just data ->
-            imageAvatar data
+            imageAvatar name data
 
         Nothing ->
-            case doc.title of
-                Just name ->
-                    textAvatar <| defaultIfEmpty "Mysterious Stanger" name
-
-                Nothing ->
-                    textAvatar "Mysterious Stranger"
+            textAvatar <| defaultIfEmpty "Mysterious Stanger" name
 
 
-imageAvatar : String -> Html Msg
-imageAvatar imageSrc =
+imageAvatar : String -> String -> Html Msg
+imageAvatar name imageSrc =
     div
-        [ css
-            [ width (px 36)
-            , height (px 36)
+        [ title name
+        , css
+            [ width (px 15)
+            , height (px 15)
             , backgroundImage (url imageSrc)
             , backgroundPosition center
             , backgroundRepeat noRepeat
@@ -131,10 +106,10 @@ imageAvatar imageSrc =
 textAvatar : String -> Html Msg
 textAvatar name =
     div
-        [ onClick PickImage
+        [ title name
         , css
-            [ width (px 36)
-            , height (px 36)
+            [ width (px 15)
+            , height (px 15)
             , borderRadius (pct 50)
             , border3 (px 1) solid hotPink
             , color hotPink
@@ -142,7 +117,7 @@ textAvatar name =
             , displayFlex
             , alignItems center
             , justifyContent center
-            , fontSize (Css.em 0.9)
+            , fontSize (Css.em 0.5)
             , overflow hidden
             ]
         ]

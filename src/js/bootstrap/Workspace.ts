@@ -13,6 +13,27 @@ export function article(repo: Repo) {
   return Bs.code(repo, "Article.elm")
 }
 
+export function smallAvatar(repo: Repo) {
+  return Bs.code(repo, "SmallAvatar.elm")
+}
+
+export function pickerItem(repo: Repo) {
+  return Bs.code(repo, "PickerItem.elm", {
+    config: {
+      property: property(repo),
+      authors: authors(repo)
+    }
+  })
+}
+
+export function authors(repo: Repo) {
+  return Bs.code(repo, "Authors.elm", {
+    config: {
+      smallAvatar: smallAvatar(repo)
+    }
+  })
+}
+
 export function avatar(repo: Repo) {
   return Bs.code(repo, "SimpleAvatar.elm")
 }
@@ -75,6 +96,7 @@ export function historyViewer(repo: Repo) {
   return Bs.code(repo, "HistoryViewer.elm", {
     config: {
       property: property(repo),
+      authors: authors(repo)
     },
   })
 }
@@ -83,6 +105,7 @@ export function createPicker(repo: Repo) {
   return Bs.code(repo, "CreatePicker.elm", {
     config: {
       property: property(repo),
+      pickerItem: pickerItem(repo)
     },
   })
 }
@@ -91,6 +114,7 @@ export function rendererPicker(repo: Repo) {
   return Bs.code(repo, "RendererPicker.elm", {
     config: {
       property: property(repo),
+      pickerItem: pickerItem(repo)
     },
   })
 }
@@ -125,6 +149,7 @@ export function property(repo: Repo) {
 
 export function registryData(repo: Repo) {
   return repo.create({
+    authors: authors(repo),
     avatar: avatar(repo),
     board: board(repo),
     chat: chat(repo),
@@ -136,7 +161,9 @@ export function registryData(repo: Repo) {
     liveEdit: liveEdit(repo),
     navigationBar: navigationBar(repo),
     note: note(repo),
+    pickerItem: property(repo),
     property: property(repo),
+    smallAvatar: smallAvatar(repo),
     superboxDefault: superboxDefault(repo),
     superboxEdit: superboxEdit(repo),
     todoList: todoList(repo),

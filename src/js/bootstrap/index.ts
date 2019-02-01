@@ -21,7 +21,8 @@ export function code(repo: Repo, file: string, opts: Opts = {}): string {
     })
     return cached
   } else {
-    const created = createCode(repo, file, opts)
+    const createOpts = Object.assign({lastEditTimestamp: Date.now()}, opts)
+    const created = createCode(repo, file, createOpts)
     cache.set(file, created)
     return created
   }

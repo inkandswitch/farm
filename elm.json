@@ -24,6 +24,7 @@
             "elm-explorations/webgl": "1.0.1",
             "mdgriffith/elm-ui": "1.1.0",
             "rtfeldman/elm-css": "16.0.0",
+            "ryannhg/date-format": "2.3.0",
             "stil4m/elm-syntax": "7.0.4"
         },
         "indirect": {

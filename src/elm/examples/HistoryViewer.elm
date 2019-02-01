@@ -241,8 +241,21 @@ viewHistoryItem focused index url =
             ]
             (case RealmUrl.parse url of
                 Ok { code, data } ->
-                    [ viewDataTitle data
-                    , viewCodeTitle code
+                    [ div
+                        []
+                        [ div
+                            [ css
+                                [ marginBottom (px 5)
+                                ]
+                            ]
+                            [ viewDataTitle data
+                            , viewCodeTitle code
+                            ]
+                        , div
+                            []
+                            [ Html.fromUnstyled <| Gizmo.render Config.authors data
+                            ]
+                        ]
                     ]
 
                 Err err ->

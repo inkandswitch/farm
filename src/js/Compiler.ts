@@ -41,7 +41,7 @@ export default class Compiler {
 
             state.sourceHash = msg.sourceHash
             state.outputHash = msg.outputHash
-            state.lastEditTimestamp = Math.floor(Date.now() / 1000)
+            state.lastEditTimestamp = Date.now()
             state.authors = Author.recordAuthor(Compiler.selfDataUrl, state.authors)
 
             const outputUrl = repo.writeFile(
