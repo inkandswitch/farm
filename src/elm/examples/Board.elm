@@ -126,7 +126,7 @@ update msg { state, doc, flags } =
 
         Stop ->
             ( { state | action = None }
-            , doc |> applyAction state.action
+            , doc |> applyAction (snapAction state.action)
             , Cmd.none
             )
 
@@ -370,14 +370,10 @@ applyAction action doc =
 
 snap : Float -> Float
 snap fl =
-    let
-        n =
-            Basics.round fl
-
-        offset =
-            modBy 24 n
-    in
-    toFloat (n - offset)
+    (fl / 24)
+        |> Basics.round
+        |> (*) 24
+        |> toFloat
 
 
 snapPoint : Point -> Point
@@ -388,6 +384,19 @@ snapPoint { x, y } =
 snapSize : Size -> Size
 snapSize { w, h } =
     { w = snap w, h = snap h }
+
+
+snapAction : Action -> Action
+snapAction action =
+    case action of
+        None ->
+            action
+
+        Moving n pt ->
+            Moving n (snapPoint pt)
+
+        Resizing n size ->
+            Resizing n (snapSize size)
 
 
 bumpZ : Int -> Doc -> Doc
