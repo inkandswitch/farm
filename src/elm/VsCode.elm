@@ -1,11 +1,11 @@
-module VsCode exposing (link)
+module VsCode exposing (link, open)
 
 import Gizmo
 
 
 link : String -> String
 link url =
-    "vscode-insiders://inkandswitch.hypermerge/" ++ url
+    "vscode://inkandswitch.hypermerge/" ++ url
 
 
 open : String -> Cmd msg
