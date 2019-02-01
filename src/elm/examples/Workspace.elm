@@ -92,6 +92,7 @@ type Msg
     | ToggleRendererPicker
     | HideActivePicker
     | Open String
+    | Fork String
     | ChangeRenderer String
     | CopyShareLink
     | Focus String
@@ -177,13 +178,20 @@ update msg ({ state, doc } as model) =
                         _ ->
                             ( state
                             , doc
-                            , IO.log <| "Failed to create a new gizmo"
+                            , IO.log "Failed to create a new gizmo"
                             )
+
+                ( [ "CodeFork" ], Just codeUrl ) ->
+                    currentPair doc.history
+                        |> Result.fromMaybe "No current gizmo"
+                        |> Result.andThen (\p -> FarmUrl.create { p | code = codeUrl })
+                        |> Result.map (\farmUrl -> update (NavigateTo farmUrl) model)
+                        |> Result.withDefault ( state, doc, Cmd.none )
 
                 _ ->
                     ( state
                     , doc
-                    , IO.log <| "Failed to create a new gizmo"
+                    , IO.log "Failed to create a new gizmo"
                     )
 
         HideActivePicker ->
@@ -227,6 +235,9 @@ update msg ({ state, doc } as model) =
 
         Open url ->
             update (NavigateTo url) model
+
+        Fork url ->
+            ( state, doc, Repo.fork "CodeFork:" url )
 
         CopyShareLink ->
             case History.current doc.history of
@@ -451,6 +462,24 @@ viewNavButtons ({ doc } as model) =
                 _ ->
                     Html.text ""
             ]
+        , case currentPair doc.history of
+            Nothing ->
+                text ""
+
+            Just { code } ->
+                div
+                    [ css
+                        [ display inlineBlock
+                        , position relative
+                        ]
+                    ]
+                    [ viewLink
+                        True
+                        (Fork code)
+                        (Tooltip.tooltip Tooltip.BottomRight "Cmd+Shift+f")
+                        [ text "fork"
+                        ]
+                    ]
         ]
 
 
@@ -740,6 +769,12 @@ currentPair =
         >> Result.toMaybe
 
 
+currentCode : History String -> Maybe String
+currentCode =
+    currentPair
+        >> Maybe.map (\{ code } -> code)
+
+
 onStopPropagationClick : Msg -> Html.Attribute Msg
 onStopPropagationClick msg =
     stopPropagationOn "click" (D.succeed ( msg, True ))
@@ -776,13 +811,19 @@ isCreatePicker picker =
 
 
 subscriptions : Model State Doc -> Sub Msg
-subscriptions { state } =
+subscriptions { state, doc } =
     Sub.batch
         [ Navigation.currentUrl NavigateTo
         , Repo.created CreateDocCreated
         , Keyboard.shortcuts
             [ ( Cmd O, ToggleOpenPicker )
             , ( Cmd T, ToggleOpenPicker )
+            , ( Cmd (Shift F)
+              , doc.history
+                    |> currentCode
+                    |> Maybe.map Fork
+                    |> Maybe.withDefault NoOp
+              )
             , ( Cmd I, ToggleRendererPicker )
             , ( Cmd S, CopyShareLink )
             , ( Cmd N, ToggleCreatePicker )
