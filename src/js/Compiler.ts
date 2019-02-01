@@ -39,9 +39,16 @@ export default class Compiler {
 
             this.log(msg.url, "Compilation successful. Writing to doc.")
 
+            // XXX: Skip setting the lastEditTimestamp if this is the
+            // very first compile. We already set it when we bootstrap
+            // the code doc. Should probably do something smart with
+            // a `timeCreated` and `timeLastModified`.
+            if (state.outputHash) {
+              state.lastEditTimestamp = Date.now()
+            }
+
             state.sourceHash = msg.sourceHash
             state.outputHash = msg.outputHash
-            state.lastEditTimestamp = Date.now()
             state.authors = Author.recordAuthor(Compiler.selfDataUrl, state.authors)
 
             const outputUrl = repo.writeFile(
