@@ -175,7 +175,16 @@ export default class ElmGizmo {
   onInit = (doc: any) => {
     this.handle.change((state: any) => {
       defaults(state, doc)
-      state.authors = Author.recordAuthor(ElmGizmo.selfDataUrl, state.authors)
+
+      // On init, only record the author if there is no existing authors
+      // list. If there is no authors list, this is the very first init
+      // of the doc and we want to record the current author as its
+      // creator. If there is an author's list, we don't want to record
+      // the current author unless a change is made - othewise we would
+      // record everyone who *views* the document as an author.
+      if (!state.authors) {
+        state.authors = Author.recordAuthor(ElmGizmo.selfDataUrl, state.authors)
+      }
     })
 
     this.handle.subscribe(doc => {
