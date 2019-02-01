@@ -37,7 +37,7 @@ program
   .description("Bootstrap a gizmo from src/js/bootstrap.")
   .action((gizmo: string) => {
     const bs = require("../bootstrap/" + gizmo)
-    const code = bs.code(repo)
+    const code = bs.code("", repo)
     const data = bs.data(repo)
     console.log("\n\ncode url:", code, "\n\n")
     console.log("\n\ndata url:", data, "\n\n")
@@ -51,7 +51,7 @@ program
   .command("create <elmFile>")
   .description("Create a farm gizmo from an elm file")
   .action(filename => {
-    const url = Bs.code(repo, filename)
+    const url = Bs.code("", repo, filename)
     console.log("\n\ngizmo code url:", url, "\n\n")
     setTimeout(() => {}, 99999999) // HACK: without a worker, node exits
   })

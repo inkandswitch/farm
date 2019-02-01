@@ -46,10 +46,12 @@ export default class Compiler {
             if (state.outputHash) {
               state.lastEditTimestamp = Date.now()
             }
+            if (Compiler.selfDataUrl) {
+              state.authors = Author.recordAuthor(Compiler.selfDataUrl,state.authors)
+            }
 
             state.sourceHash = msg.sourceHash
             state.outputHash = msg.outputHash
-            state.authors = Author.recordAuthor(Compiler.selfDataUrl, state.authors)
 
             const outputUrl = repo.writeFile(
               encoder.encode(msg.output),

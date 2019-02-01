@@ -21,10 +21,10 @@ export default class App {
   compiler: Compiler = new Compiler(this.repo, "./compile.worker.js")
   root?: HTMLElement
 
-  registryUrl = load("rootRegistryUrl", () => Workspace.registryData(this.repo))
-  rootCodeUrl = load("rootCodeUrl", () => Workspace.code(this.repo))
-  rootDataUrl = load("rootDataUrl", () => Workspace.data(this.repo))
   selfDataUrl = load("selfDataUrl", () => Workspace.identityData(this.repo))
+  registryUrl = load("rootRegistryUrl", () => Workspace.registryData(this.selfDataUrl, this.repo))
+  rootCodeUrl = load("rootCodeUrl", () => Workspace.code(this.selfDataUrl, this.repo))
+  rootDataUrl = load("rootDataUrl", () => Workspace.data(this.selfDataUrl, this.repo))
 
   constructor() {
     ;(self as any).repo = this.repo
@@ -99,7 +99,7 @@ export default class App {
   }
 
   createCode(file: string, options: Bs.Opts) {
-    return Bs.createCode(this.repo, file, options)
+    return Bs.createCode(this.selfDataUrl, this.repo, file, options)
   }
 }
 

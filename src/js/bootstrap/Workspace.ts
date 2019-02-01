@@ -1,51 +1,51 @@
 import Repo from "../Repo"
 import * as Bs from "."
 
-export function code(repo: Repo) {
-  return workspace(repo)
+export function code(identity: string, repo: Repo) {
+  return workspace(identity, repo)
 }
 
-export function data(repo: Repo) {
-  return workspaceData(repo)
+export function data(identity: string, repo: Repo) {
+  return workspaceData(identity, repo)
 }
 
-export function article(repo: Repo) {
-  return Bs.code(repo, "Article.elm")
+export function article(identity: string, repo: Repo) {
+  return Bs.code(identity, repo, "Article.elm")
 }
 
-export function smallAvatar(repo: Repo) {
-  return Bs.code(repo, "SmallAvatar.elm")
+export function smallAvatar(identity: string, repo: Repo) {
+  return Bs.code(identity, repo, "SmallAvatar.elm")
 }
 
-export function pickerItem(repo: Repo) {
-  return Bs.code(repo, "PickerItem.elm", {
+export function pickerItem(identity: string, repo: Repo) {
+  return Bs.code(identity, repo, "PickerItem.elm", {
     config: {
-      property: property(repo),
-      authors: authors(repo)
+      property: property(identity, repo),
+      authors: authors(identity, repo)
     }
   })
 }
 
-export function authors(repo: Repo) {
-  return Bs.code(repo, "Authors.elm", {
+export function authors(identity: string, repo: Repo) {
+  return Bs.code(identity, repo, "Authors.elm", {
     config: {
-      smallAvatar: smallAvatar(repo)
+      smallAvatar: smallAvatar(identity, repo)
     }
   })
 }
 
-export function avatar(repo: Repo) {
-  return Bs.code(repo, "SimpleAvatar.elm")
+export function avatar(identity: string, repo: Repo) {
+  return Bs.code(identity, repo, "SimpleAvatar.elm")
 }
 
-export function board(repo: Repo) {
-  const url = Bs.code(repo, "Board.elm", {
+export function board(identity: string, repo: Repo) {
+  const url = Bs.code(identity, repo, "Board.elm", {
     title: "Board",
     config: {
-      chat: chat(repo),
-      note: note(repo),
-      todoList: todoList(repo),
-      image: image(repo)
+      chat: chat(identity, repo),
+      note: note(identity, repo),
+      todoList: todoList(identity, repo),
+      image: image(identity, repo)
     },
   })
 
@@ -57,117 +57,121 @@ export function board(repo: Repo) {
   return url
 }
 
-export function chat(repo: Repo) {
-  return Bs.code(repo, "Chat.elm", {
+export function chat(identity: string, repo: Repo) {
+  return Bs.code(identity, repo, "Chat.elm", {
     title: "Chat",
     config: {
-      avatar: avatar(repo),
-      editableTitle: editableTitle(repo)
+      avatar: avatar(identity, repo),
+      editableTitle: editableTitle(identity, repo)
     }
   })
 }
 
-export function counter(repo: Repo) {
-  return Bs.code(repo, "Counter.elm")
+export function counter(identity: string, repo: Repo) {
+  return Bs.code(identity, repo, "Counter.elm")
 }
 
-export function counterData(repo: Repo) {
+export function counterData(identity: string, repo: Repo) {
   return repo.create({ title: "Counter data" })
 }
 
-export function counterTutorial(repo: Repo) {
-  return Bs.code(repo, "CounterTutorial.elm")
+export function counterTutorial(identity: string, repo: Repo) {
+  return Bs.code(identity, repo, "CounterTutorial.elm")
 }
 
-export function counterTutorialData(repo: Repo) {
+export function counterTutorialData(identity: string, repo: Repo) {
   return repo.create({
     title: "Counter Tutorial",
     step: 1,
-    codeUrl: counter(repo),
-    dataUrl: counterData(repo),
+    codeUrl: counter(identity, repo),
+    dataUrl: counterData(identity, repo),
   })
 }
 
-export function editableTitle(repo: Repo) {
-  return Bs.code(repo, "EditableTitle.elm")
+export function editableTitle(identity: string, repo: Repo) {
+  return Bs.code(identity, repo, "EditableTitle.elm")
 }
 
-export function historyViewer(repo: Repo) {
-  return Bs.code(repo, "HistoryViewer.elm", {
+export function historyViewer(identity: string, repo: Repo) {
+  return Bs.code(identity, repo, "HistoryViewer.elm", {
     config: {
-      property: property(repo),
-      authors: authors(repo)
+      property: property(identity, repo),
+      authors: authors(identity, repo)
     },
   })
 }
 
-export function createPicker(repo: Repo) {
-  return Bs.code(repo, "CreatePicker.elm", {
+export function createPicker(identity: string, repo: Repo) {
+  return Bs.code(identity, repo, "CreatePicker.elm", {
     config: {
-      property: property(repo),
-      pickerItem: pickerItem(repo)
+      property: property(identity, repo),
+      pickerItem: pickerItem(identity, repo)
     },
   })
 }
 
-export function rendererPicker(repo: Repo) {
-  return Bs.code(repo, "RendererPicker.elm", {
+export function rendererPicker(identity: string, repo: Repo) {
+  return Bs.code(identity, repo, "RendererPicker.elm", {
     config: {
-      property: property(repo),
-      pickerItem: pickerItem(repo)
+      property: property(identity, repo),
+      pickerItem: pickerItem(identity, repo)
     },
   })
 }
 
 export function identityData(repo: Repo) {
-  return repo.create({
+  const identity = repo.create({
     title: "Mysterious Stranger",
   })
+  repo.change(identity, (doc: any) => {
+    doc.authors = [identity]
+  })
+  return identity
 }
 
-export function image(repo: Repo) {
-  return Bs.code(repo, "Image.elm")
+export function image(identity: string, repo: Repo) {
+  return Bs.code(identity, repo, "Image.elm")
 }
 
-export function liveEdit(repo: Repo) {
-  return Bs.code(repo, "LiveEdit.elm")
+export function liveEdit(identity: string, repo: Repo) {
+  return Bs.code(identity, repo, "LiveEdit.elm")
 }
 
-export function navigationBar(repo: Repo) {
-  return Bs.code(repo, "NavigationBar.elm")
+export function navigationBar(identity: string, repo: Repo) {
+  return Bs.code(identity, repo, "NavigationBar.elm")
 }
 
-export function note(repo: Repo) {
-  return Bs.code(repo, "Note.elm", {
+export function note(identity: string, repo: Repo) {
+  return Bs.code(identity, repo, "Note.elm", {
     title: "Note"
   })
 }
 
-export function property(repo: Repo) {
-  return Bs.code(repo, "Property.elm")
+export function property(identity: string, repo: Repo) {
+  return Bs.code(identity, repo, "Property.elm")
 }
 
-export function registryData(repo: Repo) {
+export function registryData(identity: string, repo: Repo) {
   return repo.create({
-    authors: authors(repo),
-    avatar: avatar(repo),
-    board: board(repo),
-    chat: chat(repo),
-    editableTitle: editableTitle(repo),
-    historyViewer: historyViewer(repo),
-    rendererPicker: rendererPicker(repo),
-    createPicker: createPicker(repo),
-    image: image(repo),
-    liveEdit: liveEdit(repo),
-    navigationBar: navigationBar(repo),
-    note: note(repo),
-    pickerItem: property(repo),
-    property: property(repo),
-    smallAvatar: smallAvatar(repo),
-    superboxDefault: superboxDefault(repo),
-    superboxEdit: superboxEdit(repo),
-    todoList: todoList(repo),
-    workspace: workspace(repo),
+    authors: authors(identity, repo),
+    avatar: avatar(identity, repo),
+    board: board(identity, repo),
+    chat: chat(identity, repo),
+    editableTitle: editableTitle(identity, repo),
+    historyViewer: historyViewer(identity, repo),
+    rendererPicker: rendererPicker(identity, repo),
+    createPicker: createPicker(identity, repo),
+    image: image(identity, repo),
+    liveEdit: liveEdit(identity, repo),
+    navigationBar: navigationBar(identity, repo),
+    note: note(identity, repo),
+    pickerItem: property(identity, repo),
+    property: property(identity, repo),
+    smallAvatar: smallAvatar(identity, repo),
+    superboxDefault: superboxDefault(identity, repo),
+    superboxEdit: superboxEdit(identity, repo),
+    todoList: todoList(identity, repo),
+    workspace: workspace(identity, repo),
     icons: {
       chat: chatIcon(repo),
       tutorial: tutorialIcon(repo),
@@ -175,35 +179,35 @@ export function registryData(repo: Repo) {
   })
 }
 
-export function superboxDefault(repo: Repo) {
-  return Bs.code(repo, "SuperboxDefault.elm")
+export function superboxDefault(identity: string, repo: Repo) {
+  return Bs.code(identity, repo, "SuperboxDefault.elm")
 }
 
-export function superboxEdit(repo: Repo) {
-  return Bs.code(repo, "SuperboxEdit.elm")
+export function superboxEdit(identity: string, repo: Repo) {
+  return Bs.code(identity, repo, "SuperboxEdit.elm")
 }
 
-export function todoList(repo: Repo) {
-  return Bs.code(repo, "TodoList.elm", {
+export function todoList(identity: string, repo: Repo) {
+  return Bs.code(identity, repo, "TodoList.elm", {
     title: "Todo List"
   })
 }
 
-export function wiki(repo: Repo) {
-  return Bs.code(repo, "Wiki.elm", {
+export function wiki(identity: string, repo: Repo) {
+  return Bs.code(identity, repo, "Wiki.elm", {
     title: "Wiki",
     config: {
-      article: article(repo),
-      articleIndex: Bs.code(repo, "ArticleIndex.elm", {
+      article: article(identity, repo),
+      articleIndex: Bs.code(identity, repo, "ArticleIndex.elm", {
         config: {
-          articleIndexItem: Bs.code(repo, "ArticleIndexItem.elm"),
+          articleIndexItem: Bs.code(identity, repo, "ArticleIndexItem.elm"),
         },
       }),
     },
   })
 }
 
-export function wikiData(repo: Repo) {
+export function wikiData(identity: string, repo: Repo) {
   const wikiArticle = repo.create({
     title: "Welcome",
     body: "This is the FarmWiki",
@@ -215,16 +219,16 @@ export function wikiData(repo: Repo) {
   })
 }
 
-export function windowManager(repo: Repo) {
-  return Bs.code(repo, "WindowManager.elm", {
+export function windowManager(identity: string, repo: Repo) {
+  return Bs.code(identity, repo, "WindowManager.elm", {
     config: {
-      title: editableTitle(repo),
-      empty: Bs.code(repo, "EmptyGizmo.elm"),
+      title: editableTitle(identity, repo),
+      empty: Bs.code(identity, repo, "EmptyGizmo.elm"),
     },
   })
 }
 
-export function windowManagerData(repo: Repo) {
+export function windowManagerData(identity: string, repo: Repo) {
   return repo.create({
     windows: [
       {
@@ -233,33 +237,33 @@ export function windowManagerData(repo: Repo) {
         w: 300,
         h: 400,
         z: 0,
-        code: counterTutorial(repo),
-        data: counterTutorialData(repo),
+        code: counterTutorial(identity, repo),
+        data: counterTutorialData(identity, repo),
       },
     ],
   })
 }
 
-export function workspace(repo: Repo) {
-  return Bs.code(repo, "Workspace.elm", {
+export function workspace(identity: string, repo: Repo) {
+  return Bs.code(identity, repo, "Workspace.elm", {
     config: {
-      board: board(repo),
-      liveEdit: liveEdit(repo),
-      openPicker: historyViewer(repo),
-      rendererPicker: rendererPicker(repo),
-      createPicker: createPicker(repo),
-      property: property(repo)
+      board: board(identity, repo),
+      liveEdit: liveEdit(identity, repo),
+      openPicker: historyViewer(identity, repo),
+      rendererPicker: rendererPicker(identity, repo),
+      createPicker: createPicker(identity, repo),
+      property: property(identity, repo)
     },
   })
 }
 
-export function workspaceData(repo: Repo) {
+export function workspaceData(identity: string, repo: Repo) {
   return repo.create({
     codeDocs: [
-      board(repo),
-      note(repo),
-      chat(repo),
-      todoList(repo)
+      board(identity, repo),
+      note(identity, repo),
+      chat(identity, repo),
+      todoList(identity, repo)
     ]
   })
 }
