@@ -1,6 +1,7 @@
 module Board exposing (Doc, Msg, State, gizmo)
 
 import Array exposing (Array)
+import Browser.Dom as Dom exposing (Viewport)
 import Browser.Events
 import Clipboard
 import Config
@@ -12,13 +13,14 @@ import FarmUrl
 import File exposing (File)
 import Gizmo exposing (Flags, Model)
 import Html.Styled as Html exposing (Html, button, div, fromUnstyled, input, text, toUnstyled)
-import Html.Styled.Attributes as Attr exposing (css, value)
+import Html.Styled.Attributes as Attr exposing (css, id, value)
 import Html.Styled.Events as Events exposing (on, onClick, onDoubleClick, onInput, onMouseDown, onMouseUp)
 import IO
 import Json.Decode as Json exposing (Decoder)
 import Json.Encode as E
+import Random
 import Repo exposing (Ref, Url)
-import Task
+import Task exposing (Task)
 import Tuple exposing (pair)
 import Uri
 import VsCode
@@ -36,7 +38,6 @@ gizmo =
 
 type Action
     = None
-    | Create Point
     | Moving Int Point
     | Resizing Int Size
 
@@ -68,6 +69,8 @@ type alias Pair =
 -}
 type alias State =
     { action : Action
+    , randomId : String -- TODO: Use proper UUID
+    , createPosition : Point
     , menu : Menu
     , scroll : Point
     , scrolling : Bool
@@ -85,14 +88,16 @@ type alias Doc =
 init : Flags -> ( State, Doc, Cmd Msg )
 init flags =
     ( { action = None
+      , randomId = ""
       , menu = NoMenu
+      , createPosition = origin
       , scroll = { x = 0, y = 0 }
       , scrolling = False
       }
     , { cards = Array.empty
       , maxZ = 1
       }
-    , Cmd.none
+    , Random.generate SetRandomId <| Random.int Random.minInt Random.maxInt
     )
 
 
@@ -100,6 +105,7 @@ init flags =
 -}
 type Msg
     = NoOp
+    | SetRandomId Int
     | Stop
     | Move Int
     | Resize Int
@@ -108,22 +114,31 @@ type Msg
     | Remove Int
     | Click Int
     | SetMenu Menu
-    | CreateCard Point Url
     | HandleDrop Point (List File)
     | HandlePaste Point (List File)
+    | CreateCard Point String
+    | CreateCardInScene Point String (Result Dom.Error Viewport)
     | CreateImage Point String
+    | CreateImageInScene Point String (Result Dom.Error Viewport)
     | Created ( Ref, List Url )
+    | EmbedGizmo Point String
+    | EmbedGizmoInScene Point String (Result Dom.Error Viewport)
     | NavigateToCard Int
     | Scroll Point
     | ScrollEnd
-    | EmbedGizmo Point String
 
 
 update : Msg -> Model State Doc -> ( State, Doc, Cmd Msg )
 update msg { state, doc, flags } =
-    case msg of
+    case Debug.log "msg" msg of
         NoOp ->
             ( state, doc, Cmd.none )
+
+        SetRandomId rid ->
+            ( { state | randomId = "board" ++ String.fromInt rid }
+            , doc
+            , Cmd.none
+            )
 
         Stop ->
             ( { state | action = None }
@@ -195,53 +210,11 @@ update msg { state, doc, flags } =
         SetMenu m ->
             ( { state | menu = m }, doc, Cmd.none )
 
-        CreateCard position code ->
-            ( { state | action = Create position }
-            , doc
-            , Repo.create code 1
-            )
-
-        CreateImage position src ->
-            ( { state | action = Create position }
-            , doc
-            , Repo.createWithProps Config.image 1 [ ( "src", E.string src ) ]
-            )
-
-        Created ( code, urls ) ->
-            case urls of
-                [ data ] ->
-                    let
-                        pos =
-                            actionPosition state.action
-
-                        card =
-                            newCard code data |> moveTo pos
-                    in
-                    ( { state | menu = NoMenu, action = None }, doc |> pushCard card, Cmd.none )
-
-                _ ->
-                    ( state, doc, Cmd.none )
-
-        EmbedGizmo position url ->
-            case FarmUrl.parse url of
-                Ok { code, data } ->
-                    let
-                        card =
-                            newCard code data |> moveTo position
-                    in
-                    ( state
-                    , doc |> pushCard card
-                    , Cmd.none
-                    )
-
-                Err err ->
-                    ( state, doc, Cmd.none )
-
         HandleDrop position files ->
             ( state
             , doc
             , files
-                |> List.map (dropFileToCmd position)
+                |> List.map (fileToCmdWithPosition position)
                 |> Cmd.batch
             )
 
@@ -249,9 +222,94 @@ update msg { state, doc, flags } =
             ( state
             , doc
             , files
-                |> List.map (dropFileToCmd position)
+                |> List.map (fileToCmdWithPosition position)
                 |> Cmd.batch
             )
+
+        CreateCard position code ->
+            ( state
+            , doc
+            , Task.attempt
+                (CreateCardInScene position code)
+                (Dom.getViewportOf state.randomId)
+            )
+
+        CreateCardInScene relativePos code viewport ->
+            case viewport of
+                Ok vp ->
+                    ( { state | createPosition = toScenePosition vp relativePos }
+                    , doc
+                    , Repo.create code 1
+                    )
+
+                Err err ->
+                    ( state
+                    , doc
+                    , IO.log "error creating card"
+                    )
+
+        CreateImage position src ->
+            ( state
+            , doc
+            , Task.attempt
+                (CreateImageInScene position src)
+                (Dom.getViewportOf state.randomId)
+            )
+
+        CreateImageInScene relativePos src viewport ->
+            case viewport of
+                Ok vp ->
+                    ( { state | createPosition = toScenePosition vp relativePos }
+                    , doc
+                    , Repo.createWithProps Config.image 1 [ ( "src", E.string src ) ]
+                    )
+
+                Err err ->
+                    ( state
+                    , doc
+                    , IO.log "error creating card"
+                    )
+
+        Created ( code, urls ) ->
+            case urls of
+                [ data ] ->
+                    let
+                        card =
+                            newCard code data |> moveTo (snapPoint state.createPosition)
+                    in
+                    ( { state | menu = NoMenu, createPosition = origin }, doc |> pushCard card, Cmd.none )
+
+                _ ->
+                    ( state, doc, Cmd.none )
+
+        EmbedGizmo position url ->
+            ( state
+            , doc
+            , Task.attempt
+                (EmbedGizmoInScene position url)
+                (Dom.getViewportOf state.randomId)
+            )
+
+        EmbedGizmoInScene relativePos url viewport ->
+            case ( FarmUrl.parse url, viewport ) of
+                ( Ok { code, data }, Ok vp ) ->
+                    let
+                        pos =
+                            toScenePosition vp relativePos
+
+                        card =
+                            newCard code data |> moveTo (snapPoint pos)
+                    in
+                    ( state
+                    , doc |> pushCard card
+                    , Cmd.none
+                    )
+
+                _ ->
+                    ( state
+                    , doc
+                    , IO.log "Error embedding gizmo"
+                    )
 
         NavigateToCard n ->
             ( state
@@ -278,23 +336,20 @@ update msg { state, doc, flags } =
             ( { state | scrolling = False }, doc, Cmd.none )
 
 
-actionPosition : Action -> Point
-actionPosition action =
-    case action of
-        Create position ->
-            position
-
-        _ ->
-            origin
-
-
 origin : Point
 origin =
     { x = 0, y = 0 }
 
 
-dropFileToCmd : Point -> File -> Cmd Msg
-dropFileToCmd position file =
+toScenePosition : Viewport -> Point -> Point
+toScenePosition vp relative =
+    { x = vp.viewport.x + relative.x
+    , y = vp.viewport.y + relative.y
+    }
+
+
+fileToCmdWithPosition : Point -> File -> Cmd Msg
+fileToCmdWithPosition position file =
     case String.split "/" (File.mime file) of
         [ "image", _ ] ->
             Task.perform (CreateImage position) <| File.toUrl file
@@ -416,9 +471,6 @@ snapAction action =
         Resizing n size ->
             Resizing n (snapSize size)
 
-        Create pt ->
-            Create (snapPoint pt)
-
         _ ->
             action
 
@@ -493,8 +545,10 @@ view { doc, state } =
         , onPaste HandlePaste
         ]
         [ viewContextMenu doc state.menu
+        , viewClickShield
         , div
-            [ css
+            [ id state.randomId
+            , css
                 [ -- TODO: turns out this is hard:
                   -- transform (translate2 (px <| negate state.scroll.x) (px <| negate state.scroll.y))
                   fill
@@ -504,13 +558,11 @@ view { doc, state } =
                 , overflow auto
                 ]
             ]
-            (viewClickShield
-                :: (doc
-                        |> applyAction state.action
-                        |> .cards
-                        |> Array.indexedMap viewCard
-                        |> Array.toList
-                   )
+            (doc
+                |> applyAction state.action
+                |> .cards
+                |> Array.indexedMap viewCard
+                |> Array.toList
             )
         ]
 
@@ -800,10 +852,3 @@ xyDecoder =
     Json.map2 Point
         (Json.field "x" Json.float)
         (Json.field "y" Json.float)
-
-
-xyOffsetDecoder : Decoder Point
-xyOffsetDecoder =
-    Json.map2 Point
-        (Json.field "offsetX" Json.float)
-        (Json.field "offsetY" Json.float)
