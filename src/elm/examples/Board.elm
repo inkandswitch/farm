@@ -1,7 +1,7 @@
 module Board exposing (Doc, Msg, State, gizmo)
 
 import Array exposing (Array)
-import Browser.Dom as Dom exposing (Viewport)
+import Browser.Dom as Dom exposing (Element, Viewport)
 import Browser.Events
 import Clipboard
 import Config
@@ -117,12 +117,12 @@ type Msg
     | HandleDrop Point (List File)
     | HandlePaste Point (List File)
     | CreateCard Point String
-    | CreateCardInScene Point String (Result Dom.Error Viewport)
+    | CreateCardInScene String (Result Dom.Error Point)
     | CreateImage Point String
-    | CreateImageInScene Point String (Result Dom.Error Viewport)
+    | CreateImageInScene String (Result Dom.Error Point)
     | Created ( Ref, List Url )
     | EmbedGizmo Point String
-    | EmbedGizmoInScene Point String (Result Dom.Error Viewport)
+    | EmbedGizmoInScene String (Result Dom.Error Point)
     | NavigateToCard Int
     | Scroll Point
     | ScrollEnd
@@ -214,7 +214,7 @@ update msg { state, doc, flags } =
             ( state
             , doc
             , files
-                |> List.map (fileToCmdWithPosition position)
+                |> List.map (fileToCmd position)
                 |> Cmd.batch
             )
 
@@ -222,7 +222,7 @@ update msg { state, doc, flags } =
             ( state
             , doc
             , files
-                |> List.map (fileToCmdWithPosition position)
+                |> List.map (fileToCmd position)
                 |> Cmd.batch
             )
 
@@ -230,14 +230,14 @@ update msg { state, doc, flags } =
             ( state
             , doc
             , Task.attempt
-                (CreateCardInScene position code)
-                (Dom.getViewportOf state.randomId)
+                (CreateCardInScene code)
+                (getLocalCoordinates state.randomId position)
             )
 
-        CreateCardInScene relativePos code viewport ->
-            case viewport of
-                Ok vp ->
-                    ( { state | createPosition = toScenePosition vp relativePos }
+        CreateCardInScene code localCoordinates ->
+            case localCoordinates of
+                Ok pos ->
+                    ( { state | createPosition = pos }
                     , doc
                     , Repo.create code 1
                     )
@@ -252,14 +252,14 @@ update msg { state, doc, flags } =
             ( state
             , doc
             , Task.attempt
-                (CreateImageInScene position src)
-                (Dom.getViewportOf state.randomId)
+                (CreateImageInScene src)
+                (getLocalCoordinates state.randomId position)
             )
 
-        CreateImageInScene relativePos src viewport ->
-            case viewport of
-                Ok vp ->
-                    ( { state | createPosition = toScenePosition vp relativePos }
+        CreateImageInScene src localCoordinates ->
+            case localCoordinates of
+                Ok pos ->
+                    ( { state | createPosition = pos }
                     , doc
                     , Repo.createWithProps Config.image 1 [ ( "src", E.string src ) ]
                     )
@@ -286,17 +286,14 @@ update msg { state, doc, flags } =
             ( state
             , doc
             , Task.attempt
-                (EmbedGizmoInScene position url)
-                (Dom.getViewportOf state.randomId)
+                (EmbedGizmoInScene url)
+                (getLocalCoordinates state.randomId position)
             )
 
-        EmbedGizmoInScene relativePos url viewport ->
-            case ( FarmUrl.parse url, viewport ) of
-                ( Ok { code, data }, Ok vp ) ->
+        EmbedGizmoInScene url localCoordinates ->
+            case ( FarmUrl.parse url, localCoordinates ) of
+                ( Ok { code, data }, Ok pos ) ->
                     let
-                        pos =
-                            toScenePosition vp relativePos
-
                         card =
                             newCard code data |> moveTo (snapPoint pos)
                     in
@@ -348,8 +345,50 @@ toScenePosition vp relative =
     }
 
 
-fileToCmdWithPosition : Point -> File -> Cmd Msg
-fileToCmdWithPosition position file =
+getLocalCoordinates : String -> Point -> Task Dom.Error Point
+getLocalCoordinates boardId pos =
+    -- subtract the board element offset for the global scene
+    -- add the board viewport offset for the board scene
+    Task.sequence
+        [ Task.map (\el -> el.element) <| Dom.getElement boardId
+        , Task.map (\vp -> vp.viewport) <| Dom.getViewportOf boardId
+        ]
+        |> Task.map
+            (\coordinates ->
+                case coordinates of
+                    [ globalOffset, localScrollOffset ] ->
+                        pos
+                            |> withOffset localScrollOffset
+                            |> withoutOffset globalOffset
+
+                    _ ->
+                        -- TODO: how can we preserve the Dom.Error? The compiler forces this case
+                        Debug.log
+                            "Unknown error translating to local coordinates, using origin"
+                            origin
+            )
+
+
+type alias Offset a =
+    { a | x : Float, y : Float }
+
+
+withOffset : Offset a -> Point -> Point
+withOffset offset pos =
+    { x = pos.x + offset.x
+    , y = pos.y + offset.y
+    }
+
+
+withoutOffset : Offset a -> Point -> Point
+withoutOffset offset pos =
+    { x = pos.x - offset.x
+    , y = pos.y - offset.y
+    }
+
+
+fileToCmd : Point -> File -> Cmd Msg
+fileToCmd position file =
     case String.split "/" (File.mime file) of
         [ "image", _ ] ->
             Task.perform (CreateImage position) <| File.toUrl file
@@ -545,7 +584,6 @@ view { doc, state } =
         , onPaste HandlePaste
         ]
         [ viewContextMenu doc state.menu
-        , viewClickShield
         , div
             [ id state.randomId
             , css
@@ -558,11 +596,13 @@ view { doc, state } =
                 , overflow auto
                 ]
             ]
-            (doc
-                |> applyAction state.action
-                |> .cards
-                |> Array.indexedMap viewCard
-                |> Array.toList
+            (viewClickShield
+                :: (doc
+                        |> applyAction state.action
+                        |> .cards
+                        |> Array.indexedMap viewCard
+                        |> Array.toList
+                   )
             )
         ]
 
