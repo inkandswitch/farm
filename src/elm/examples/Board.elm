@@ -204,7 +204,7 @@ update msg { state, doc, flags } =
             )
 
         Remove n ->
-            ( state
+            ( state |> hideMenu
             , { doc | cards = doc.cards |> Array.remove n }
             , Cmd.none
             )
