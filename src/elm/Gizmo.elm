@@ -13,20 +13,20 @@ port module Gizmo exposing
     , element
     , emit
     , onEmit
+    , portal
+    , portalTo
     , render
     , renderWindow
     , renderWith
-    , portal
-    , portalTo
     , sandbox
     , send
     )
 
 import Dict exposing (Dict)
 import Doc
-import Html exposing (Html)
-import Html.Attributes as Attr
-import Html.Events as Events
+import Html.Styled as Html exposing (Html)
+import Html.Styled.Attributes as Attr
+import Html.Styled.Events as Events
 import Json.Decode as Json
 import Json.Encode as E
 import Repo exposing (Url)
@@ -190,7 +190,7 @@ portal =
 
 
 {-| Render a gizmo as a child of an element specified by a CSS selector.
-    Note: Uses `document.querySelector` under the hood.
+Note: Uses `document.querySelector` under the hood.
 -}
 portalTo : String -> Html.Attribute msg
 portalTo =

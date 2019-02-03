@@ -2,7 +2,7 @@ port module Harness exposing (main)
 
 import Browser
 import Gizmo exposing (Flags, InputFlags, Msg(..), decodeFlags)
-import Html exposing (Html)
+import Html.Styled as Html exposing (Html)
 import Repo
 import Source as S exposing (Doc, State, gizmo)
 
@@ -105,7 +105,7 @@ main =
     Browser.element
         { init = init
         , update = update
-        , view = view
+        , view = Html.toUnstyled << view
         , subscriptions = subscriptions
         }
 
