@@ -123,6 +123,11 @@ export function rendererPicker(identity: string, repo: Repo) {
 export function gizmoTemplate(identity: string, repo: Repo) {
   return Bs.code(identity, repo, "GizmoTemplate.elm", {
     title: "My Gizmo",
+    config: {
+      avatar: avatar(identity, repo),
+      authors: authors(identity, repo),
+      editableTitle: editableTitle(identity, repo),
+    }
   })
 }
 
