@@ -1570,10 +1570,9 @@ discovery-channel@^5.5.1:
     pretty-hash "^1.0.1"
     thunky "^0.1.0"
 
-discovery-cloud-client@^0.0.1:
-  version "0.0.1"
-  resolved "https://registry.yarnpkg.com/discovery-cloud-client/-/discovery-cloud-client-0.0.1.tgz#967e628ad351ea02d31630e7ee5e20f277c815bb"
-  integrity sha512-X73p3paQbyALEOZTMyNMT7xEjA8xY05ajohOMDsGsy3hkRCMoi4MWtWC4ogfYUqsUoPh9GSRCpRyPuiPtn8zVg==
+"discovery-cloud-client@github:inkandswitch/discovery-cloud-client":
+  version "0.0.3"
+  resolved "https://codeload.github.com/inkandswitch/discovery-cloud-client/tar.gz/e13b09a52de2315e5020a2cc8e347809913daefe"
   dependencies:
     bs58 "^4.0.1"
     debug "^4.1.0"
