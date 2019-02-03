@@ -132,7 +132,7 @@ type Msg
 
 update : Msg -> Model State Doc -> ( State, Doc, Cmd Msg )
 update msg { state, doc, flags } =
-    case Debug.log "msg" msg of
+    case msg of
         NoOp ->
             ( state, doc, Cmd.none )
 
