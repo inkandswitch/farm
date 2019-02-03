@@ -338,13 +338,6 @@ origin =
     { x = 0, y = 0 }
 
 
-toScenePosition : Viewport -> Point -> Point
-toScenePosition vp relative =
-    { x = vp.viewport.x + relative.x
-    , y = vp.viewport.y + relative.y
-    }
-
-
 getLocalCoordinates : String -> Point -> Task Dom.Error Point
 getLocalCoordinates boardId pos =
     -- subtract the board element offset for the global scene
