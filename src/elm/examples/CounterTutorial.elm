@@ -18,7 +18,7 @@ gizmo =
     Gizmo.element
         { init = init
         , update = update
-        , view = Html.toUnstyled << view
+        , view = view
         , subscriptions = subscriptions
         }
 
@@ -142,7 +142,7 @@ view ({ doc, state } as model) =
                 , padding (px 10)
                 ]
             ]
-            [ Html.fromUnstyled <| Gizmo.render doc.codeUrl doc.dataUrl
+            [ Gizmo.render doc.codeUrl doc.dataUrl
             ]
         , div
             [ css

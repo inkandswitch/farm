@@ -1,7 +1,7 @@
 module Counter exposing (Doc, Msg, State, gizmo)
 
-import Gizmo exposing (Model)
 import Css exposing (..)
+import Gizmo exposing (Model)
 import Html.Styled exposing (..)
 import Html.Styled.Attributes exposing (..)
 import Html.Styled.Events exposing (..)
@@ -12,7 +12,7 @@ gizmo =
     Gizmo.sandbox
         { init = init
         , update = update
-        , view = toUnstyled << view
+        , view = view
         }
 
 

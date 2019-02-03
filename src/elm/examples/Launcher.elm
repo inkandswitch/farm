@@ -31,7 +31,7 @@ gizmo =
     Gizmo.element
         { init = init
         , update = update
-        , view = Html.toUnstyled << view
+        , view = view
         , subscriptions = subscriptions
         }
 
@@ -558,7 +558,7 @@ dataListItem source icon title =
 
 viewGizmo : SourceUrl -> DataUrl -> Html Msg
 viewGizmo source data =
-    Html.fromUnstyled (Gizmo.render source data)
+    Gizmo.render source data
 
 
 avatarHeader : Html Msg -> Html Msg -> Html Msg
@@ -668,7 +668,7 @@ viewGizmoWindow : String -> Html Msg
 viewGizmoWindow farmUrl =
     case FarmUrl.parse farmUrl of
         Ok gizmoConfig ->
-            Html.fromUnstyled <| Gizmo.renderWindow gizmoConfig.code gizmoConfig.data (CloseGizmo farmUrl)
+            Gizmo.renderWindow gizmoConfig.code gizmoConfig.data (CloseGizmo farmUrl)
 
         _ ->
             Html.text ""

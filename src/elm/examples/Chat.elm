@@ -18,7 +18,7 @@ gizmo =
     Gizmo.element
         { init = init
         , update = update
-        , view = Html.toUnstyled << view
+        , view = view
         , subscriptions = subscriptions
         }
 
@@ -227,7 +227,7 @@ viewGroup state ( authorMessage, messages ) =
             ]
         ]
         [ div [ css [ flexShrink zero ] ]
-            [ fromUnstyled <| Gizmo.render Config.avatar authorMessage.author
+            [ Gizmo.render Config.avatar authorMessage.author
             ]
         , div
             [ css
@@ -244,7 +244,7 @@ viewGroup state ( authorMessage, messages ) =
                     , alignItems center
                     ]
                 ]
-                [ fromUnstyled <| Gizmo.render Config.editableTitle authorMessage.author
+                [ Gizmo.render Config.editableTitle authorMessage.author
                 , viewTime state.zone authorMessage.time
                 ]
             , div

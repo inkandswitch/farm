@@ -14,7 +14,7 @@ gizmo =
     Gizmo.sandbox
         { init = init
         , update = update
-        , view = Html.toUnstyled << view
+        , view = view
         }
 
 

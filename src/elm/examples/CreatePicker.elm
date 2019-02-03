@@ -31,7 +31,7 @@ gizmo =
     Gizmo.element
         { init = init
         , update = update
-        , view = Html.toUnstyled << view
+        , view = view
         , subscriptions = subscriptions
         }
 
@@ -94,7 +94,7 @@ viewItem url =
         [ div
             [ onStopPropagationClick (Select url)
             ]
-            [ Html.fromUnstyled <| Gizmo.render Config.pickerItem url
+            [ Gizmo.render Config.pickerItem url
             ]
         ]
 
@@ -107,8 +107,7 @@ viewProperty prop default url =
             , Gizmo.attr "default" default
             ]
     in
-    Html.fromUnstyled <|
-        Gizmo.renderWith attrs Config.property url
+    Gizmo.renderWith attrs Config.property url
 
 
 onStopPropagationClick : Msg -> Html.Attribute Msg

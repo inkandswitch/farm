@@ -1,9 +1,9 @@
 module GizmoTemplate exposing (Doc, Msg, State, gizmo)
 
+import Css exposing (..)
 import Gizmo exposing (Flags, Model)
 import Html.Styled as Html exposing (..)
-import Html.Styled.Attributes exposing (css)
-import Css exposing (..)
+import Html.Styled.Attributes as Attr exposing (css)
 
 
 gizmo : Gizmo.Program State Doc Msg
@@ -11,7 +11,7 @@ gizmo =
     Gizmo.element
         { init = init
         , update = update
-        , view = Html.toUnstyled << view
+        , view = view
         , subscriptions = subscriptions
         }
 
@@ -30,9 +30,9 @@ type alias Doc =
 
 init : Flags -> ( State, Doc, Cmd Msg )
 init flags =
-    ( {}
-    , {}
-    , Cmd.none
+    ( {} {- initial State -}
+    , {} {- initial Doc -}
+    , Cmd.none {- initial Cmd -}
     )
 
 
@@ -53,10 +53,13 @@ update msg { state, doc } =
 
 
 view : Model State Doc -> Html Msg
-view { doc } =
+view { flags, doc, state } =
     div
         []
-        [ h1 [] [ text "Hello Gizmo" ] ]
+        [ h1 [] [ Gizmo.render Config.editableTitle flags.data ]
+        , div []
+            []
+        ]
 
 
 subscriptions : Model State Doc -> Sub Msg

@@ -30,7 +30,7 @@ gizmo =
     Gizmo.element
         { init = init
         , update = update
-        , view = Html.toUnstyled << view
+        , view = view
         , subscriptions = subscriptions
         }
 
@@ -336,7 +336,7 @@ viewRendererPicker { flags } =
                 ]
             ]
         ]
-        [ Html.fromUnstyled <| Gizmo.render Config.rendererPicker flags.data
+        [ Gizmo.render Config.rendererPicker flags.data
         ]
 
 
@@ -367,7 +367,7 @@ viewOpenPicker { flags } =
                 ]
             ]
         ]
-        [ Html.fromUnstyled <| Gizmo.render Config.openPicker flags.data
+        [ Gizmo.render Config.openPicker flags.data
         ]
 
 
@@ -401,7 +401,7 @@ viewCreatePicker { flags } =
         ]
         [ div [ css [ pickerStyle ] ]
             [ viewNewGizmo
-            , Html.fromUnstyled <| Gizmo.render Config.createPicker flags.data
+            , Gizmo.render Config.createPicker flags.data
             ]
         ]
 
@@ -723,7 +723,7 @@ viewContent { doc, state } =
             Nothing ->
                 case currentPair doc.history of
                     Just ({ code, data } as pair) ->
-                        Html.fromUnstyled <| Gizmo.render code data
+                        Gizmo.render code data
 
                     Nothing ->
                         viewEmptyContent
@@ -795,8 +795,7 @@ viewEmptyContent =
 
 viewProperty : String -> String -> Html Msg
 viewProperty prop url =
-    Html.fromUnstyled <|
-        Gizmo.renderWith [ Gizmo.attr "prop" prop ] Config.property url
+    Gizmo.renderWith [ Gizmo.attr "prop" prop ] Config.property url
 
 
 viewLiveEdit : String -> String -> Html Msg
@@ -808,7 +807,7 @@ viewLiveEdit prop url =
             , Gizmo.attr "default" "No title"
             ]
     in
-    Html.fromUnstyled <| Gizmo.renderWith props Config.liveEdit url
+    Gizmo.renderWith props Config.liveEdit url
 
 
 currentPair : History String -> Maybe Pair

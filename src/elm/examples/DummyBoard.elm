@@ -1,9 +1,9 @@
 module DummyBoard exposing (Doc, Msg, State, gizmo)
 
+import Css exposing (..)
 import Gizmo exposing (Flags, Model)
 import Html.Styled as Html exposing (..)
 import Html.Styled.Attributes exposing (css)
-import Css exposing (..)
 
 
 gizmo : Gizmo.Program State Doc Msg
@@ -11,7 +11,7 @@ gizmo =
     Gizmo.element
         { init = init
         , update = update
-        , view = Html.toUnstyled << view
+        , view = view
         , subscriptions = subscriptions
         }
 

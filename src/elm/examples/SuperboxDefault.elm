@@ -1,10 +1,10 @@
 module SuperboxDefault exposing (Doc, Msg, State, gizmo)
 
+import Css exposing (..)
 import Gizmo exposing (Flags, Model)
 import Html.Styled as Html exposing (..)
 import Html.Styled.Attributes exposing (css)
 import Html.Styled.Events exposing (..)
-import Css exposing (..)
 import Json.Encode as E
 
 
@@ -13,7 +13,7 @@ gizmo =
     Gizmo.element
         { init = init
         , update = update
-        , view = Html.toUnstyled << view
+        , view = view
         , subscriptions = subscriptions
         }
 
@@ -54,7 +54,7 @@ update msg { state, doc } =
             , doc
             , Cmd.none
             )
-        
+
         RequestEditMode ->
             ( state
             , doc
@@ -79,7 +79,7 @@ view { doc } =
         ]
         [ div
             [ onClick RequestSearchMode
-            , css 
+            , css
                 [ width (pct 100)
                 , cursor pointer
                 , flexGrow (num 1)
@@ -100,9 +100,14 @@ view { doc } =
             ]
         ]
 
+
 emptyWithDefault : String -> String -> String
 emptyWithDefault default str =
-    if str == "" then default else str
+    if str == "" then
+        default
+
+    else
+        str
 
 
 subscriptions : Model State Doc -> Sub Msg

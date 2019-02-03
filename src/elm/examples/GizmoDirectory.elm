@@ -21,7 +21,7 @@ gizmo =
     Gizmo.element
         { init = init
         , update = update
-        , view = view >> toUnstyled
+        , view = view
         , subscriptions = subscriptions
         }
 
@@ -220,7 +220,7 @@ view { flags, state, doc } =
                 ]
             ]
             [ text "Hola "
-            , fromUnstyled <| Gizmo.render titleGizmo flags.self
+            , Gizmo.render titleGizmo flags.self
             , text "! What would you like to work on today?"
             ]
         , div [] [ viewGizmos doc.gizmos ]
@@ -288,7 +288,7 @@ viewArrivingGizmo currentGizmo currentDocument element =
             )
         ]
         [ viewGizmoTitleBar currentGizmo currentDocument
-        , fromUnstyled <| Gizmo.render currentGizmo currentDocument
+        , Gizmo.render currentGizmo currentDocument
         ]
 
 
@@ -307,7 +307,7 @@ viewDepartingGizmo currentGizmo currentDocument element =
             )
         ]
         [ viewGizmoTitleBar currentGizmo currentDocument
-        , fromUnstyled <| Gizmo.render currentGizmo currentDocument
+        , Gizmo.render currentGizmo currentDocument
         ]
 
 
@@ -324,7 +324,7 @@ viewCurrentGizmo currentGizmo currentDocument =
             )
         ]
         [ viewGizmoTitleBar currentGizmo currentDocument
-        , fromUnstyled <| Gizmo.render currentGizmo currentDocument
+        , Gizmo.render currentGizmo currentDocument
         ]
 
 
@@ -348,7 +348,7 @@ viewGizmoTitleBar currentGizmo currentDocument =
             ]
         ]
         [ viewGizmoIconAndTitle currentGizmo
-        , div [ css [ fontSize (px 24) ] ] [ fromUnstyled <| Gizmo.render titleGizmo currentDocument ]
+        , div [ css [ fontSize (px 24) ] ] [ Gizmo.render titleGizmo currentDocument ]
         , div [ onClick <| Close currentGizmo currentDocument ] [ text "back" ]
         ]
 
@@ -424,7 +424,7 @@ viewGizmoIconAndTitle gizmoUrl =
         ]
         [ viewFakeGizmoIcon
         , div [ css [ marginLeft (px 10), fontSize (px 24) ] ]
-            [ fromUnstyled <| Gizmo.render titleGizmo gizmoUrl
+            [ Gizmo.render titleGizmo gizmoUrl
             ]
         ]
 
@@ -462,7 +462,7 @@ viewGizmoTileDocuments tiledGizmo documents =
 
 viewGizmoTileDocument : String -> String -> Html Msg
 viewGizmoTileDocument tiledGizmo document =
-    li [ onClick <| Navigate tiledGizmo document ] [ fromUnstyled <| Gizmo.render titleGizmo document ]
+    li [ onClick <| Navigate tiledGizmo document ] [ Gizmo.render titleGizmo document ]
 
 
 viewGizmoTileCreateDocument : String -> Html Msg

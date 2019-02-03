@@ -1,13 +1,13 @@
 module SuperboxEdit exposing (Doc, Msg, State, gizmo)
 
+import Colors
+import Css exposing (..)
 import Gizmo exposing (Flags, Model)
 import Html.Styled as Html exposing (..)
-import Html.Styled.Attributes exposing (css, value, autofocus)
+import Html.Styled.Attributes exposing (autofocus, css, value)
 import Html.Styled.Events exposing (..)
-import Css exposing (..)
-import Json.Encode as E
 import Json.Decode as D
-import Colors
+import Json.Encode as E
 
 
 gizmo : Gizmo.Program State Doc Msg
@@ -15,7 +15,7 @@ gizmo =
     Gizmo.element
         { init = init
         , update = update
-        , view = Html.toUnstyled << view
+        , view = view
         , subscriptions = subscriptions
         }
 
@@ -103,11 +103,12 @@ onEnter : Msg -> Attribute Msg
 onEnter msg =
     on "keypress" (D.andThen (enter msg) keyCode)
 
+
 enter : msg -> Int -> D.Decoder msg
 enter msg keycode =
-
     if keycode == 13 then
         D.succeed msg
+
     else
         D.fail "Not the enter key"
 

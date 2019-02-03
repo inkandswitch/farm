@@ -1,5 +1,6 @@
 module SimpleAvatar exposing (Doc, Msg, State, gizmo)
 
+import Colors
 import Css exposing (..)
 import File exposing (File)
 import File.Select as Select
@@ -10,7 +11,6 @@ import Html.Styled.Attributes as Attr exposing (autofocus, css, href, placeholde
 import Html.Styled.Events exposing (keyCode, on, onBlur, onClick, onInput)
 import Json.Decode as Json
 import Task
-import Colors
 
 
 defaultName : String
@@ -23,7 +23,7 @@ gizmo =
     Gizmo.element
         { init = init
         , update = update
-        , view = view >> toUnstyled
+        , view = view
         , subscriptions = subscriptions
         }
 

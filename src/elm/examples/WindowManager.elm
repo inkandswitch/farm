@@ -7,7 +7,7 @@ import Css exposing (..)
 import Dict
 import Extra.Array as Array
 import Gizmo exposing (Flags, Model)
-import Html.Styled as Html exposing (Html, button, div, fromUnstyled, input, text, toUnstyled)
+import Html.Styled as Html exposing (Html, button, div, input, text)
 import Html.Styled.Attributes as Attr exposing (css, value)
 import Html.Styled.Events as Events exposing (on, onClick, onInput, onMouseDown, onMouseUp)
 import Json.Decode as Json exposing (Decoder)
@@ -22,7 +22,7 @@ gizmo =
     Gizmo.element
         { init = init
         , update = update
-        , view = view >> toUnstyled
+        , view = view
         , subscriptions = subscriptions
         }
 
@@ -101,7 +101,6 @@ makeDeps { config } =
                 config
                     |> Dict.get name
                     |> Maybe.map Gizmo.render
-                    |> Maybe.map ((<<) fromUnstyled)
                     |> Maybe.withDefault (always <| text (name ++ " gizmo missing"))
     in
     { title = make "title"
@@ -391,7 +390,7 @@ viewWindow deps n win =
             ]
             [ case win.data of
                 Just data ->
-                    fromUnstyled <| Gizmo.render win.code data
+                    Gizmo.render win.code data
 
                 Nothing ->
                     viewEmptyWindow deps n win
@@ -403,18 +402,24 @@ viewWindow deps n win =
 viewEmptyWindow : Deps -> Int -> Window -> Html Msg
 viewEmptyWindow deps n win =
     div
-        [ Attr.fromUnstyled <| Gizmo.onEmit "OpenDocument" (.value >> openDocumentValue >> SetWindowData n)
+        [ Gizmo.onEmit "OpenDocument" (.value >> openDocumentValue >> SetWindowData n)
         ]
         [ deps.empty win.code
         ]
+
 
 openDocumentValue : E.Value -> Url
 openDocumentValue value =
     case Json.decodeValue Json.string value of
         Ok url ->
             url
+
         Err msg ->
-            "" --TODO: handle this case
+            ""
+
+
+
+--TODO: handle this case
 
 
 viewTitleBar : Deps -> Int -> Window -> Html Msg
@@ -458,14 +463,12 @@ viewResize n =
 
 viewTitle : String -> Html Msg
 viewTitle =
-    fromUnstyled
-        << Gizmo.render "hypermerge:/E19jZZNm4QceSWwwiZGLtrduFVDwmdtM3PGFAfMMS55S"
+    Gizmo.render "hypermerge:/E19jZZNm4QceSWwwiZGLtrduFVDwmdtM3PGFAfMMS55S"
 
 
 viewEmptyGizmo : String -> Html Msg
 viewEmptyGizmo =
-    fromUnstyled
-        << Gizmo.render "hypermerge:/yCNgQ8kE3v3xkqdembXjzk2knXfEaoHwe5iK3jPXy1K"
+    Gizmo.render "hypermerge:/yCNgQ8kE3v3xkqdembXjzk2knXfEaoHwe5iK3jPXy1K"
 
 
 viewContextMenu : Doc -> Menu -> Html Msg

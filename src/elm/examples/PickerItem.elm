@@ -17,7 +17,7 @@ gizmo =
     Gizmo.element
         { init = init
         , update = update
-        , view = Html.toUnstyled << view
+        , view = view
         , subscriptions = subscriptions
         }
 
@@ -111,7 +111,7 @@ view { flags, doc, state } =
                     [ flexGrow (int 1)
                     ]
                 ]
-                [ Html.fromUnstyled <| Gizmo.render Config.authors flags.data
+                [ Gizmo.render Config.authors flags.data
                 ]
             , viewLastEdit state.currentTime doc.lastEditTimestamp
             ]

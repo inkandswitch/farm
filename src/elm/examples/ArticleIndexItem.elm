@@ -1,10 +1,10 @@
 module ArticleIndexItem exposing (Doc, Msg, State, gizmo)
 
+import Css exposing (..)
 import Gizmo exposing (Flags, Model)
 import Html.Styled as Html exposing (..)
-import Html.Styled.Events as Events
-import Css exposing (..)
 import Html.Styled.Attributes exposing (css, placeholder, value)
+import Html.Styled.Events as Events
 
 
 hotPink =
@@ -20,7 +20,7 @@ gizmo =
     Gizmo.element
         { init = init
         , update = update
-        , view = Html.toUnstyled << view
+        , view = view
         , subscriptions = subscriptions
         }
 
@@ -37,8 +37,10 @@ type alias Doc =
     { title : String
     }
 
+
 type alias GizmoUrl =
     String
+
 
 init : Flags -> ( State, Doc, Cmd Msg )
 init flags =
@@ -78,6 +80,7 @@ view { doc } =
         ]
         [ text doc.title
         ]
+
 
 subscriptions : Model State Doc -> Sub Msg
 subscriptions model =

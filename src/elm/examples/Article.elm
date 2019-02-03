@@ -1,20 +1,21 @@
 module Article exposing (Doc, Msg, State, gizmo)
 
+import Colors exposing (..)
 import Css exposing (..)
 import Css.Global as G
 import Gizmo exposing (Flags, Model)
 import Html.Styled as Html exposing (..)
-import Html.Styled.Attributes exposing (css, class, placeholder, value)
+import Html.Styled.Attributes exposing (class, css, placeholder, value)
 import Html.Styled.Events exposing (..)
 import Json.Encode as Json
 import Markdown
-import Colors exposing (..)
+
 
 markdownStyles =
     [ G.class "MarkdownContainer"
         [ G.descendants
             [ G.everything
-                [ fontFamilies ["system-ui"]
+                [ fontFamilies [ "system-ui" ]
                 ]
             , G.each
                 [ G.typeSelector "h1"
@@ -74,7 +75,7 @@ gizmo =
     Gizmo.element
         { init = init
         , update = update
-        , view = Html.toUnstyled << view
+        , view = view
         , subscriptions = subscriptions
         }
 
@@ -138,12 +139,14 @@ update msg { state, doc } =
             , Cmd.none
             )
 
+
 updateTitleEmitValue : String -> String -> Json.Value
 updateTitleEmitValue old new =
     Json.object
         [ ( "old", Json.string old )
-        , ( "new", Json.string new)
+        , ( "new", Json.string new )
         ]
+
 
 textColor =
     hex "#333"
@@ -160,7 +163,7 @@ view { state, doc } =
             , margin (px 10)
             , boxShadow4 (hex "ddd") (px 0) (px 0) (px 5)
             , backgroundColor (hex "fff")
-            , fontFamilies ["system-ui"]
+            , fontFamilies [ "system-ui" ]
             ]
         ]
         [ div
@@ -196,7 +199,13 @@ view { state, doc } =
                         ]
                     ]
                 ]
-                [ text (if state.isEditing then "View" else "Edit")
+                [ text
+                    (if state.isEditing then
+                        "View"
+
+                     else
+                        "Edit"
+                    )
                 ]
             ]
         , if state.isEditing then
@@ -213,7 +222,8 @@ view { state, doc } =
                 , placeholder "Your note here..."
                 ]
                 []
-         else
+
+          else
             div
                 [ class "MarkdownContainer"
                 ]

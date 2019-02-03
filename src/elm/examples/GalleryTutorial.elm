@@ -13,7 +13,7 @@ gizmo =
     Gizmo.sandbox
         { init = init
         , update = update
-        , view = Html.toUnstyled << view
+        , view = view
         }
 
 
@@ -80,7 +80,7 @@ view ({ doc } as model) =
                 , padding (px 10)
                 ]
             ]
-            [ Html.fromUnstyled <| Gizmo.render doc.codeUrl doc.dataUrl
+            [ Gizmo.render doc.codeUrl doc.dataUrl
             ]
         , div
             [ css

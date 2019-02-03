@@ -23,7 +23,7 @@ gizmo =
     Gizmo.element
         { init = init
         , update = update
-        , view = Html.toUnstyled << view
+        , view = view
         , subscriptions = subscriptions
         }
 
@@ -87,7 +87,7 @@ view : Model State Doc -> Html Msg
 view { flags, doc } =
     let
         viewArticleItem =
-            viewGizmo <| Maybe.withDefault "missing" (Dict.get "articleIndexItem" flags.config)
+            Gizmo.render <| Maybe.withDefault "missing" (Dict.get "articleIndexItem" flags.config)
     in
     div
         [ css
@@ -144,8 +144,3 @@ viewArticle viewArticleItem url =
 subscriptions : Model State Doc -> Sub Msg
 subscriptions model =
     Sub.none
-
-
-viewGizmo : String -> String -> Html Msg
-viewGizmo source data =
-    Html.fromUnstyled (Gizmo.render source data)

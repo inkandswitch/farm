@@ -22,7 +22,7 @@ gizmo =
     Gizmo.element
         { init = init
         , update = update
-        , view = view >> toUnstyled
+        , view = view
         , subscriptions = subscriptions
         }
 

@@ -1,14 +1,14 @@
 module Wiki exposing (Doc, Msg, State, gizmo)
 
-import Gizmo exposing (Flags, Model)
-import Html.Styled as Html exposing (..)
-import Html.Styled.Events as Events
-import Html.Styled.Attributes exposing (css)
 import Css exposing (..)
 import Dict exposing (Dict)
-import Repo exposing (Props, Ref, Url, create, createWithProps)
-import Json.Encode as E
+import Gizmo exposing (Flags, Model)
+import Html.Styled as Html exposing (..)
+import Html.Styled.Attributes exposing (css)
+import Html.Styled.Events as Events
 import Json.Decode as D
+import Json.Encode as E
+import Repo exposing (Props, Ref, Url, create, createWithProps)
 
 
 gizmo : Gizmo.Program State Doc Msg
@@ -16,21 +16,28 @@ gizmo =
     Gizmo.element
         { init = init
         , update = update
-        , view = Html.toUnstyled << view
+        , view = view
         , subscriptions = subscriptions
         }
+
+
 
 -- When gizmo docs are supported, this will represent the url of
 -- a gizmo doc. For now, it represents the data doc (we assume the
 -- Article source is the code doc).
+
+
 type alias GizmoUrl =
     String
+
 
 type alias ArticleTitle =
     String
 
+
 type alias TitleIndex =
     Dict ArticleTitle (List GizmoUrl)
+
 
 type alias State =
     { currentArticle : Maybe GizmoUrl
@@ -39,6 +46,7 @@ type alias State =
 
 type alias Doc =
     { articles : List GizmoUrl
+
     --, titleIndex : E.Value --Dict ArticleTitle (List GizmoUrl)
     }
 
@@ -47,11 +55,13 @@ defaultArticleTitle : ArticleTitle
 defaultArticleTitle =
     "New Article"
 
+
 newArticleProps : Repo.Props
 newArticleProps =
     [ ( "title", E.string defaultArticleTitle )
-    , ( "body", E.string "")
+    , ( "body", E.string "" )
     ]
+
 
 gizmoProps : String -> String -> Repo.Props
 gizmoProps codeUrl dataUrl =
@@ -62,10 +72,13 @@ gizmoProps codeUrl dataUrl =
 
 init : Flags -> ( State, Doc, Cmd Msg )
 init flags =
-    ( { currentArticle = Nothing}
-    , { articles = [] } --, titleIndex = E.object [] }
+    ( { currentArticle = Nothing }
+    , { articles = [] }
+      --, titleIndex = E.object [] }
     , Cmd.none
     )
+
+
 
 -- decodeIndex : E.Value -> TitleIndex
 -- decodeIndex val =
@@ -74,13 +87,13 @@ init flags =
 --             Dict.fromList index
 --         Err msg ->
 --             Dict.empty
-
 -- encodeIndex : TitleIndex -> E.Value
 -- encodeIndex index =
 --     index
 --         |> Dict.map (\k v -> List.map (\e -> E.string e) v)
 --         |> Dict.toList
 --         |> E.object
+
 
 {-| Message type for modifying State and Doc inside update
 -}
@@ -100,10 +113,13 @@ update msg model =
     let
         flags =
             model.flags
+
         state =
             model.state
+
         doc =
             model.doc
+
         articleCode =
             Maybe.withDefault "" (Dict.get "article" flags.config)
     in
@@ -125,19 +141,22 @@ update msg model =
                 "CreateArticleDataDoc" ->
                     -- Uncomment when gizmo docs are supported.
                     -- update (DataDocCreated (ref, urls)) model
-                    update (GizmoDocCreated (ref, urls)) model
+                    update (GizmoDocCreated ( ref, urls )) model
+
                 "CreateArticleGizmoDoc" ->
-                    update (GizmoDocCreated (ref, urls)) model
+                    update (GizmoDocCreated ( ref, urls )) model
+
                 _ ->
                     ( state, doc, Cmd.none )
 
         DataDocCreated ( ref, urls ) ->
             case urls of
-                [dataUrl] ->
+                [ dataUrl ] ->
                     ( state
                     , doc
                     , Repo.createWithProps "CreateArticleGizmoDoc" 1 (gizmoProps articleCode dataUrl)
                     )
+
                 _ ->
                     ( state
                     , doc
@@ -146,11 +165,12 @@ update msg model =
 
         GizmoDocCreated ( ref, urls ) ->
             case urls of
-                [gizmoUrl] ->
+                [ gizmoUrl ] ->
                     ( { state | currentArticle = Just gizmoUrl }
                     , { doc | articles = gizmoUrl :: doc.articles }
                     , Cmd.none
                     )
+
                 _ ->
                     ( state
                     , doc
@@ -172,29 +192,38 @@ update msg model =
 
         RemoveArticle url ->
             let
-                updatedDoc = { doc | articles = List.filter (\v -> v /= url) doc.articles }
+                updatedDoc =
+                    { doc | articles = List.filter (\v -> v /= url) doc.articles }
             in
             case state.currentArticle of
                 Just currentArticle ->
-                    ( { state | currentArticle = if currentArticle == url then Nothing else Just currentArticle }
+                    ( { state
+                        | currentArticle =
+                            if currentArticle == url then
+                                Nothing
+
+                            else
+                                Just currentArticle
+                      }
                     , updatedDoc
                     , Cmd.none
                     )
+
                 Nothing ->
                     ( state
                     , updatedDoc
                     , Cmd.none
                     )
-                
+
 
 view : Model State Doc -> Html Msg
 view { flags, state, doc } =
     let
         viewArticle =
-            viewGizmo <| Maybe.withDefault "" (Dict.get "article" flags.config)
+            Gizmo.render <| Maybe.withDefault "" (Dict.get "article" flags.config)
 
         viewIndex =
-            viewGizmo <| Maybe.withDefault "" (Dict.get "articleIndex" flags.config)
+            Gizmo.render <| Maybe.withDefault "" (Dict.get "articleIndex" flags.config)
     in
     div
         [ onNavigate NavigateToArticle
@@ -213,21 +242,26 @@ view { flags, state, doc } =
         , case state.currentArticle of
             Just articleUrl ->
                 viewArticle articleUrl
+
             Nothing ->
                 Html.text ""
         ]
+
 
 onNavigate : (ArticleTitle -> msg) -> Html.Attribute msg
 onNavigate tagger =
     Events.on "navigate" (D.map tagger detailString)
 
+
 onCreate : msg -> Html.Attribute msg
 onCreate msg =
     Events.on "createarticle" (D.succeed msg)
 
+
 onRemove : (ArticleTitle -> msg) -> Html.Attribute msg
 onRemove tagger =
     Events.on "removearticle" (D.map tagger detailString)
+
 
 onTitleUpdate : (ArticleTitle -> ArticleTitle -> msg) -> Html.Attribute msg
 onTitleUpdate tagger =
@@ -238,22 +272,20 @@ onTitleUpdate tagger =
             (detailField "new" D.string)
         )
 
+
 detail : D.Decoder a -> D.Decoder a
 detail decoder =
-    D.at ["detail", "value"] decoder
+    D.at [ "detail", "value" ] decoder
+
 
 detailString : D.Decoder String
 detailString =
     detail D.string
 
+
 detailField : String -> D.Decoder a -> D.Decoder a
 detailField field decoder =
     detail (D.field field decoder)
-
-
-viewGizmo : String -> String -> Html Msg
-viewGizmo source data =
-    Html.fromUnstyled (Gizmo.render source data)
 
 
 subscriptions : Model State Doc -> Sub Msg

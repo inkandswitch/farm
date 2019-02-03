@@ -12,7 +12,7 @@ import Extra.Array as Array
 import FarmUrl
 import File exposing (File)
 import Gizmo exposing (Flags, Model)
-import Html.Styled as Html exposing (Html, button, div, fromUnstyled, input, text, toUnstyled)
+import Html.Styled as Html exposing (Html, button, div, input, text)
 import Html.Styled.Attributes as Attr exposing (css, id, value)
 import Html.Styled.Events as Events exposing (on, onClick, onDoubleClick, onInput, onMouseDown, onMouseUp)
 import IO
@@ -31,7 +31,7 @@ gizmo =
     Gizmo.element
         { init = init
         , update = update
-        , view = view >> toUnstyled
+        , view = view
         , subscriptions = subscriptions
         }
 
@@ -634,7 +634,7 @@ viewCard n card =
                 [ overflow hidden
                 ]
             ]
-            [ fromUnstyled <| Gizmo.render (resolveUrl card.code) (resolveUrl card.data)
+            [ Gizmo.render (resolveUrl card.code) (resolveUrl card.data)
             ]
         , viewResize n
         ]

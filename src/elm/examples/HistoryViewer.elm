@@ -30,7 +30,7 @@ gizmo =
     Gizmo.element
         { init = init
         , update = update
-        , view = Html.toUnstyled << view
+        , view = view
         , subscriptions = subscriptions
         }
 
@@ -253,7 +253,7 @@ viewHistoryItem focused index url =
                             ]
                         , div
                             []
-                            [ Html.fromUnstyled <| Gizmo.render Config.authors data
+                            [ Gizmo.render Config.authors data
                             ]
                         ]
                     ]
@@ -290,8 +290,7 @@ viewProperty prop default url =
             , Gizmo.attr "default" default
             ]
     in
-    Html.fromUnstyled <|
-        Gizmo.renderWith attrs Config.property url
+    Gizmo.renderWith attrs Config.property url
 
 
 onStopPropagationClick : Msg -> Html.Attribute Msg

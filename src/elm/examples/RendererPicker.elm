@@ -15,10 +15,10 @@ import Json.Decode as D
 import Json.Encode as E
 import Keyboard exposing (Combo(..))
 import Link
+import ListSet exposing (ListSet)
 import Navigation
 import RealmUrl
 import Task
-import ListSet exposing (ListSet)
 
 
 focusColor =
@@ -30,7 +30,7 @@ gizmo =
     Gizmo.element
         { init = init
         , update = update
-        , view = Html.toUnstyled << view
+        , view = view
         , subscriptions = subscriptions
         }
 
@@ -38,8 +38,7 @@ gizmo =
 {-| Ephemeral state not saved to the doc
 -}
 type alias State =
-    {
-    }
+    {}
 
 
 {-| Document state
@@ -51,7 +50,7 @@ type alias Doc =
 
 init : Flags -> ( State, Doc, Cmd Msg )
 init flags =
-    ( { }
+    ( {}
     , { codeDocs = ListSet.empty
       }
     , Cmd.none
@@ -107,9 +106,8 @@ viewItem url =
     div
         [ onStopPropagationClick (Select url)
         ]
-        [ Html.fromUnstyled <| Gizmo.render Config.pickerItem url
+        [ Gizmo.render Config.pickerItem url
         ]
-
 
 
 viewProperty : String -> String -> String -> Html Msg
@@ -120,8 +118,7 @@ viewProperty prop default url =
             , Gizmo.attr "default" default
             ]
     in
-    Html.fromUnstyled <|
-        Gizmo.renderWith attrs Config.property url
+    Gizmo.renderWith attrs Config.property url
 
 
 onStopPropagationClick : Msg -> Html.Attribute Msg

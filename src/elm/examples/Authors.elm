@@ -12,12 +12,13 @@ maxAuthors : Int
 maxAuthors =
     3
 
+
 gizmo : Gizmo.Program State Doc Msg
 gizmo =
     Gizmo.element
         { init = init
         , update = update
-        , view = view >> toUnstyled
+        , view = view
         , subscriptions = subscriptions
         }
 
@@ -113,7 +114,7 @@ viewAuthor author =
             [ marginRight (px 3)
             ]
         ]
-        [ Html.fromUnstyled <| Gizmo.render Config.smallAvatar author
+        [ Gizmo.render Config.smallAvatar author
         ]
 
 
