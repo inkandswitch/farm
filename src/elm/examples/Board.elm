@@ -120,6 +120,8 @@ type Msg
     | CreateCardInScene String (Result Dom.Error Point)
     | CreateImage Point String
     | CreateImageInScene String (Result Dom.Error Point)
+    | CreateNote Point String
+    | CreateNoteInScene String (Result Dom.Error Point)
     | Created ( Ref, List Url )
     | EmbedGizmo Point String
     | EmbedGizmoInScene String (Result Dom.Error Point)
@@ -275,6 +277,28 @@ update msg { state, doc, flags } =
                     , IO.log "error creating card"
                     )
 
+        CreateNote position str ->
+            ( state
+            , doc
+            , Task.attempt
+                (CreateNoteInScene str)
+                (getLocalCoordinates state.randomId position)
+            )
+
+        CreateNoteInScene str localCoordinates ->
+            case localCoordinates of
+                Ok pos ->
+                    ( { state | createPosition = pos }
+                    , doc
+                    , Repo.createWithProps Config.note 1 [ ( "body", E.string str ) ]
+                    )
+
+                Err err ->
+                    ( state
+                    , doc
+                    , IO.log "error creating card"
+                    )
+
         Created ( code, urls ) ->
             case urls of
                 [ data ] ->
@@ -391,6 +415,9 @@ fileToCmd position file =
         [ "image", _ ] ->
             Task.perform (CreateImage position) <| File.toUrl file
 
+        [ "text", "plain" ] ->
+            Task.perform (CreateNote position) <| File.toString file
+
         [ "application", "farm-url" ] ->
             Task.perform (EmbedGizmo position) <| File.toString file
 
@@ -398,7 +425,7 @@ fileToCmd position file =
             Task.perform (CreateCard position) <| File.toString file
 
         _ ->
-            IO.log <| "Unknown file type"
+            IO.log <| "Unknown file type: " ++ File.mime file
 
 
 subscriptions : Model State Doc -> Sub Msg
