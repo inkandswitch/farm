@@ -94,6 +94,7 @@ type Msg
     | HideActivePicker
     | Open String
     | Fork String
+    | ForkWithNewData String
     | Edit String
     | ChangeRenderer String
     | CopyShareLink
@@ -157,23 +158,15 @@ update msg ({ state, doc } as model) =
             )
 
         Create codeUrl ->
-            case Link.getId codeUrl of
-                Ok id ->
-                    ( state
-                    , doc
-                    , Repo.create ("WorkspaceCreate:" ++ id) 1
-                    )
-
-                Err err ->
-                    ( state
-                    , doc
-                    , IO.log <| "Invalid code url" ++ codeUrl
-                    )
+            ( state
+            , doc
+            , Repo.create ("WorkspaceCreate|" ++ codeUrl) 1
+            )
 
         CreateDocCreated ( ref, urls ) ->
-            case ( String.split ":" ref, List.head urls ) of
-                ( [ "WorkspaceCreate", codeId ], Just dataUrl ) ->
-                    case FarmUrl.create { code = Link.create codeId, data = dataUrl } of
+            case ( String.split "|" ref, urls ) of
+                ( [ "WorkspaceCreate", codeUrl ], [ dataUrl ] ) ->
+                    case FarmUrl.create { code = codeUrl, data = dataUrl } of
                         Ok farmUrl ->
                             update (NavigateTo farmUrl) model
 
@@ -183,10 +176,27 @@ update msg ({ state, doc } as model) =
                             , IO.log "Failed to create a new gizmo"
                             )
 
-                ( [ "CodeFork" ], Just codeUrl ) ->
+                ( [ "CodeFork" ], [ codeUrl ] ) ->
                     currentPair doc.history
                         |> Result.fromMaybe "No current gizmo"
                         |> Result.andThen (\p -> FarmUrl.create { p | code = codeUrl })
+                        |> Result.map
+                            (\farmUrl ->
+                                update (NavigateTo farmUrl) model
+                                    |> withCmd (VsCode.open farmUrl)
+                            )
+                        |> Result.withDefault ( state, doc, Cmd.none )
+
+                ( [ "CodeForkWithNewData" ], [ codeUrl ] ) ->
+                    ( state
+                    , doc
+                    , Repo.createWithProps ("NewDataForCodeFork|" ++ codeUrl)
+                        1
+                        [ ( "title", E.string "My Data Doc" ) ]
+                    )
+
+                ( [ "NewDataForCodeFork", codeUrl ], [ dataUrl ] ) ->
+                    FarmUrl.create { code = codeUrl, data = dataUrl }
                         |> Result.map
                             (\farmUrl ->
                                 update (NavigateTo farmUrl) model
@@ -244,6 +254,9 @@ update msg ({ state, doc } as model) =
 
         Fork url ->
             ( state, doc, Repo.fork "CodeFork" url )
+
+        ForkWithNewData url ->
+            ( state, doc, Repo.fork "CodeForkWithNewData" url )
 
         Edit url ->
             ( state, doc, VsCode.open url )
@@ -526,7 +539,7 @@ viewNewGizmo =
             [ padding (px 10)
             , cursor pointer
             ]
-        , onClick (Fork Config.gizmoTemplate)
+        , onClick (ForkWithNewData Config.gizmoTemplate)
         ]
         [ text "+ Develop new Gizmo" ]
 
@@ -686,7 +699,10 @@ viewDataTitle dataUrl =
 viewRendererTitle : Model State Doc -> String -> Html Msg
 viewRendererTitle model codeUrl =
     div
-        []
+        [ css
+            [ flexShrink (int 0)
+            ]
+        ]
         [ span
             [ onClick ToggleRendererPicker
             , css
