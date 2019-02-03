@@ -16,8 +16,14 @@ Object.assign(self, {
 })
 
 protocol.registerBufferProtocol("hyperfile", async ({ url }, callback) => {
+  console.log("Getting", url)
   const { mimeType, data } = await app.repo.readFile(url)
+  console.log("Found", mimeType)
   callback({ mimeType, data: Buffer.from(data) })
+})
+
+addEventListener("beforeunload", () => {
+  protocol.unregisterProtocol("hyperfile")
 })
 
 ipcRenderer.on("open-url", (_event: any, url: string) => {
