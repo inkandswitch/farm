@@ -16,7 +16,7 @@ import Html.Styled as Html exposing (Html, button, div, input, text)
 import Html.Styled.Attributes as Attr exposing (css, id, value)
 import Html.Styled.Events as Events exposing (on, onClick, onDoubleClick, onInput, onMouseDown, onMouseUp)
 import IO
-import Json.Decode as Json exposing (Decoder)
+import Json.Decode as D exposing (Decoder)
 import Json.Encode as E
 import Random
 import Repo exposing (Ref, Url)
@@ -115,7 +115,7 @@ type Msg
     | Click Int
     | SetMenu Menu
     | HandleDrop Point (List File)
-    | HandlePaste Point (List File)
+    | HandlePaste D.Value
     | CreateCard Point String
     | CreateCardInScene String (Result Dom.Error Point)
     | CreateImage Point String
@@ -218,12 +218,17 @@ update msg { state, doc, flags } =
                 |> Cmd.batch
             )
 
-        HandlePaste position files ->
+        HandlePaste value ->
             ( state
             , doc
-            , files
-                |> List.map (fileToCmd position)
-                |> Cmd.batch
+            , case D.decodeValue clipboardDecoder value of
+                Ok files ->
+                    files
+                        |> List.map (fileToCmd { x = 20, y = 20 })
+                        |> Cmd.batch
+
+                Err _ ->
+                    Cmd.none
             )
 
         CreateCard position code ->
@@ -400,14 +405,15 @@ subscriptions : Model State Doc -> Sub Msg
 subscriptions { state, doc } =
     Sub.batch
         [ Repo.created Created
+        , Clipboard.pasted HandlePaste
         , case state.action of
             None ->
                 Sub.none
 
             _ ->
                 Sub.batch
-                    [ Browser.Events.onMouseMove (movementDecoder |> Json.map MouseDelta)
-                    , Browser.Events.onMouseUp (Json.succeed Stop)
+                    [ Browser.Events.onMouseMove (movementDecoder |> D.map MouseDelta)
+                    , Browser.Events.onMouseUp (D.succeed Stop)
                     ]
         ]
 
@@ -574,7 +580,6 @@ view { doc, state } =
         , onContextMenu (SetMenu << BoardMenu)
         , onDragOver NoOp
         , onDrop HandleDrop
-        , onPaste HandlePaste
         ]
         [ viewContextMenu doc state.menu
         , div
@@ -642,7 +647,7 @@ viewCard n card =
 
 openDocumentValue : E.Value -> Url
 openDocumentValue value =
-    case Json.decodeValue Json.string value of
+    case D.decodeValue D.string value of
         Ok url ->
             url
 
@@ -814,7 +819,7 @@ fill =
 onPreventStop : String -> Decoder msg -> Html.Attribute msg
 onPreventStop name =
     Events.custom name
-        << Json.map
+        << D.map
             (\msg ->
                 { message = msg
                 , stopPropagation = True
@@ -826,62 +831,54 @@ onPreventStop name =
 onMouseWheel : (Point -> msg) -> Html.Attribute msg
 onMouseWheel mkMsg =
     onPreventStop "wheel"
-        (deltaDecoder |> Json.map mkMsg)
+        (deltaDecoder |> D.map mkMsg)
 
 
 onContextMenu : (Point -> msg) -> Html.Attribute msg
 onContextMenu mkMsg =
     onPreventStop "contextmenu"
-        (xyDecoder |> Json.map mkMsg)
+        (xyDecoder |> D.map mkMsg)
 
 
 onDragOver : msg -> Html.Attribute msg
 onDragOver =
-    onPreventStop "dragover" << Json.succeed
+    onPreventStop "dragover" << D.succeed
 
 
 onDrop : (Point -> List File -> msg) -> Html.Attribute msg
 onDrop mkMsg =
     onPreventStop "drop" <|
-        Json.map2 mkMsg
+        D.map2 mkMsg
             xyDecoder
             dataTransferFileDecoder
 
 
-onPaste : (Point -> List File -> msg) -> Html.Attribute msg
-onPaste mkMsg =
-    onPreventStop "paste" <|
-        Json.map2 mkMsg
-            xyDecoder
-            clipboardDecoder
-
-
 clipboardDecoder : Decoder (List File)
 clipboardDecoder =
-    Json.field "clipboardData" DataTransfer.elmFileDecoder
+    D.field "clipboardData" DataTransfer.elmFileDecoder
 
 
 dataTransferFileDecoder : Decoder (List File)
 dataTransferFileDecoder =
-    Json.field "dataTransfer" DataTransfer.elmFileDecoder
+    D.field "dataTransfer" DataTransfer.elmFileDecoder
 
 
 movementDecoder : Decoder Point
 movementDecoder =
-    Json.map2 Point
-        (Json.field "movementX" Json.float)
-        (Json.field "movementY" Json.float)
+    D.map2 Point
+        (D.field "movementX" D.float)
+        (D.field "movementY" D.float)
 
 
 deltaDecoder : Decoder Point
 deltaDecoder =
-    Json.map2 Point
-        (Json.field "deltaX" Json.float)
-        (Json.field "deltaY" Json.float)
+    D.map2 Point
+        (D.field "deltaX" D.float)
+        (D.field "deltaY" D.float)
 
 
 xyDecoder : Decoder Point
 xyDecoder =
-    Json.map2 Point
-        (Json.field "x" Json.float)
-        (Json.field "y" Json.float)
+    D.map2 Point
+        (D.field "x" D.float)
+        (D.field "y" D.float)

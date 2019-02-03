@@ -120,7 +120,11 @@ export default class ElmGizmo {
 
     if (this.hasPort("pasted")) {
       const onPaste = (event: ClipboardEvent) => {
-        if (event.srcElement && event.srcElement.localName === "input") return
+        const { srcElement } = event
+        if (srcElement && srcElement.localName === "input") return
+        if (srcElement && srcElement.localName === "textarea") return
+
+        event.preventDefault()
         this.withPort("pasted", this.send(event))
       }
 
