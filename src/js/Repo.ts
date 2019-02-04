@@ -79,6 +79,11 @@ export default class Repo {
     return new Promise(res => this.once(url, res))
   }
 
+  preload(url: string): this {
+    this.once(url, () => {})
+    return this
+  }
+
   once = <T>(url: string, fn: Function): this => {
     const handle = this.open(url)
     handle.subscribe(doc => {

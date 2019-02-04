@@ -4,6 +4,7 @@ import { whenChanged } from "./Subscription"
 import Compiler from "./Compiler"
 import ElmGizmo from "./ElmGizmo"
 import * as Code from "./Code"
+import * as Link from "./Link"
 
 export function setRepo(repo: Repo) {
   ElmGizmo.repo = repo
@@ -124,6 +125,14 @@ export function constructorForWindow(window: Window) {
         })
 
         this.gizmo.dispatchEvent = e => this.dispatchEvent(e)
+
+        if (doc.config) {
+          Object.values<any>(doc.config).forEach(url => {
+            if (typeof url === "string" && Link.isValidLink(url)) {
+              this.repo.preload(url)
+            }
+          })
+        }
       })
     }
 
