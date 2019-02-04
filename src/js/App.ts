@@ -113,7 +113,7 @@ function load(key: string, def: () => string): string {
 
 function css(): string {
   return `
-  @import url('https://fonts.googleapis.com/css?family=IBM+Plex+Sans:300,300i,400,400i,700,700i')
+  @import url('https://fonts.googleapis.com/css?family=IBM+Plex+Sans:300,300i,400,400i,700,700i');
 
   * {
     box-sizing: border-box;
