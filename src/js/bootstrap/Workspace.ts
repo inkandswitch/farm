@@ -13,6 +13,17 @@ export function article(identity: string, repo: Repo) {
   return Bs.code(identity, repo, "Article.elm")
 }
 
+export function titledMarkdownNote(identity: string, repo: Repo) {
+  return Bs.code(identity, repo, "TitledMarkdownNote.elm")
+}
+
+export function koala(identity: string, repo: Repo) {
+  return Bs.code(identity, repo, "Koala.elm", {
+    property: property(identity, repo),
+    note: titledMarkdownNote(identity, repo)
+  })
+}
+
 export function smallAvatar(identity: string, repo: Repo) {
   return Bs.code(identity, repo, "SmallAvatar.elm")
 }
@@ -44,6 +55,7 @@ export function board(identity: string, repo: Repo) {
     config: {
       chat: chat(identity, repo),
       note: note(identity, repo),
+      koala: koala(identity, repo),
       todoList: todoList(identity, repo),
       image: image(identity, repo),
       dotGrid: Bs.asset(repo, "dot_grid.svg"),
@@ -169,6 +181,8 @@ export function registryData(identity: string, repo: Repo) {
     avatar: avatar(identity, repo),
     board: board(identity, repo),
     chat: chat(identity, repo),
+    koala: koala(identity, repo),
+    titledMarkdownNote: titledMarkdownNote(identity, repo),
     editableTitle: editableTitle(identity, repo),
     historyViewer: historyViewer(identity, repo),
     rendererPicker: rendererPicker(identity, repo),

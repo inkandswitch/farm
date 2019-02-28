@@ -6,6 +6,8 @@ module Colors exposing (
     , hotPink
     , darkerHotPink
     , blueBlack
+    , darkGrey
+    , darkerGrey
     )
 
 primary : String
@@ -37,3 +39,11 @@ darkerHotPink =
 blueBlack : String
 blueBlack =
     "#102542"
+
+darkerGrey : String
+darkerGrey =
+    "#333"
+
+darkGrey : String
+darkGrey =
+    "#777"
