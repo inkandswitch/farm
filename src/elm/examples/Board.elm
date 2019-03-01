@@ -834,7 +834,6 @@ viewBoardMenu pt =
         , menuButton "Board" (CreateCard pt "board")
         , menuButton "Note" (CreateCard pt "note")
         , menuButton "Essay" (CreateCard pt "essay")
-        , menuButton "Koala" (CreateCard pt "koala")
         , menuButton "Todo List" (CreateCard pt "todoList")
         ]
 

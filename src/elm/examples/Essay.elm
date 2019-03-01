@@ -107,7 +107,6 @@ init flags =
 -}
 type Msg
     = NoOp
-    | SetTitle String
     | SetBody String
     | ToggleEdit
 
@@ -119,12 +118,6 @@ update msg { state, doc } =
             ( state
             , doc
             , Cmd.none
-            )
-
-        SetTitle title ->
-            ( state
-            , { doc | title = title }
-            , Gizmo.emit "updatetitle" (updateTitleEmitValue doc.title title)
             )
 
         SetBody body ->
@@ -159,36 +152,20 @@ view { state, doc } =
             [ displayFlex
             , flexDirection column
             , padding (px 10)
-            , border3 (px 1) solid (hex "ddd")
             , margin (px 10)
-            , boxShadow4 (hex "ddd") (px 0) (px 0) (px 5)
             , backgroundColor (hex "fff")
             , fontFamilies [ "system-ui" ]
             ]
         ]
         [ div
             [ css
-                [ displayFlex
-                , flexDirection row
-                , marginBottom (px 15)
-                , borderBottom3 (px 1) solid (hex "#aaa")
-                , paddingBottom (px 10)
-                , alignItems center
+                [ display block
+                , position absolute
+                , right (px 10)
+                , top (px 10)
                 ]
             ]
-            [ input
-                [ css
-                    [ border zero
-                    , flexGrow (num 1)
-                    , fontSize (Css.em 1.5)
-                    , color textColor
-                    ]
-                , onInput SetTitle
-                , value doc.title
-                , placeholder "Title"
-                ]
-                []
-            , span
+            [ span
                 [ onClick ToggleEdit
                 , css
                     [ color (hex hotPink)
@@ -214,7 +191,9 @@ view { state, doc } =
                     [ flexGrow (num 1)
                     , border zero
                     , width (pct 100)
+                    , height (vh 80)
                     , fontSize (Css.em 1)
+                    , fontFamilies ["Lucida Console"]
                     , color textColor
                     ]
                 , onInput SetBody

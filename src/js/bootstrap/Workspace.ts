@@ -9,8 +9,8 @@ export function data(identity: string, repo: Repo) {
   return workspaceData(identity, repo)
 }
 
-export function article(identity: string, repo: Repo) {
-  return Bs.code(identity, repo, "Article.elm")
+export function essay(identity: string, repo: Repo) {
+  return Bs.code(identity, repo, "Essay.elm")
 }
 
 export function titledMarkdownNote(identity: string, repo: Repo) {
@@ -55,7 +55,7 @@ export function board(identity: string, repo: Repo) {
     config: {
       chat: chat(identity, repo),
       note: note(identity, repo),
-      koala: koala(identity, repo),
+      essay: essay(identity, repo),
       todoList: todoList(identity, repo),
       image: image(identity, repo),
       dotGrid: Bs.asset(repo, "dot_grid.svg"),
