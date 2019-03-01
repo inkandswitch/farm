@@ -219,32 +219,6 @@ export function todoList(identity: string, repo: Repo) {
   })
 }
 
-export function wiki(identity: string, repo: Repo) {
-  return Bs.code(identity, repo, "Wiki.elm", {
-    title: "Wiki",
-    config: {
-      article: article(identity, repo),
-      articleIndex: Bs.code(identity, repo, "ArticleIndex.elm", {
-        config: {
-          articleIndexItem: Bs.code(identity, repo, "ArticleIndexItem.elm"),
-        },
-      }),
-    },
-  })
-}
-
-export function wikiData(identity: string, repo: Repo) {
-  const wikiArticle = repo.create({
-    title: "Welcome",
-    body: "This is the FarmWiki",
-  })
-
-  return repo.create({
-    title: "FarmWiki",
-    articles: [wikiArticle],
-  })
-}
-
 export function windowManager(identity: string, repo: Repo) {
   return Bs.code(identity, repo, "WindowManager.elm", {
     config: {
