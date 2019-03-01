@@ -1,31 +1,49 @@
 module TodoList exposing (Doc, Msg, State, gizmo)
 
 import Array exposing (Array)
+import Extra.Array exposing (remove)
 import Css exposing (..)
 import Extra.Array as Array
-import Gizmo exposing (Model)
+import Gizmo exposing (Flags, Model)
 import Html.Styled as Html exposing (Html, button, div, input, text)
-import Html.Styled.Attributes as Attr exposing (checked, css, value)
+import Html.Styled.Attributes as Attr exposing (checked, css, value, id)
 import Html.Styled.Events as Events exposing (onCheck, onClick, onInput)
+import Keyboard exposing (Combo(..))
+import Browser.Dom as Dom
+import Task exposing (Task)
 
+
+import Random exposing (Generator, list, int)
+
+randomString : Int -> Generator String
+randomString stringLength =
+  Random.map String.fromList <| Random.list stringLength randomChar
+
+randomChar : Generator Char
+randomChar =
+    Random.map (\n -> Char.fromCode (n + 65)) (int 0 51)
 
 gizmo : Gizmo.Program State Doc Msg
 gizmo =
-    Gizmo.sandbox
+    Gizmo.element
         { init = init
         , update = update
         , view = view
+        , subscriptions = subscriptions
         }
 
+subscriptions : Model State Doc -> Sub Msg
+subscriptions { state } =
+    Sub.none
 
 {-| Ephemeral state not saved to the doc
 -}
 type alias State =
     {}
 
-
 type alias Todo =
     { done : Bool
+    , id : String
     , title : String
     }
 
@@ -37,33 +55,54 @@ type alias Doc =
     }
 
 
-init : ( State, Doc )
-init =
+init : Flags -> ( State, Doc, Cmd Msg )
+init flags =
     ( {}
     , { todos = Array.empty
       }
+    , Cmd.none
     )
-
 
 {-| Message type for modifying State and Doc inside update
 -}
 type Msg
-    = SetDone Int Bool
-    | SetTitle Int String
-    | NewTodo
+    = SetDone String Bool
+    | SetTitle String String
+    | CreateTodo
+    | NewTodo String
+    | DeleteTodo String
+    | NoOp
 
 
-update : Msg -> Model State Doc -> ( State, Doc )
+update : Msg -> Model State Doc -> ( State, Doc, Cmd Msg )
 update msg { state, doc } =
     case msg of
-        SetDone n done ->
-            ( state, doc |> updateTodo n (setDone done) )
+        SetDone id done ->
+            ( state, doc |> updateTodo id (setDone done), Cmd.none )
 
-        SetTitle n title ->
-            ( state, doc |> updateTodo n (setTitle title) )
+        SetTitle id title ->
+            ( state, doc |> updateTodo id (setTitle title), Cmd.none )
 
-        NewTodo ->
-            ( state, doc |> pushTodo emptyTodo )
+
+        CreateTodo -> 
+            ( state, doc, Random.generate NewTodo (randomString 7))
+
+        NewTodo id ->
+            let newTodo = emptyTodo id
+            in
+            ( state
+            , doc |> pushTodo newTodo 
+            , Task.attempt (\_ -> NoOp) (focusTodo newTodo.id)
+            )
+
+        DeleteTodo id ->
+            ( state
+            , doc |> Debug.log "delete" (deleteTodo id)
+            , Task.attempt (\_ -> NoOp) (focusTodo id)
+            )
+
+        NoOp -> ( state, doc, Cmd.none )
+
 
 
 setDone : Bool -> Todo -> Todo
@@ -76,21 +115,39 @@ setTitle title todo =
     { todo | title = title }
 
 
-emptyTodo : Todo
-emptyTodo =
+emptyTodo : String -> Todo
+emptyTodo id =
     { title = ""
+    , id = id
     , done = False
     }
 
+updateElement : String -> (Todo -> Todo) -> Array Todo -> Array Todo
+updateElement id fn list =
+  let
+    toggle todo =
+      if todo.id == id then
+        fn todo
+      else
+        todo
+  in
+    Array.map toggle list
 
-updateTodo : Int -> (Todo -> Todo) -> Doc -> Doc
-updateTodo n fn doc =
-    { doc | todos = doc.todos |> Array.update n fn }
+updateTodo : String -> (Todo -> Todo) -> Doc -> Doc
+updateTodo id fn doc =
+    { doc | todos = doc.todos |> updateElement id fn }
 
+
+deleteTodo : String -> Doc -> Doc
+deleteTodo id doc =
+    { doc | todos = doc.todos |> Array.filter (\e -> e.id /= id) }
 
 pushTodo : Todo -> Doc -> Doc
 pushTodo todo doc =
     { doc | todos = doc.todos |> Array.push todo }
+
+focusTodo id =
+    Dom.focus ("task-" ++ id)
 
 
 view : Model State Doc -> Html Msg
@@ -108,22 +165,29 @@ view { doc } =
                 , borderRadius (px 3)
                 ]
             ]
-            (doc.todos |> Array.indexedMap viewTodo |> Array.toList)
+            (doc.todos |> Array.map viewTodo |> Array.toList)
         , viewNewButton
         ]
 
 
-viewTodo : Int -> Todo -> Html Msg
-viewTodo n { title, done } =
+viewTodo : Todo -> Html Msg
+viewTodo { title, id, done } =
+    let todoId = randomString 7
+    in 
     div
         [ css
             [ property "display" "grid"
             , property "grid-template-columns" "auto 1fr"
             ]
         ]
-        [ input [ Attr.type_ "checkbox", checked done, onCheck (SetDone n) ] []
+        [ input [ Attr.type_ "checkbox", checked done, onCheck (SetDone id) ] []
         , input
-            [ onInput (SetTitle n)
+            [ Attr.id ("task-" ++ id)
+            , onInput (SetTitle id)
+            , if String.length title == 0 then
+                Keyboard.onUp Backspace (DeleteTodo id)
+              else
+                Keyboard.onPress Enter CreateTodo
             , value title
             , css
                 [ property "-webkit-appearance" "none"
@@ -147,11 +211,11 @@ viewTodo n { title, done } =
 viewNewButton : Html Msg
 viewNewButton =
     div
-        [ onClick NewTodo
+        [ onClick CreateTodo
         , css
             [ cursor pointer
             , textAlign center
             , padding (px 10)
             ]
         ]
-        [ text "+ New Todo" ]
+        [ text "+ Create Todo" ]

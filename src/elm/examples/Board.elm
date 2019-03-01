@@ -1,6 +1,5 @@
 module Board exposing (Doc, Msg, State, gizmo)
 
-import Array exposing (Array)
 import Browser.Dom as Dom exposing (Element, Viewport)
 import Browser.Events
 import Clipboard
@@ -8,13 +7,16 @@ import Config
 import Css exposing (..)
 import DataTransfer
 import Dict
-import Extra.Array as Array
 import FarmUrl
 import File exposing (File)
 import Gizmo exposing (Flags, Model)
 import Html.Styled as Html exposing (Html, button, div, input, text)
 import Html.Styled.Attributes as Attr exposing (css, id, value)
-import Html.Styled.Events as Events exposing (on, onClick, onDoubleClick, onInput, onMouseDown, onMouseUp)
+import Html.Events as Events
+import Html.Events.Extra.Pointer as Pointer
+import Html.Events.Extra.Mouse as Mouse
+import Html.Events.Extra.Drag as Drag
+
 import IO
 import Json.Decode as D exposing (Decoder)
 import Json.Encode as E
@@ -24,6 +26,8 @@ import Task exposing (Task)
 import Tuple exposing (pair)
 import Uri
 import VsCode
+import Set exposing (Set)
+import List.Extra
 
 
 gizmo : Gizmo.Program State Doc Msg
@@ -38,8 +42,8 @@ gizmo =
 
 type Action
     = None
-    | Moving Int Point
-    | Resizing Int Size
+    | Moving Point
+    | Resizing Size
 
 
 type Menu
@@ -64,23 +68,36 @@ type alias Pair =
     , data : Url
     }
 
+{- the ints here are indices into the local view of the cards array
+   this is incorrect! other users could insert new cards and this would
+   make your selection change weirdly. we should use more durable selection
+   references. theoretically we could generate them locally, but if they're
+   shared we can share references.
+   this probably means migrating all boards to UUID-indexed cards. oof. -}
+type alias Selection =
+    List Int
 
 {-| Ephemeral state not saved to the doc
 -}
 type alias State =
     { action : Action
-    , randomId : String -- TODO: Use proper UUID
+    , randomId : String -- TODO: Use proper UUID --
     , createPosition : Point
     , menu : Menu
-    , scroll : Point
-    , scrolling : Bool
+    , selection : Selection
     }
 
+{- the randomId above is a hack that lets us get mouse coordinates relative to
+   the origin of the board's background element. this is yucky.
+   we have similar problems with the current TODO implementation. this string could
+   be shared between users but should be per-instance, because you may have the same
+   board several times on one canvas. (even if that's not useful.)
+-}
 
 {-| Document state
 -}
 type alias Doc =
-    { cards : Array Card
+    { cards : List Card
     , maxZ : Int
     }
 
@@ -91,10 +108,9 @@ init flags =
       , randomId = ""
       , menu = NoMenu
       , createPosition = origin
-      , scroll = { x = 0, y = 0 }
-      , scrolling = False
+      , selection = []
       }
-    , { cards = Array.empty
+    , { cards = []
       , maxZ = 1
       }
     , Random.generate SetRandomId <| Random.int Random.minInt Random.maxInt
@@ -106,13 +122,13 @@ init flags =
 type Msg
     = NoOp
     | SetRandomId Int
-    | Stop
-    | Move Int
+    | FinishAction
     | Resize Int
     | MouseDelta Point
     | Mirror Int
-    | Remove Int
-    | Click Int
+    | Remove
+    | Select Int Mouse.Keys
+    | BackgroundClicked
     | SetMenu Menu
     | HandleDrop Point (List File)
     | HandlePaste D.Value
@@ -126,8 +142,7 @@ type Msg
     | EmbedGizmo Point String
     | EmbedGizmoInScene String (Result Dom.Error Point)
     | NavigateToCard Int
-    | Scroll Point
-    | ScrollEnd
+    | KeyUp String
 
 
 update : Msg -> Model State Doc -> ( State, Doc, Cmd Msg )
@@ -142,23 +157,27 @@ update msg { state, doc, flags } =
             , Cmd.none
             )
 
-        Stop ->
+        FinishAction ->
             ( { state | action = None }
-            , doc |> applyAction (snapAction state.action)
+            , doc |> applyAction state.selection (snapAction state.action)
             , Cmd.none
             )
+ 
+        Select n keys ->
+                ( state
+                    |> updateSelection n keys
+                    |> beginMoving
+                    |> hideMenu
+                , doc 
+                    |> bumpZ n
+                , Cmd.none
+                )
 
-        Move n ->
-            case doc |> getCard n of
-                Nothing ->
-                    ( state, doc, Cmd.none )
-
-                Just card ->
-                    ( { state | action = Moving n { x = card.x, y = card.y } }
-                        |> hideMenu
-                    , doc
-                    , Cmd.none
-                    )
+        BackgroundClicked ->
+            ( { state  | selection = clearSelection } |> hideMenu
+            , doc
+            , Cmd.none
+            )
 
         Resize n ->
             case doc |> getCard n of
@@ -166,7 +185,9 @@ update msg { state, doc, flags } =
                     ( state, doc, Cmd.none )
 
                 Just card ->
-                    ( { state | action = Resizing n { w = card.w, h = card.h } }
+                    ( state
+                        |> \x -> { x | selection = setSelection n x.selection }
+                        |> beginResizing card
                         |> hideMenu
                     , doc
                     , Cmd.none
@@ -174,14 +195,14 @@ update msg { state, doc, flags } =
 
         MouseDelta delta ->
             case state.action of
-                Moving n pt ->
-                    ( { state | action = Moving n (moveBy delta pt) }
+                Moving pt ->
+                    ( { state | action = Moving (moveBy delta pt) }
                     , doc
                     , Cmd.none
                     )
 
-                Resizing n size ->
-                    ( { state | action = Resizing n (resizeBy delta size) }
+                Resizing size ->
+                    ( { state | action = Resizing (resizeBy delta size) }
                     , doc
                     , Cmd.none
                     )
@@ -189,12 +210,24 @@ update msg { state, doc, flags } =
                 _ ->
                     ( state, doc, Cmd.none )
 
-        Click n ->
-            ( state, doc |> bumpZ n, Cmd.none )
+        KeyUp key ->
+            case key of
+                "Backspace" -> 
+                    let newCards = doc.cards
+                            |> List.indexedMap Tuple.pair
+                            |> List.filter (\pair -> not (List.member (Tuple.first pair) state.selection))
+                            |> List.map Tuple.second 
+                    in
+                        ( { state | selection = clearSelection } |> hideMenu
+                        , { doc | cards = newCards }
+                        , Cmd.none
+                        )
+                _ -> ( state, doc, Cmd.none )
+
 
         Mirror n ->
             ( { state | menu = NoMenu }
-            , case doc.cards |> Array.get n of
+            , case doc.cards |> List.Extra.getAt n of
                 Just card ->
                     doc |> pushCard (card |> moveBy (Point 24 24))
 
@@ -203,9 +236,15 @@ update msg { state, doc, flags } =
             , Cmd.none
             )
 
-        Remove n ->
+        Remove ->
+            let 
+                newCards = List.foldl
+                    (\n cards -> List.Extra.removeAt n cards)
+                    doc.cards
+                    state.selection
+            in
             ( state |> hideMenu
-            , { doc | cards = doc.cards |> Array.remove n }
+            , { doc | cards = newCards }
             , Cmd.none
             )
 
@@ -349,18 +388,6 @@ update msg { state, doc, flags } =
                 |> Result.withDefault Cmd.none
             )
 
-        Scroll delta ->
-            ( { state
-                | scrolling = True
-                , scroll = state.scroll |> moveBy delta
-              }
-            , doc
-            , Cmd.none
-            )
-
-        ScrollEnd ->
-            ( { state | scrolling = False }, doc, Cmd.none )
-
 
 origin : Point
 origin =
@@ -416,7 +443,18 @@ fileToCmd position file =
             Task.perform (CreateImage position) <| File.toUrl file
 
         [ "text", "plain" ] ->
-            Task.perform (CreateNote position) <| File.toString file
+            {- Task.perform (CreateNote position) (File.toUrl file) -}
+            File.toString file
+                |> Task.perform (\string ->
+                    let
+                        first_five = String.left 5 string
+                    in
+                    case first_five of
+                        "farm:" -> {- this doesn't work -}
+                            (EmbedGizmo position) string
+                        _ -> 
+                            (CreateNote position) string
+                    )
 
         [ "application", "farm-url" ] ->
             Task.perform (EmbedGizmo position) <| File.toString file
@@ -433,17 +471,12 @@ subscriptions { state, doc } =
     Sub.batch
         [ Repo.created Created
         , Clipboard.pasted HandlePaste
-        , case state.action of
-            None ->
-                Sub.none
-
-            _ ->
-                Sub.batch
-                    [ Browser.Events.onMouseMove (movementDecoder |> D.map MouseDelta)
-                    , Browser.Events.onMouseUp (D.succeed Stop)
-                    ]
+        , Browser.Events.onKeyUp (D.map KeyUp keyDecoder)
         ]
 
+keyDecoder : D.Decoder String
+keyDecoder =
+  D.field "key" D.string
 
 newCard : Url -> Url -> Card
 newCard code data =
@@ -456,27 +489,43 @@ newCard code data =
     , z = 0
     }
 
-
+{- card collection functions -}
 getCard : Int -> Doc -> Maybe Card
 getCard n =
-    .cards >> Array.get n
+    .cards >> List.Extra.getAt n
 
 
 pushCard : Card -> Doc -> Doc
 pushCard card doc =
-    { doc | cards = doc.cards |> Array.push card }
-        |> bumpZ (Array.length doc.cards)
+    { doc | cards = doc.cards |> List.append [card] }
+        |> bumpZ (List.length doc.cards)
 
 
 updateCard : Int -> (Card -> Card) -> Doc -> Doc
 updateCard n f doc =
-    { doc | cards = doc.cards |> Array.update n f }
+    { doc | cards = doc.cards |> List.Extra.updateAt n f }
 
 
 resolveCard : Card -> Pair
 resolveCard { code, data } =
     Pair (resolveUrl code) (resolveUrl data)
 
+{- selection management functions -}
+isSelected : Int -> Selection -> Bool
+isSelected n selection =
+    List.member n selection
+clearSelection : Selection
+clearSelection =
+    []
+setSelection : Int -> Selection -> Selection
+setSelection n _ =
+    [n]
+toggleSelection : Int -> Selection -> Selection
+toggleSelection n selection =
+    if List.member n selection then
+        List.Extra.remove n selection
+    else   
+        n :: selection 
 
 resolveUrl : Url -> Url
 resolveUrl url =
@@ -488,22 +537,42 @@ resolveUrl url =
             Config.getString url
                 |> Maybe.withDefault url
 
+updateSelection : Int -> Mouse.Keys -> State -> State
+updateSelection n keys state =
+    let selectionCommand = case keys.shift of 
+                    True -> toggleSelection
+                    False -> setSelection
+    in
+        { state | selection = selectionCommand n state.selection }
 
+beginMoving : State -> State
+beginMoving state =
+    { state | action = Moving { x = 0, y = 0 } }
+
+beginResizing : Card -> State -> State
+beginResizing card state =
+    { state | action = Resizing { w = card.w, h = card.h } }
+    
 hideMenu : State -> State
 hideMenu state =
     { state | menu = NoMenu }
 
-
-applyAction : Action -> Doc -> Doc
-applyAction action doc =
+applyAction : Selection -> Action -> Doc -> Doc
+applyAction selection action doc =
     case action of
-        Moving n pt ->
-            doc
-                |> updateCard n (moveTo pt)
-                |> bumpZ n
-
-        Resizing n size ->
-            doc |> updateCard n (resizeTo size)
+        Moving pt ->
+            List.foldl (\n iteratedDoc ->  
+                iteratedDoc 
+                |> updateCard n ((moveBy pt) >> boundsSnap)
+                |> bumpZ n )
+            doc selection
+                
+        Resizing size ->
+            List.foldl (\n iteratedDoc ->  
+                iteratedDoc 
+                |> updateCard n (resizeTo size) 
+                |> bumpZ n )
+            doc selection
 
         _ ->
             doc
@@ -530,11 +599,11 @@ snapSize { w, h } =
 snapAction : Action -> Action
 snapAction action =
     case action of
-        Moving n pt ->
-            Moving n (snapPoint pt)
+        Moving delta ->
+            Moving (snapPoint delta)
 
-        Resizing n size ->
-            Resizing n (snapSize size)
+        Resizing size ->
+            Resizing (snapSize size)
 
         _ ->
             action
@@ -553,10 +622,10 @@ bumpZ n doc =
             else
                 { doc
                     | maxZ = doc.maxZ + 1
-                    , cards = doc.cards |> Array.set n { card | z = doc.maxZ + 1 }
+                    , cards = doc.cards |> List.Extra.setAt n { card | z = doc.maxZ + 1 }
                 }
 
-
+{- dimension management code -}
 type alias Positioned a =
     { a | x : Float, y : Float }
 
@@ -580,8 +649,11 @@ moveBy { x, y } a =
 
 moveTo : Point -> Positioned a -> Positioned a
 moveTo { x, y } a =
-    { a | x = x, y = max 0 y }
+    { a | x = x, y = y }
 
+boundsSnap : Positioned a -> Positioned a
+boundsSnap a =
+    { a | x = max 0 a.x, y = max 0 a.y }
 
 resizeBy : Point -> Sized a -> Sized a
 resizeBy { x, y } a =
@@ -592,7 +664,11 @@ resizeTo : Size -> Sized a -> Sized a
 resizeTo { w, h } a =
     { a | w = max 20 w, h = max 20 h }
 
+{-
 
+    View Functions
+
+ -}
 view : Model State Doc -> Html Msg
 view { doc, state } =
     div
@@ -602,19 +678,28 @@ view { doc, state } =
             , fill
             , overflow hidden
             ]
-
-        -- , onMouseWheel Scroll
-        , onContextMenu (SetMenu << BoardMenu)
-        , onDragOver NoOp
-        , onDrop HandleDrop
+        , Mouse.onContextMenu (\event -> 
+            let (x, y) = event.clientPos
+                pt = Point x y 
+            in SetMenu (BoardMenu pt)
+            ) |> Attr.fromUnstyled
+        , Mouse.onDoubleClick (\event -> 
+            let (x, y) = event.clientPos 
+                pt = Point x y
+            in CreateCard pt "note")
+             |> Attr.fromUnstyled
+        , onMove (\event -> 
+                let (dx, dy) = event.movement
+                    pt = Point dx dy
+                in MouseDelta pt) 
+        , Pointer.onUp (\_ -> FinishAction) |> Attr.fromUnstyled
         ]
+        -- FIXME , onDrop HandleDrop
         [ viewContextMenu doc state.menu
         , div
             [ id state.randomId
             , css
-                [ -- TODO: turns out this is hard:
-                  -- transform (translate2 (px <| negate state.scroll.x) (px <| negate state.scroll.y))
-                  fill
+                [ fill
                 , backgroundColor (hex "f9f8f3")
                 , backgroundImage (url Config.dotGrid)
                 , backgroundAttachment local
@@ -623,10 +708,9 @@ view { doc, state } =
             ]
             (viewClickShield
                 :: (doc
-                        |> applyAction state.action
+                        |> applyAction state.selection state.action
                         |> .cards
-                        |> Array.indexedMap viewCard
-                        |> Array.toList
+                        |> List.indexedMap (viewCard state.selection)
                    )
             )
         ]
@@ -635,23 +719,26 @@ view { doc, state } =
 viewClickShield : Html Msg
 viewClickShield =
     div
-        [ onMouseDown (SetMenu NoMenu)
+        [ Pointer.onDown (\event -> BackgroundClicked) |> Attr.fromUnstyled
         , Attr.tabindex 0
         , css
             [ fill
-            , zIndex (int 1)
+            , zIndex (int 0)
             ]
         ]
         []
 
 
-viewCard : Int -> Card -> Html Msg
-viewCard n card =
+viewCard : Selection -> Int -> Card ->  Html Msg
+viewCard selection n card =
     div
         [ css
             [ property "display" "grid"
             , property "grid-template-rows" "auto 1fr"
-            , bordered
+            , if isSelected n selection then
+                selectionBordered
+              else
+                bordered
             , position absolute
             , transform <| translate2 (px card.x) (px card.y)
             , width (px card.w)
@@ -691,12 +778,16 @@ viewTitleBar n card =
             , position relative
             , zIndex (int 999999999)
             ]
-        , onDoubleClick (NavigateToCard n)
-        , onContextMenu (SetMenu << CardMenu n)
-        , onMouseDown (Move n)
-        , onMouseUp (Click n)
+        , Mouse.onDoubleClick (\_ -> NavigateToCard n) |> Attr.fromUnstyled
+        , Mouse.onContextMenu (\event -> 
+            let (x, y) = event.clientPos
+                pt = Point x y 
+            in SetMenu (CardMenu n pt)
+            ) |> Attr.fromUnstyled
+        , Mouse.onDown (.keys >> Select n)  |> Attr.fromUnstyled
+        , Pointer.onUp (\_ -> FinishAction)  |> Attr.fromUnstyled
         ]
-        []
+        [ Gizmo.renderWith [ Gizmo.attr "prop" "title" ] Config.property (resolveUrl card.data) ]
 
 
 viewResize : Int -> Html Msg
@@ -711,7 +802,7 @@ viewResize n =
             , cursor seResize
             , zIndex (int 999999999)
             ]
-        , onMouseDown (Resize n)
+        , Mouse.onDown (\e -> Resize n) |> Attr.fromUnstyled
         ]
         []
 
@@ -742,6 +833,8 @@ viewBoardMenu pt =
         [ menuButton "Chat" (CreateCard pt "chat")
         , menuButton "Board" (CreateCard pt "board")
         , menuButton "Note" (CreateCard pt "note")
+        , menuButton "Essay" (CreateCard pt "essay")
+        , menuButton "Koala" (CreateCard pt "koala")
         , menuButton "Todo List" (CreateCard pt "todoList")
         ]
 
@@ -749,8 +842,7 @@ viewBoardMenu pt =
 viewCardMenu : Int -> Card -> Html Msg
 viewCardMenu n card =
     menu
-        [ menuButton "Mirror" (Mirror n)
-        , menuButton "Remove" (Remove n)
+        [ menuButton "Remove" (Remove)
         ]
 
 
@@ -787,7 +879,7 @@ menuButton label msg =
         [ css
             [ menuItemStyle
             ]
-        , onClick msg
+        , Attr.fromUnstyled <| Mouse.onClick (\x -> msg) 
         ]
         [ text label
         ]
@@ -831,6 +923,17 @@ bordered =
         , backgroundColor (hex "#fff")
         ]
 
+selectionBordered : Style
+selectionBordered = 
+    batch 
+        [ outline3 (px 2) solid (hex "000")
+        , borderRadius (px 3)
+        , outlineOffset (px -1)
+        , backgroundColor (hex "#fff")
+        , boxShadow5 (px 4) (px 4) (px 24) (px 0) (rgba 0 0 0 0.25)
+        , zIndex (int 2)
+        ] 
+
 
 fill : Style
 fill =
@@ -843,43 +946,6 @@ fill =
         ]
 
 
-onPreventStop : String -> Decoder msg -> Html.Attribute msg
-onPreventStop name =
-    Events.custom name
-        << D.map
-            (\msg ->
-                { message = msg
-                , stopPropagation = True
-                , preventDefault = True
-                }
-            )
-
-
-onMouseWheel : (Point -> msg) -> Html.Attribute msg
-onMouseWheel mkMsg =
-    onPreventStop "wheel"
-        (deltaDecoder |> D.map mkMsg)
-
-
-onContextMenu : (Point -> msg) -> Html.Attribute msg
-onContextMenu mkMsg =
-    onPreventStop "contextmenu"
-        (xyDecoder |> D.map mkMsg)
-
-
-onDragOver : msg -> Html.Attribute msg
-onDragOver =
-    onPreventStop "dragover" << D.succeed
-
-
-onDrop : (Point -> List File -> msg) -> Html.Attribute msg
-onDrop mkMsg =
-    onPreventStop "drop" <|
-        D.map2 mkMsg
-            xyDecoder
-            dataTransferFileDecoder
-
-
 clipboardDecoder : Decoder (List File)
 clipboardDecoder =
     D.field "clipboardData" DataTransfer.elmFileDecoder
@@ -890,22 +956,35 @@ dataTransferFileDecoder =
     D.field "dataTransfer" DataTransfer.elmFileDecoder
 
 
-movementDecoder : Decoder Point
+{- 
+    we implement our own onMove function here because some browsers
+    don't support the movement{X/Y} properties in the onMove event.
+    that said, Chrome does, and this is (currently) an electron app. 
+-}
+onMove : (EventWithMovement -> msg) -> Html.Attribute msg
+onMove tag =
+    let
+        options =
+            { stopPropagation = True, preventDefault = True }
+    in
+    D.map tag decodeWithMovement
+        |> Events.on "mousemove"
+        |> Attr.fromUnstyled
+
+type alias EventWithMovement =
+    { mouseEvent : Mouse.Event
+    , movement : ( Float, Float )
+    }
+
+decodeWithMovement : Decoder EventWithMovement
+decodeWithMovement =
+    D.map2 EventWithMovement
+        Mouse.eventDecoder
+        movementDecoder
+
+movementDecoder : Decoder ( Float, Float )
 movementDecoder =
-    D.map2 Point
+    D.map2 Tuple.pair
         (D.field "movementX" D.float)
         (D.field "movementY" D.float)
 
-
-deltaDecoder : Decoder Point
-deltaDecoder =
-    D.map2 Point
-        (D.field "deltaX" D.float)
-        (D.field "deltaY" D.float)
-
-
-xyDecoder : Decoder Point
-xyDecoder =
-    D.map2 Point
-        (D.field "x" D.float)
-        (D.field "y" D.float)
