@@ -59,6 +59,7 @@ export function board(identity: string, repo: Repo) {
       todoList: todoList(identity, repo),
       image: image(identity, repo),
       dotGrid: Bs.asset(repo, "dot_grid.svg"),
+      property: property(identity, repo)
     },
   })
 
