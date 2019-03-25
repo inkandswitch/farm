@@ -1,11 +1,12 @@
 import QueuedWorker from "./QueuedWorker"
+import FakeWorker from "./FakeWorker"
 import * as Msg from "./Msg"
 import Repo from "./Repo"
 import { whenChanged } from "./Subscription"
 import { sha1 } from "./Digest"
 import * as Author from "./Author"
 
-type CompileWorker = QueuedWorker<Msg.ToCompiler, Msg.FromCompiler>
+type CompileWorker = FakeWorker<Msg.ToCompiler, Msg.FromCompiler>
 
 const PERSIST = "PERSIST" in process.env
 const encoder = new TextEncoder()
@@ -23,7 +24,8 @@ export default class Compiler {
 
   constructor(repo: Repo, url: string) {
     this.repo = repo
-    this.worker = new QueuedWorker(url)
+    this.worker = new FakeWorker(url)
+    //this.worker = new QueuedWorker(url)
 
     this.worker.subscribe(msg => {
       this.repo.change(msg.url, (state: any) => {

@@ -8,6 +8,7 @@ import * as Workspace from "./bootstrap/Workspace"
 import * as Draggable from "./Draggable"
 
 require("utp-native")
+require("iltorb")
 
 const REPO_ROOT = process.env.REPO_ROOT || ""
 

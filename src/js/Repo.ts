@@ -1,11 +1,11 @@
 import { RepoFrontend } from "hypermerge/dist/RepoFrontend"
 import {ChangeFn} from "hypermerge"
 import { Handle } from "hypermerge/dist/Handle"
-import QueuedWorker from "./QueuedWorker"
+//import QueuedWorker from "./QueuedWorker"
 import { validateDocURL } from "hypermerge/dist/Metadata"
 import * as Base58 from "bs58"
 import * as URL from "url"
-// import FakeWorker from "./FakeWorker"
+import FakeWorker from "./FakeWorker"
 
 const decoder = new TextDecoder()
 
@@ -16,7 +16,7 @@ export interface HyperFile {
 }
 
 export default class Repo {
-  worker: QueuedWorker<any, any>
+  worker: FakeWorker<any, any>
   front: RepoFrontend
   fileCache: Map<string, HyperFile>
   registry?: object
@@ -27,8 +27,8 @@ export default class Repo {
     this.fileCache = new Map()
 
     // Swap to allow utp-native usage:
-    this.worker = new QueuedWorker(url)
-    // this.worker = new FakeWorker(url)
+    //this.worker = new QueuedWorker(url)
+    this.worker = new FakeWorker(url)
 
     this.worker.subscribe(this.front.receive)
     this.front.subscribe(this.worker.send)
