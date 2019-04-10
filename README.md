@@ -65,3 +65,10 @@ The upstream Elm extension assumes files are written to disk, which Hypermerge d
 .vsx file.
 
 [repo]: https://github.com/automerge/hypermerge/tree/fork#concepts
+
+### Windows
+
+Farm uses several packages which will require a native rebuild on Windows. You should only need to do this once. To rebuild, from the repo root run:
+```
+npx electron-rebuild
+```
