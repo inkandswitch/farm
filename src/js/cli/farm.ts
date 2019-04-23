@@ -38,13 +38,11 @@ program
   .action((gizmo: string) => {
     const bs = require("../bootstrap/" + gizmo)
     const code = bs.code("", repo)
-    const data = bs.data(repo)
-    console.log("\n\ncode url:", code, "\n\n")
-    console.log("\n\ndata url:", data, "\n\n")
-
+    const data = bs.data("", repo)
     const farmUrl = FarmUrl.create({ code, data })
-    console.log("\n\nfarm url:", farmUrl, "\n\n")
-    setTimeout(() => {}, 99999999) // HACK: without a worker, node exits
+    console.log(`Successfully bootstrapped ${gizmo}!\n\nurl:`, farmUrl)
+    repo.terminate()
+    //setTimeout(() => {}, 99999999) // HACK: without a worker, node exits
   })
 
 program

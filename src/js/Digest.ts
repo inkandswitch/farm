@@ -1,3 +1,5 @@
+import { TextEncoder } from "text-encoding"
+
 const encoder = new TextEncoder()
 
 export async function sha1(input: string) {

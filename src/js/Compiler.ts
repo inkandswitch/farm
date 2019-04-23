@@ -5,6 +5,7 @@ import Repo from "./Repo"
 import { whenChanged } from "./Subscription"
 import { sha1 } from "./Digest"
 import * as Author from "./Author"
+import { TextEncoder } from "text-encoding"
 
 type CompileWorker = FakeWorker<Msg.ToCompiler, Msg.FromCompiler>
 

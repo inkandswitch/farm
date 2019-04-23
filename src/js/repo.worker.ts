@@ -35,4 +35,4 @@ repo.replicate(
   new discoveryCloud({url: "wss://discovery-cloud.herokuapp.com", id: repo.id, stream: repo.stream})
 )
 
-console.log('repo worker loaded', repo)
+//console.log('repo worker loaded', repo)
